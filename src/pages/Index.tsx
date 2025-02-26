@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
-import { ArrowUpRight, Bank } from "lucide-react";
+import { ArrowUpRight, Building2 } from "lucide-react";
 import { Line, LineChart, ResponsiveContainer, XAxis } from "recharts";
 
 const data = [
@@ -32,7 +32,7 @@ const actions = [
     type: "Withdraw to Bank",
     amount: "1,500.00 USDC",
     status: "0/2 approved",
-    icon: Bank,
+    icon: Building2,
   },
 ];
 
