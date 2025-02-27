@@ -9,8 +9,13 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Home, DollarSign, Users, FileText, Settings } from "lucide-react";
+import { Home, DollarSign, Users, FileText, Settings, LogOut } from "lucide-react";
+import { useAuth } from "./AuthProvider";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const menuItems = [
   { icon: Home, label: "Home", href: "/" },
@@ -21,6 +26,18 @@ const menuItems = [
 ];
 
 export function DashboardSidebar() {
+  const { session } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate("/auth");
+    } catch (error: any) {
+      toast.error("Error logging out");
+    }
+  };
+
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
@@ -45,6 +62,20 @@ export function DashboardSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="p-4">
+        <div className="flex flex-col gap-4">
+          <div className="text-sm">
+            <div className="font-medium">{session?.user.email}</div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-sm text-red-500 hover:text-red-600"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </button>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }
