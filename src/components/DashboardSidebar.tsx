@@ -24,7 +24,7 @@ export function DashboardSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
-        <h2 className="text-lg font-semibold">VendorPay</h2>
+        <h2 className="text-lg font-semibold">Fluida</h2>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
