@@ -6,8 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AddVendorDialog } from "./components/AddVendorDialog";
 import { VendorList } from "./components/VendorList";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function Vendors() {
+  const { session } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [editingVendor, setEditingVendor] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<any>(null);
@@ -65,10 +67,16 @@ export default function Vendors() {
   };
 
   const handleAddVendor = async (newVendor: any) => {
+    if (!session?.user?.id) {
+      toast.error("You must be logged in to add vendors");
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('vendors')
         .insert([{
+          user_id: session.user.id, // Add user_id to link vendor to current user
           name: newVendor.name,
           email: newVendor.email,
           address: newVendor.address,
