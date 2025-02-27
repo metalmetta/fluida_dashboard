@@ -268,4 +268,46 @@ export default function Vendors() {
                             ...editForm,
                             name: e.target.value
                           })}
-                          className="max
+                          className="max-w-[200px]"
+                        />
+                        <Input
+                          value={editForm?.email}
+                          onChange={e => setEditForm({
+                            ...editForm,
+                            email: e.target.value
+                          })}
+                          className="max-w-[200px]"
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="font-medium">{vendor.name}</p>
+                        <p className="text-sm text-muted-foreground">{vendor.email}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {editingVendor === vendor.id ? (
+                      <>
+                        <Button variant="ghost" size="sm" onClick={() => handleSaveEdit()}>
+                          <Save className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setEditingVendor(null)}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <Button variant="ghost" size="sm" onClick={() => handleEditVendor(vendor)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      </div>
+    </DashboardLayout>
+  );
+}
