@@ -9,6 +9,148 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      actions: {
+        Row: {
+          amount: number
+          approvals_received: number
+          approvals_required: number
+          created_at: string
+          id: string
+          status: string
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          approvals_received?: number
+          approvals_required?: number
+          created_at?: string
+          id?: string
+          status: string
+          type: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          approvals_received?: number
+          approvals_required?: number
+          created_at?: string
+          id?: string
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "actions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_accounts: {
+        Row: {
+          account_number: string
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          account_number: string
+          balance?: number
+          created_at?: string
+          currency: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          account_number?: string
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          description: string | null
+          due_date: string | null
+          id: string
+          invoice_number: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          date: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           full_name: string | null
@@ -26,6 +168,68 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      vendors: {
+        Row: {
+          address: string
+          bank_account_number: string | null
+          bank_holder_name: string | null
+          bank_name: string | null
+          bank_routing_number: string | null
+          country: string
+          created_at: string
+          email: string
+          id: string
+          last_payment_date: string | null
+          name: string
+          status: string
+          updated_at: string
+          user_id: string | null
+          wallet_address: string | null
+        }
+        Insert: {
+          address: string
+          bank_account_number?: string | null
+          bank_holder_name?: string | null
+          bank_name?: string | null
+          bank_routing_number?: string | null
+          country: string
+          created_at?: string
+          email: string
+          id?: string
+          last_payment_date?: string | null
+          name: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          wallet_address?: string | null
+        }
+        Update: {
+          address?: string
+          bank_account_number?: string | null
+          bank_holder_name?: string | null
+          bank_name?: string | null
+          bank_routing_number?: string | null
+          country?: string
+          created_at?: string
+          email?: string
+          id?: string
+          last_payment_date?: string | null
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          wallet_address?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
