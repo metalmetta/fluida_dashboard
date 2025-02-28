@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -10,6 +11,9 @@ import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import quickbooksIcon from "../vendors/quickbooks.png";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
+import { useQuery } from "@tanstack/react-query";
 
 interface Invoice {
   id: string;
@@ -64,11 +68,44 @@ const getBadgeVariant = (status: Invoice['status']) => {
 };
 
 export default function Invoices() {
-  const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
+  const { session } = useAuth();
   const [isUploading, setIsUploading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Use React Query to fetch invoices from Supabase
+  const { data: invoices = initialInvoices, refetch } = useQuery({
+    queryKey: ['invoices'],
+    queryFn: async () => {
+      if (!session?.user?.id) return initialInvoices;
+      
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('*, vendors(name)')
+        .order('date', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching invoices:', error);
+        toast.error('Failed to load invoices');
+        return initialInvoices;
+      }
+
+      // Transform the data to match our Invoice interface
+      return data.map(invoice => ({
+        id: invoice.invoice_number || invoice.id,
+        vendor: invoice.vendors?.name || 'Unknown Vendor',
+        amount: `$${invoice.amount.toFixed(2)}`,
+        date: new Date(invoice.date).toLocaleDateString(),
+        status: invoice.status,
+        invoiceNumber: invoice.invoice_number,
+        description: invoice.description,
+        dueDate: invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : undefined,
+        synced: false
+      }));
+    },
+    enabled: !!session?.user?.id
+  });
 
   // Mock function to simulate PDF data extraction
   const extractPdfData = async (file: File): Promise<Partial<Invoice>> => {
@@ -96,14 +133,53 @@ export default function Invoices() {
       return;
     }
 
+    if (!session?.user?.id) {
+      toast.error("You must be logged in to upload invoices");
+      return;
+    }
+
     setIsUploading(true);
     try {
       // Extract data from PDF
       const extractedData = await extractPdfData(file);
       
-      // Create new invoice
+      // Parse amount to remove $ sign and convert to number
+      const amountString = extractedData.amount || "$0.00";
+      const amountNumber = parseFloat(amountString.replace(/[^0-9.-]+/g, ""));
+
+      // Convert dates to ISO format for database
+      const invoiceDate = extractedData.date 
+        ? new Date(extractedData.date).toISOString() 
+        : new Date().toISOString();
+      
+      const dueDate = extractedData.dueDate 
+        ? new Date(extractedData.dueDate).toISOString() 
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+      // Insert invoice to Supabase
+      const { data, error } = await supabase
+        .from('invoices')
+        .insert([
+          {
+            user_id: session.user.id,
+            amount: amountNumber,
+            date: invoiceDate,
+            due_date: dueDate,
+            invoice_number: extractedData.invoiceNumber,
+            description: extractedData.description,
+            status: 'pending'
+          }
+        ])
+        .select();
+
+      if (error) {
+        console.error('Error saving invoice:', error);
+        throw error;
+      }
+
+      // Create new invoice object for UI
       const newInvoice: Invoice = {
-        id: `INV-${invoices.length + 1}`.padStart(7, "0"),
+        id: data[0].invoice_number || data[0].id,
         vendor: extractedData.vendor || "Unknown Vendor",
         amount: extractedData.amount || "$0.00",
         date: extractedData.date || new Date().toLocaleDateString(),
@@ -113,9 +189,9 @@ export default function Invoices() {
         dueDate: extractedData.dueDate,
       };
 
-      setInvoices([newInvoice, ...invoices]);
       setIsDialogOpen(false);
       toast.success("Invoice uploaded successfully");
+      refetch(); // Refresh the invoices list
     } catch (error) {
       toast.error("Error processing invoice");
       console.error(error);
@@ -127,13 +203,21 @@ export default function Invoices() {
   const handlePayInvoice = async (invoice: Invoice) => {
     setIsProcessingPayment(true);
     try {
+      // Find the invoice in Supabase by invoice_number or id
+      if (invoice.invoiceNumber) {
+        const { error } = await supabase
+          .from('invoices')
+          .update({ status: 'paid' })
+          .eq('invoice_number', invoice.invoiceNumber);
+          
+        if (error) throw error;
+      }
+      
       // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Update invoice status
-      setInvoices(invoices.map(inv => 
-        inv.id === invoice.id ? { ...inv, status: "paid" } : inv
-      ));
+      // Update invoice status in local state
+      refetch();
       
       setSelectedInvoice(null);
       toast.success("Payment processed successfully");
