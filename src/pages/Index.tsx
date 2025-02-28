@@ -15,7 +15,6 @@ import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
 import { Database } from "@/types/database.types";
-import { PlaidLink } from '@/components/PlaidLink';
 
 type TopUp = Database['public']['Tables']['top_ups']['Row'] & {
   bank_accounts: {
@@ -34,12 +33,14 @@ const COUNTRY_CURRENCY_MAP = {
 const Index = () => {
   const { session } = useAuth();
   const [isTopUpDialogOpen, setIsTopUpDialogOpen] = useState(false);
+  const [isAddBankDialogOpen, setIsAddBankDialogOpen] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedBankId, setSelectedBankId] = useState("");
   const [topUpAmount, setTopUpAmount] = useState("");
   const queryClient = useQueryClient();
 
   // Fetch bank accounts
-  const { data: bankAccounts = [], refetch: refetchBankAccounts } = useQuery({
+  const { data: bankAccounts = [] } = useQuery({
     queryKey: ['bankAccounts'],
     queryFn: async () => {
       if (!session?.user?.id) return [];
@@ -174,6 +175,50 @@ const Index = () => {
     }
   };
 
+  const handleAddBank = async () => {
+    if (!selectedCountry || !session?.user?.id) {
+      if (!session?.user?.id) {
+        toast.error("You must be logged in to add a bank account");
+      }
+      return;
+    }
+    
+    try {
+      // Get currency for selected country
+      const currency = COUNTRY_CURRENCY_MAP[selectedCountry as keyof typeof COUNTRY_CURRENCY_MAP];
+      
+      // Generate random account number
+      const accountNumber = Math.floor(1000 + Math.random() * 9000).toString();
+      
+      // Insert a new bank_account record in Supabase
+      const { data, error } = await supabase
+        .from('bank_accounts')
+        .insert([{
+          name: `Bank ${bankAccounts.length + 1}`,
+          account_number: accountNumber,
+          balance: 0,
+          currency,
+          user_id: session.user.id
+        }])
+        .select();
+
+      if (error) {
+        console.error("Bank account creation error:", error);
+        throw error;
+      }
+      
+      toast.success("Bank account added successfully");
+      setIsAddBankDialogOpen(false);
+      setSelectedCountry("");
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
+    } catch (error: any) {
+      toast.error("Error adding bank account");
+      console.error(error);
+    }
+  };
+
   // Check if user is logged in
   const isLoggedIn = !!session?.user?.id;
   if (!isLoggedIn) {
@@ -300,14 +345,41 @@ const Index = () => {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium">Bank Accounts Linked</h3>
-            <PlaidLink
-              userId={session?.user?.id || ''}
-              onSuccess={(bankAccountId) => {
-                refetchBankAccounts();
-                toast.success('Bank account linked successfully');
-              }}
-              className="ml-auto"
-            />
+            <Dialog open={isAddBankDialogOpen} onOpenChange={setIsAddBankDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Bank Account
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogTitle>Add New Bank Account</DialogTitle>
+                <DialogDescription>
+                  Select your country to connect a new bank account.
+                </DialogDescription>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="country">Country</Label>
+                    <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="US">United States (USD)</SelectItem>
+                        <SelectItem value="CA">Canada (CAD)</SelectItem>
+                        <SelectItem value="UK">United Kingdom (GBP)</SelectItem>
+                        <SelectItem value="EU">European Union (EUR)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={handleAddBank} disabled={!selectedCountry}>
+                    Add Bank Account
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="space-y-4">
             {bankAccounts.map((bank) => (
