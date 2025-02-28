@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/components/AuthProvider";
 
 const COUNTRY_CURRENCY_MAP = {
   US: "USD",
@@ -22,6 +23,7 @@ const COUNTRY_CURRENCY_MAP = {
 };
 
 const Index = () => {
+  const { session } = useAuth();
   const [isTopUpDialogOpen, setIsTopUpDialogOpen] = useState(false);
   const [isAddBankDialogOpen, setIsAddBankDialogOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState("");
@@ -33,6 +35,8 @@ const Index = () => {
   const { data: bankAccounts = [] } = useQuery({
     queryKey: ['bankAccounts'],
     queryFn: async () => {
+      if (!session?.user?.id) return [];
+      
       const { data, error } = await supabase
         .from('bank_accounts')
         .select('*')
@@ -43,13 +47,16 @@ const Index = () => {
         throw error;
       }
       return data;
-    }
+    },
+    enabled: !!session?.user?.id
   });
 
   // Fetch actions
   const { data: actions = [] } = useQuery({
     queryKey: ['actions'],
     queryFn: async () => {
+      if (!session?.user?.id) return [];
+      
       const { data, error } = await supabase
         .from('actions')
         .select('*')
@@ -65,7 +72,8 @@ const Index = () => {
         icon: action.type.includes('Withdraw') ? Building2 : ArrowUpRight,
         status: `${action.approvals_received}/${action.approvals_required} approved`
       }));
-    }
+    },
+    enabled: !!session?.user?.id
   });
 
   // Calculate total balance
@@ -78,7 +86,12 @@ const Index = () => {
   }));
 
   const handleTopUp = async () => {
-    if (!selectedBankId || !topUpAmount) return;
+    if (!selectedBankId || !topUpAmount || !session?.user?.id) {
+      if (!session?.user?.id) {
+        toast.error("You must be logged in to perform this action");
+      }
+      return;
+    }
     
     try {
       // Insert a new action record for the top-up
@@ -89,7 +102,8 @@ const Index = () => {
           amount: parseFloat(topUpAmount),
           status: 'pending',
           approvals_required: 2,
-          approvals_received: 0
+          approvals_received: 0,
+          user_id: session.user.id
         }]);
 
       if (actionError) throw actionError;
@@ -108,7 +122,12 @@ const Index = () => {
   };
 
   const handleAddBank = async () => {
-    if (!selectedCountry) return;
+    if (!selectedCountry || !session?.user?.id) {
+      if (!session?.user?.id) {
+        toast.error("You must be logged in to add a bank account");
+      }
+      return;
+    }
     
     try {
       // Get currency for selected country
@@ -124,11 +143,15 @@ const Index = () => {
           name: `Bank ${bankAccounts.length + 1}`,
           account_number: accountNumber,
           balance: 0,
-          currency
+          currency,
+          user_id: session.user.id
         }])
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Bank account creation error:", error);
+        throw error;
+      }
       
       toast.success("Bank account added successfully");
       setIsAddBankDialogOpen(false);
@@ -141,6 +164,19 @@ const Index = () => {
       console.error(error);
     }
   };
+
+  // Check if user is logged in
+  const isLoggedIn = !!session?.user?.id;
+  if (!isLoggedIn) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+          <h2 className="text-2xl font-semibold">Please log in</h2>
+          <p className="text-muted-foreground">You need to be logged in to view your financial dashboard</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
