@@ -67,6 +67,41 @@ const getBadgeVariant = (status: Invoice['status']) => {
   }
 };
 
+// Mock data for invoice extraction
+const mockVendors = [
+  "Tesla Inc",
+  "Microsoft Corporation",
+  "Amazon Web Services",
+  "Google Cloud",
+  "Apple Inc",
+  "Adobe Systems",
+  "Salesforce",
+  "Oracle Corporation",
+  "IBM Services",
+  "Dell Technologies",
+  "Stripe Payments",
+  "Slack Technologies",
+  "Zoom Video Communications",
+  "Dropbox Inc",
+  "GitHub Inc"
+];
+
+const mockDescriptions = [
+  "Software subscription",
+  "Consulting services",
+  "Cloud infrastructure",
+  "Hardware purchase",
+  "Professional services",
+  "Monthly maintenance",
+  "Training services",
+  "Office equipment",
+  "Marketing services",
+  "Legal services",
+  "Design services",
+  "Support contract",
+  "Annual membership"
+];
+
 export default function Invoices() {
   const { session } = useAuth();
   const [isUploading, setIsUploading] = useState(false);
@@ -107,19 +142,45 @@ export default function Invoices() {
     enabled: !!session?.user?.id
   });
 
-  // Mock function to simulate PDF data extraction
+  // Function to generate random mock data for PDF extraction
   const extractPdfData = async (file: File): Promise<Partial<Invoice>> => {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Mock extracted data
+    // Generate random invoice data
+    const randomVendor = mockVendors[Math.floor(Math.random() * mockVendors.length)];
+    const randomDescription = mockDescriptions[Math.floor(Math.random() * mockDescriptions.length)];
+    
+    // Generate random amount between $100 and $10,000
+    const randomAmount = (Math.floor(Math.random() * 9900) + 100) / 100;
+    const formattedAmount = `$${randomAmount.toFixed(2)}`;
+    
+    // Generate random invoice number
+    const year = new Date().getFullYear();
+    const randomNumber = Math.floor(10000 + Math.random() * 90000);
+    const invoiceNumber = `INV-${year}-${randomNumber}`;
+    
+    // Generate random date within the last 30 days
+    const randomDaysAgo = Math.floor(Math.random() * 30);
+    const invoiceDate = new Date();
+    invoiceDate.setDate(invoiceDate.getDate() - randomDaysAgo);
+    
+    // Due date is typically 30 days after invoice date
+    const dueDate = new Date(invoiceDate);
+    dueDate.setDate(dueDate.getDate() + 30);
+    
+    // Extract file name without extension as potential reference number
+    const fileName = file.name.replace(/\.[^/.]+$/, "");
+    
+    console.log(`Extracted data from ${fileName}: ${randomVendor}, ${formattedAmount}`);
+    
     return {
-      vendor: "New Vendor Corp",
-      amount: "$1,234.56",
-      invoiceNumber: "INV-2024-001",
-      description: "Professional Services",
-      date: new Date().toLocaleDateString(),
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+      vendor: randomVendor,
+      amount: formattedAmount,
+      invoiceNumber: invoiceNumber,
+      description: randomDescription,
+      date: invoiceDate.toLocaleDateString(),
+      dueDate: dueDate.toLocaleDateString(),
     };
   };
 
