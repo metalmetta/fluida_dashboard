@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -208,14 +207,23 @@ export default function Invoices() {
       const amountString = extractedData.amount || "$0.00";
       const amountNumber = parseFloat(amountString.replace(/[^0-9.-]+/g, ""));
 
-      // Fix date handling - convert extracted dates to proper ISO format dates
-      // First, parse the date strings to Date objects
-      const invoiceDateObj = extractedData.date ? new Date(extractedData.date) : new Date();
-      const dueDateObj = extractedData.dueDate ? new Date(extractedData.dueDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-      
-      // Format dates properly for database
-      const invoiceDate = invoiceDateObj.toISOString();
-      const dueDate = dueDateObj.toISOString();
+      // Parse dates properly
+      const parseDateString = (dateStr: string | undefined): string => {
+        if (!dateStr) return new Date().toISOString();
+        
+        // Split the date string into components
+        const [month, day, year] = dateStr.split('/').map(num => parseInt(num));
+        
+        // Create a new Date object (month is 0-based in JavaScript)
+        const date = new Date(year, month - 1, day);
+        
+        // Return ISO string
+        return date.toISOString();
+      };
+
+      // Convert dates to ISO format
+      const invoiceDate = parseDateString(extractedData.date);
+      const dueDate = parseDateString(extractedData.dueDate);
 
       // Insert invoice to Supabase
       const { data, error } = await supabase
