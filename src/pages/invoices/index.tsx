@@ -208,14 +208,14 @@ export default function Invoices() {
       const amountString = extractedData.amount || "$0.00";
       const amountNumber = parseFloat(amountString.replace(/[^0-9.-]+/g, ""));
 
-      // Convert dates to ISO format for database
-      const invoiceDate = extractedData.date 
-        ? new Date(extractedData.date).toISOString() 
-        : new Date().toISOString();
+      // Fix date handling - convert extracted dates to proper ISO format dates
+      // First, parse the date strings to Date objects
+      const invoiceDateObj = extractedData.date ? new Date(extractedData.date) : new Date();
+      const dueDateObj = extractedData.dueDate ? new Date(extractedData.dueDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
       
-      const dueDate = extractedData.dueDate 
-        ? new Date(extractedData.dueDate).toISOString() 
-        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      // Format dates properly for database
+      const invoiceDate = invoiceDateObj.toISOString();
+      const dueDate = dueDateObj.toISOString();
 
       // Insert invoice to Supabase
       const { data, error } = await supabase
