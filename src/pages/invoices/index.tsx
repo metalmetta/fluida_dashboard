@@ -274,16 +274,39 @@ export default function Invoices() {
     try {
       // Find the invoice in Supabase by invoice_number or id
       if (invoice.invoiceNumber) {
-        const { error } = await supabase
+        const { error: invoiceError } = await supabase
           .from('invoices')
           .update({ status: 'paid' })
           .eq('invoice_number', invoice.invoiceNumber);
           
-        if (error) throw error;
+        if (invoiceError) throw invoiceError;
+
+        // Get the invoice ID
+        const { data: invoiceData } = await supabase
+          .from('invoices')
+          .select('id')
+          .eq('invoice_number', invoice.invoiceNumber)
+          .single();
+
+        if (!invoiceData?.id) {
+          throw new Error('Invoice not found');
+        }
+
+        // Create a transaction record for the invoice payment
+        const { error: actionError } = await supabase
+          .from('actions')
+          .insert([{
+            type: 'Invoice Payment',
+            amount: parseFloat(invoice.amount.replace(/[^0-9.-]+/g, "")),
+            status: 'completed',
+            approvals_required: 2,
+            approvals_received: 2, // Auto-approve invoice payments
+            user_id: session?.user?.id,
+            invoice_id: invoiceData.id
+          }]);
+
+        if (actionError) throw actionError;
       }
-      
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Update invoice status in local state
       refetch();

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -14,6 +13,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
+import { cn } from "@/lib/utils";
+import { Database } from "@/types/database.types";
+import { PlaidLink } from '@/components/PlaidLink';
+
+type TopUp = Database['public']['Tables']['top_ups']['Row'] & {
+  bank_accounts: {
+    name: string;
+    currency: string;
+  } | null;
+};
 
 const COUNTRY_CURRENCY_MAP = {
   US: "USD",
@@ -25,14 +34,12 @@ const COUNTRY_CURRENCY_MAP = {
 const Index = () => {
   const { session } = useAuth();
   const [isTopUpDialogOpen, setIsTopUpDialogOpen] = useState(false);
-  const [isAddBankDialogOpen, setIsAddBankDialogOpen] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedBankId, setSelectedBankId] = useState("");
   const [topUpAmount, setTopUpAmount] = useState("");
   const queryClient = useQueryClient();
 
   // Fetch bank accounts
-  const { data: bankAccounts = [] } = useQuery({
+  const { data: bankAccounts = [], refetch: refetchBankAccounts } = useQuery({
     queryKey: ['bankAccounts'],
     queryFn: async () => {
       if (!session?.user?.id) return [];
@@ -76,6 +83,27 @@ const Index = () => {
     enabled: !!session?.user?.id
   });
 
+  // Fetch top-ups
+  const { data: topUps = [] } = useQuery<TopUp[]>({
+    queryKey: ['topUps'],
+    queryFn: async () => {
+      if (!session?.user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('top_ups')
+        .select('*, bank_accounts(name, currency)')
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (error) {
+        toast.error("Error loading top-up history");
+        throw error;
+      }
+      return data as TopUp[];
+    },
+    enabled: !!session?.user?.id
+  });
+
   // Calculate total balance
   const totalBalance = bankAccounts.reduce((sum, account) => sum + Number(account.balance), 0);
 
@@ -94,7 +122,30 @@ const Index = () => {
     }
     
     try {
-      // Insert a new action record for the top-up
+      // Get the selected bank account for currency info
+      const selectedBank = bankAccounts.find(bank => bank.id === selectedBankId);
+      if (!selectedBank) {
+        toast.error("Selected bank account not found");
+        return;
+      }
+
+      // Create a new top-up record
+      const { data: topUpData, error: topUpError } = await supabase
+        .from('top_ups')
+        .insert([{
+          user_id: session.user.id,
+          bank_account_id: selectedBankId,
+          amount: parseFloat(topUpAmount),
+          currency: selectedBank.currency,
+          status: 'pending',
+          transaction_reference: `TOP-${Date.now()}`
+        }])
+        .select()
+        .single();
+
+      if (topUpError) throw topUpError;
+
+      // Create an action record for approval tracking
       const { error: actionError } = await supabase
         .from('actions')
         .insert([{
@@ -103,7 +154,8 @@ const Index = () => {
           status: 'pending',
           approvals_required: 2,
           approvals_received: 0,
-          user_id: session.user.id
+          user_id: session.user.id,
+          top_up_id: topUpData.id
         }]);
 
       if (actionError) throw actionError;
@@ -115,52 +167,9 @@ const Index = () => {
       
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['actions'] });
+      queryClient.invalidateQueries({ queryKey: ['topUps'] });
     } catch (error: any) {
       toast.error("Error processing top-up");
-      console.error(error);
-    }
-  };
-
-  const handleAddBank = async () => {
-    if (!selectedCountry || !session?.user?.id) {
-      if (!session?.user?.id) {
-        toast.error("You must be logged in to add a bank account");
-      }
-      return;
-    }
-    
-    try {
-      // Get currency for selected country
-      const currency = COUNTRY_CURRENCY_MAP[selectedCountry as keyof typeof COUNTRY_CURRENCY_MAP];
-      
-      // Generate random account number
-      const accountNumber = Math.floor(1000 + Math.random() * 9000).toString();
-      
-      // Insert a new bank_account record in Supabase
-      const { data, error } = await supabase
-        .from('bank_accounts')
-        .insert([{
-          name: `Bank ${bankAccounts.length + 1}`,
-          account_number: accountNumber,
-          balance: 0,
-          currency,
-          user_id: session.user.id
-        }])
-        .select();
-
-      if (error) {
-        console.error("Bank account creation error:", error);
-        throw error;
-      }
-      
-      toast.success("Bank account added successfully");
-      setIsAddBankDialogOpen(false);
-      setSelectedCountry("");
-      
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
-    } catch (error: any) {
-      toast.error("Error adding bank account");
       console.error(error);
     }
   };
@@ -291,41 +300,14 @@ const Index = () => {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium">Bank Accounts Linked</h3>
-            <Dialog open={isAddBankDialogOpen} onOpenChange={setIsAddBankDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Bank Account
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogTitle>Add New Bank Account</DialogTitle>
-                <DialogDescription>
-                  Select your country to connect a new bank account.
-                </DialogDescription>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="country">Country</Label>
-                    <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a country" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="US">United States (USD)</SelectItem>
-                        <SelectItem value="CA">Canada (CAD)</SelectItem>
-                        <SelectItem value="UK">United Kingdom (GBP)</SelectItem>
-                        <SelectItem value="EU">European Union (EUR)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button onClick={handleAddBank} disabled={!selectedCountry}>
-                    Add Bank Account
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <PlaidLink
+              userId={session?.user?.id || ''}
+              onSuccess={(bankAccountId) => {
+                refetchBankAccounts();
+                toast.success('Bank account linked successfully');
+              }}
+              className="ml-auto"
+            />
           </div>
           <div className="space-y-4">
             {bankAccounts.map((bank) => (
@@ -355,6 +337,55 @@ const Index = () => {
             {bankAccounts.length === 0 && (
               <div className="flex items-center justify-center py-8 text-muted-foreground">
                 No bank accounts linked
+              </div>
+            )}
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h3 className="text-lg font-medium mb-4">Recent Top-ups</h3>
+          <div className="space-y-4">
+            {topUps.map((topUp) => (
+              <div
+                key={topUp.id}
+                className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-2 rounded-full bg-primary/10">
+                    <ArrowUpRight className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium">
+                      Top-up from {topUp.bank_accounts?.name}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(topUp.created_at).toLocaleDateString()} • Ref: {topUp.transaction_reference}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <p className="font-medium">
+                    {new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: topUp.bank_accounts?.currency || 'USD'
+                    }).format(topUp.amount)}
+                  </p>
+                  <Badge
+                    variant={topUp.status === 'completed' ? "success" : "secondary"}
+                    className={cn(
+                      topUp.status === 'pending' && "bg-yellow-100 text-yellow-800",
+                      topUp.status === 'completed' && "bg-green-100 text-green-800",
+                      topUp.status === 'failed' && "bg-red-100 text-red-800"
+                    )}
+                  >
+                    {topUp.status}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+            {topUps.length === 0 && (
+              <div className="flex items-center justify-center py-8 text-muted-foreground">
+                No recent top-ups
               </div>
             )}
           </div>
