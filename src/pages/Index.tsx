@@ -10,7 +10,7 @@ import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -27,6 +27,7 @@ const Index = () => {
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedBankId, setSelectedBankId] = useState("");
   const [topUpAmount, setTopUpAmount] = useState("");
+  const queryClient = useQueryClient();
 
   // Fetch bank accounts
   const { data: bankAccounts = [] } = useQuery({
@@ -80,7 +81,8 @@ const Index = () => {
     if (!selectedBankId || !topUpAmount) return;
     
     try {
-      const { error } = await supabase
+      // Insert a new action record for the top-up
+      const { error: actionError } = await supabase
         .from('actions')
         .insert([{
           type: 'Top-up',
@@ -90,12 +92,15 @@ const Index = () => {
           approvals_received: 0
         }]);
 
-      if (error) throw error;
+      if (actionError) throw actionError;
       
       toast.success("Top-up request submitted");
       setIsTopUpDialogOpen(false);
       setSelectedBankId("");
       setTopUpAmount("");
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['actions'] });
     } catch (error: any) {
       toast.error("Error processing top-up");
       console.error(error);
@@ -106,23 +111,31 @@ const Index = () => {
     if (!selectedCountry) return;
     
     try {
+      // Get currency for selected country
       const currency = COUNTRY_CURRENCY_MAP[selectedCountry as keyof typeof COUNTRY_CURRENCY_MAP];
+      
+      // Generate random account number
       const accountNumber = Math.floor(1000 + Math.random() * 9000).toString();
       
-      const { error } = await supabase
+      // Insert a new bank_account record in Supabase
+      const { data, error } = await supabase
         .from('bank_accounts')
         .insert([{
           name: `Bank ${bankAccounts.length + 1}`,
           account_number: accountNumber,
           balance: 0,
           currency
-        }]);
+        }])
+        .select();
 
       if (error) throw error;
       
       toast.success("Bank account added successfully");
       setIsAddBankDialogOpen(false);
       setSelectedCountry("");
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
     } catch (error: any) {
       toast.error("Error adding bank account");
       console.error(error);
@@ -230,6 +243,11 @@ const Index = () => {
                   </Badge>
                 </div>
               ))}
+              {actions.length === 0 && (
+                <div className="flex items-center justify-center py-8 text-muted-foreground">
+                  No pending actions
+                </div>
+              )}
             </div>
           </Card>
         </div>
@@ -298,6 +316,11 @@ const Index = () => {
                 </p>
               </div>
             ))}
+            {bankAccounts.length === 0 && (
+              <div className="flex items-center justify-center py-8 text-muted-foreground">
+                No bank accounts linked
+              </div>
+            )}
           </div>
         </Card>
       </div>
