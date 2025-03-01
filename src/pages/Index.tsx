@@ -16,6 +16,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
 import { Database } from "@/types/database.types";
 import { usePlaidLink } from "react-plaid-link";
+import { Separator } from "@/components/ui/separator";
 
 type TopUp = Database['public']['Tables']['top_ups']['Row'] & {
   bank_accounts: {
@@ -317,7 +318,7 @@ const Index = () => {
     onExit: (err, metadata) => {
       console.log('Link exit:', err, metadata);
       if (err) {
-        toast.error(err.message || "Error connecting to bank");
+        toast.error(err.display_message || err.error_message || "Error connecting to bank");
       }
     },
   });
