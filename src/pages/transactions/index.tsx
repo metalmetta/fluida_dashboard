@@ -3,11 +3,14 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpDown, Search, ArrowUpRight, CreditCard } from "lucide-react";
+import { ArrowUpDown, Search, Plus, ArrowUpRight, CreditCard } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -39,9 +42,12 @@ export default function Transactions() {
   const { session } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [isNewTransactionOpen, setIsNewTransactionOpen] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [type, setType] = useState("");
 
   // Fetch transactions with related data
-  const { data: transactions = [] } = useQuery<Transaction[]>({
+  const { data: transactions = [], refetch } = useQuery<Transaction[]>({
     queryKey: ['transactions'],
     queryFn: async () => {
       if (!session?.user?.id) return [];
@@ -85,6 +91,34 @@ export default function Transactions() {
     setSortOrder(current => current === "asc" ? "desc" : "asc");
   };
 
+  const handleNewTransaction = async () => {
+    if (!amount || !type || !session?.user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('actions')
+        .insert([{
+          type,
+          amount: parseFloat(amount),
+          status: 'pending',
+          approvals_required: 2,
+          approvals_received: 0,
+          user_id: session.user.id
+        }]);
+
+      if (error) throw error;
+
+      toast.success("Transaction created successfully");
+      setIsNewTransactionOpen(false);
+      setAmount("");
+      setType("");
+      refetch();
+    } catch (error: any) {
+      toast.error("Error creating transaction");
+      console.error(error);
+    }
+  };
+
   const getTransactionIcon = (type: string) => {
     switch (type) {
       case 'Top-up':
@@ -123,6 +157,52 @@ export default function Transactions() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-semibold">Transactions</h1>
+          <Dialog open={isNewTransactionOpen} onOpenChange={setIsNewTransactionOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                New Transaction
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Transaction</DialogTitle>
+                <DialogDescription>
+                  Enter the transaction details below.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="type">Transaction Type</Label>
+                  <Select value={type} onValueChange={setType}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select transaction type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Top-up">Top-up</SelectItem>
+                      <SelectItem value="Withdraw to Bank">Withdraw to Bank</SelectItem>
+                      <SelectItem value="Contractor Payout">Contractor Payout</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Amount</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    placeholder="Enter amount"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={handleNewTransaction} disabled={!amount || !type}>
+                  Create Transaction
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <Card>
