@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { Configuration, PlaidApi, PlaidEnvironments } from "https://esm.sh/plaid@18.1.0";
 
 // CORS headers for browser access
@@ -9,24 +8,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
-
-// Initialize Plaid client
-// In a production environment, you should store these values in Supabase secrets
-const PLAID_CLIENT_ID = Deno.env.get("PLAID_CLIENT_ID") || "your_client_id";
-const PLAID_SECRET = Deno.env.get("PLAID_SECRET") || "your_secret";
-const PLAID_ENV = Deno.env.get("PLAID_ENV") || "sandbox";
-
-const configuration = new Configuration({
-  basePath: PlaidEnvironments[PLAID_ENV],
-  baseOptions: {
-    headers: {
-      'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
-      'PLAID-SECRET': PLAID_SECRET,
-    },
-  },
-});
-
-const plaidClient = new PlaidApi(configuration);
 
 serve(async (req) => {
   // Handle CORS preflight request
@@ -46,6 +27,34 @@ serve(async (req) => {
   }
 
   try {
+    // Get environment variables
+    const PLAID_CLIENT_ID = Deno.env.get("PLAID_CLIENT_ID");
+    const PLAID_SECRET = Deno.env.get("PLAID_SECRET");
+    const PLAID_ENV = Deno.env.get("PLAID_ENV") || "sandbox";
+
+    // Validate environment variables
+    if (!PLAID_CLIENT_ID || !PLAID_SECRET) {
+      console.error("Missing Plaid API credentials in environment variables");
+      throw new Error("Plaid API credentials not configured. Please set PLAID_CLIENT_ID and PLAID_SECRET in Supabase Edge Function secrets.");
+    }
+
+    console.log(`Using Plaid environment: ${PLAID_ENV}`);
+    console.log(`Client ID exists: ${!!PLAID_CLIENT_ID}`);
+    console.log(`Secret exists: ${!!PLAID_SECRET}`);
+
+    // Initialize Plaid client
+    const configuration = new Configuration({
+      basePath: PlaidEnvironments[PLAID_ENV as keyof typeof PlaidEnvironments],
+      baseOptions: {
+        headers: {
+          'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
+          'PLAID-SECRET': PLAID_SECRET,
+        },
+      },
+    });
+
+    const plaidClient = new PlaidApi(configuration);
+
     // Extract request data
     const { userId } = await req.json();
     
@@ -67,6 +76,7 @@ serve(async (req) => {
     });
 
     console.log("Link token created successfully");
+    console.log(`Link token: ${createTokenResponse.data.link_token.slice(0, 10)}...`);
 
     // Return the link token to the client
     return new Response(
@@ -79,7 +89,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error creating link token:', error);
     
-    // Return error response
+    // Return error response with more details
     return new Response(
       JSON.stringify({ 
         error: error.message || 'Failed to create link token',

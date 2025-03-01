@@ -189,7 +189,7 @@ const Index = () => {
     setIsLoading(true);
     try {
       console.log("Starting link token creation process");
-      // Direct access to the Supabase Edge Function with the correct project URL
+      // Make sure we're using the correct Supabase project URL
       const response = await fetch(`https://fohvdgeknzgongfkssyc.supabase.co/functions/v1/create-link-token`, {
         method: 'POST',
         headers: {
@@ -202,28 +202,26 @@ const Index = () => {
       console.log("Link token response received, status:", response.status);
 
       if (!response.ok) {
-        const errorText = await response.text(); // First try to get text in case JSON parsing fails
-        console.error('API error response text:', errorText);
+        let errorMessage = 'Failed to create link token';
         
-        let errorData;
         try {
-          // Only try to parse as JSON if content exists
-          errorData = errorText ? JSON.parse(errorText) : { error: 'Empty response' };
-        } catch (e) {
-          errorData = { error: `Failed to parse error response: ${errorText || 'Empty response'}` };
+          const errorData = await response.json();
+          console.error('API error response:', errorData);
+          errorMessage = errorData.error || `Request failed with status ${response.status}`;
+        } catch (parseError) {
+          console.error('Failed to parse error response:', await response.text());
         }
         
-        console.error('API response error:', errorData);
-        throw new Error(errorData.error || `Request failed with status ${response.status}`);
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
-      console.log("Link token received:", data);
+      console.log("Link token received successfully");
       setLinkToken(data.link_token);
       setIsAddBankDialogOpen(true);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating link token:', error);
-      toast.error(error.message || 'Failed to connect to Plaid');
+      toast.error(error.message || 'Failed to connect to Plaid. Please check if Plaid credentials are set correctly.');
     } finally {
       setIsLoading(false);
     }
@@ -280,10 +278,10 @@ const Index = () => {
     }
 
     try {
-      console.log("Plaid success, exchanging public token...", publicToken);
+      console.log("Plaid success, exchanging public token...");
       console.log("Metadata received:", metadata);
       
-      // Direct access to the Supabase Edge Function with the correct project URL
+      // Make sure we're using the correct Supabase project URL
       const response = await fetch(`https://fohvdgeknzgongfkssyc.supabase.co/functions/v1/exchange-public-token`, {
         method: 'POST',
         headers: {
@@ -299,32 +297,36 @@ const Index = () => {
       console.log("Exchange token response received, status:", response.status);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API error response text:', errorText);
+        let errorMessage = 'Failed to exchange public token';
         
-        let errorData;
         try {
-          errorData = errorText ? JSON.parse(errorText) : { error: 'Empty response' };
-        } catch (e) {
-          errorData = { error: `Failed to parse error response: ${errorText || 'Empty response'}` };
+          const errorData = await response.json();
+          console.error('API response error:', errorData);
+          errorMessage = errorData.error || `Request failed with status ${response.status}`;
+        } catch (parseError) {
+          console.error('Failed to parse error response:', await response.text());
         }
         
-        console.error('API response error:', errorData);
-        throw new Error(errorData.error || `Request failed with status ${response.status}`);
+        throw new Error(errorMessage);
       }
 
       const { access_token, accounts } = await response.json();
       console.log("Exchange successful, received accounts:", accounts);
 
       // For each account, create a bank account record
+      if (!accounts || accounts.length === 0) {
+        throw new Error("No accounts returned from Plaid");
+      }
+      
+      let addedAccounts = 0;
       for (const account of accounts) {
         const { data, error } = await supabase
           .from('bank_accounts')
           .insert([{
-            name: account.name,
-            account_number: account.mask,
+            name: account.name || `Account ${account.mask || 'Unknown'}`,
+            account_number: account.mask || 'Unknown',
             balance: account.balances.current || 0,
-            currency: account.balances.iso_currency_code,
+            currency: account.balances.iso_currency_code || 'USD',
             user_id: session.user.id,
             plaid_access_token: access_token,
             plaid_account_id: account.account_id
@@ -333,16 +335,22 @@ const Index = () => {
 
         if (error) {
           console.error("Bank account creation error:", error);
-          throw error;
+          continue;
         }
+        addedAccounts++;
       }
 
-      toast.success("Bank accounts linked successfully");
+      if (addedAccounts > 0) {
+        toast.success(`Successfully linked ${addedAccounts} bank account${addedAccounts > 1 ? 's' : ''}`);
+      } else {
+        toast.warning("No bank accounts were linked. Please try again.");
+      }
+      
       setIsAddBankDialogOpen(false);
       
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
-    } catch (error: any) {
+    } catch (error) {
       toast.error(error.message || "Error linking bank accounts");
       console.error(error);
     }
@@ -351,7 +359,7 @@ const Index = () => {
   const { open, ready } = usePlaidLink({
     token: linkToken,
     onSuccess: (public_token, metadata) => {
-      console.log("Plaid Link Success!", public_token);
+      console.log("Plaid Link Success!");
       onPlaidSuccess(public_token, metadata);
     },
     onExit: (err, metadata) => {
