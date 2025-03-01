@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
 import { Database } from "@/types/database.types";
+import { usePlaidLink } from "react-plaid-link";
 
 type TopUp = Database['public']['Tables']['top_ups']['Row'] & {
   bank_accounts: {
@@ -37,6 +38,8 @@ const Index = () => {
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedBankId, setSelectedBankId] = useState("");
   const [topUpAmount, setTopUpAmount] = useState("");
+  const [linkToken, setLinkToken] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch bank accounts
@@ -175,7 +178,39 @@ const Index = () => {
     }
   };
 
-  const handleAddBank = async () => {
+  const handleOpenAddBankDialog = async () => {
+    if (!session?.user?.id) {
+      toast.error("You must be logged in to add a bank account");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/plaid/create-link-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: session.user.id }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create link token');
+      }
+
+      const data = await response.json();
+      setLinkToken(data.link_token);
+      setIsAddBankDialogOpen(true);
+    } catch (error: any) {
+      console.error('Error creating link token:', error);
+      toast.error(error.message || 'Failed to connect to Plaid');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddBankManually = async () => {
     if (!selectedCountry || !session?.user?.id) {
       if (!session?.user?.id) {
         toast.error("You must be logged in to add a bank account");
@@ -219,7 +254,74 @@ const Index = () => {
     }
   };
 
-  // Check if user is logged in
+  const onPlaidSuccess = async (publicToken: string, metadata: any) => {
+    if (!session?.user?.id) {
+      toast.error("You must be logged in to add a bank account");
+      return;
+    }
+
+    try {
+      // Exchange public token for access token
+      const response = await fetch('/api/plaid/exchange-public-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ publicToken }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to exchange token');
+      }
+
+      const { access_token, accounts } = await response.json();
+
+      // For each account, create a bank account record
+      for (const account of accounts) {
+        const { data, error } = await supabase
+          .from('bank_accounts')
+          .insert([{
+            name: account.name,
+            account_number: account.mask,
+            balance: account.balances.current || 0,
+            currency: account.balances.iso_currency_code,
+            user_id: session.user.id,
+            plaid_access_token: access_token,
+            plaid_account_id: account.account_id
+          }])
+          .select();
+
+        if (error) {
+          console.error("Bank account creation error:", error);
+          throw error;
+        }
+      }
+
+      toast.success("Bank accounts linked successfully");
+      setIsAddBankDialogOpen(false);
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
+    } catch (error: any) {
+      toast.error(error.message || "Error linking bank accounts");
+      console.error(error);
+    }
+  };
+
+  const { open, ready } = usePlaidLink({
+    token: linkToken,
+    onSuccess: (public_token, metadata) => {
+      onPlaidSuccess(public_token, metadata);
+    },
+    onExit: (err, metadata) => {
+      console.log('Link exit:', err, metadata);
+      if (err) {
+        toast.error(err.message || "Error connecting to bank");
+      }
+    },
+  });
+
   const isLoggedIn = !!session?.user?.id;
   if (!isLoggedIn) {
     return (
@@ -347,17 +449,37 @@ const Index = () => {
             <h3 className="text-lg font-medium">Bank Accounts Linked</h3>
             <Dialog open={isAddBankDialogOpen} onOpenChange={setIsAddBankDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleOpenAddBankDialog}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <span className="animate-spin mr-2">○</span>
+                  ) : (
+                    <Plus className="w-4 h-4 mr-2" />
+                  )}
                   Add Bank Account
                 </Button>
               </DialogTrigger>
               <DialogContent>
-                <DialogTitle>Add New Bank Account</DialogTitle>
-                <DialogDescription>
-                  Select your country to connect a new bank account.
+                <DialogTitle>Connect Your Bank Account</DialogTitle>
+                <DialogDescription className="mb-4">
+                  Connect your bank account securely with Plaid or add manually.
                 </DialogDescription>
-                <div className="space-y-4 py-4">
+                {linkToken && (
+                  <Button 
+                    onClick={() => open()} 
+                    disabled={!ready} 
+                    className="w-full mb-4 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Connect with Plaid
+                  </Button>
+                )}
+                <Separator className="my-4" />
+                <h4 className="text-sm font-medium mb-2">Or add manually:</h4>
+                <div className="space-y-4 py-2">
                   <div className="space-y-2">
                     <Label htmlFor="country">Country</Label>
                     <Select value={selectedCountry} onValueChange={setSelectedCountry}>
@@ -374,8 +496,8 @@ const Index = () => {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button onClick={handleAddBank} disabled={!selectedCountry}>
-                    Add Bank Account
+                  <Button onClick={handleAddBankManually} disabled={!selectedCountry}>
+                    Add Bank Account Manually
                   </Button>
                 </DialogFooter>
               </DialogContent>
