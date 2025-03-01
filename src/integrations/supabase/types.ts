@@ -16,7 +16,9 @@ export type Database = {
           approvals_required: number
           created_at: string
           id: string
+          invoice_id: string | null
           status: string
+          top_up_id: string | null
           type: string
           updated_at: string
           user_id: string | null
@@ -27,7 +29,9 @@ export type Database = {
           approvals_required?: number
           created_at?: string
           id?: string
+          invoice_id?: string | null
           status: string
+          top_up_id?: string | null
           type: string
           updated_at?: string
           user_id?: string | null
@@ -38,12 +42,28 @@ export type Database = {
           approvals_required?: number
           created_at?: string
           id?: string
+          invoice_id?: string | null
           status?: string
+          top_up_id?: string | null
           type?: string
           updated_at?: string
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "actions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "actions_top_up_id_fkey"
+            columns: ["top_up_id"]
+            isOneToOne: false
+            referencedRelation: "top_ups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "actions_user_id_fkey"
             columns: ["user_id"]
@@ -60,7 +80,10 @@ export type Database = {
           created_at: string
           currency: string
           id: string
+          last_synced_at: string | null
           name: string
+          plaid_access_token: string | null
+          plaid_account_id: string | null
           updated_at: string
           user_id: string | null
         }
@@ -70,7 +93,10 @@ export type Database = {
           created_at?: string
           currency: string
           id?: string
+          last_synced_at?: string | null
           name: string
+          plaid_access_token?: string | null
+          plaid_account_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -80,7 +106,10 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          last_synced_at?: string | null
           name?: string
+          plaid_access_token?: string | null
+          plaid_account_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -169,6 +198,56 @@ export type Database = {
         }
         Relationships: []
       }
+      top_ups: {
+        Row: {
+          amount: number
+          bank_account_id: string
+          completed_at: string | null
+          created_at: string
+          currency: string
+          error_message: string | null
+          id: string
+          status: Database["public"]["Enums"]["top_up_status"] | null
+          transaction_reference: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          bank_account_id: string
+          completed_at?: string | null
+          created_at?: string
+          currency: string
+          error_message?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["top_up_status"] | null
+          transaction_reference?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          bank_account_id?: string
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          error_message?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["top_up_status"] | null
+          transaction_reference?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "top_ups_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendors: {
         Row: {
           address: string
@@ -239,7 +318,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      top_up_status: "pending" | "completed" | "failed" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
