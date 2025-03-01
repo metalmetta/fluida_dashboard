@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -187,20 +188,23 @@ const Index = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/plaid/create-link-token', {
+      const response = await fetch(`${window.location.origin}/api/supabase/functions/v1/create-link-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({ userId: session.user.id }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('API response error:', errorData);
         throw new Error(errorData.error || 'Failed to create link token');
       }
 
       const data = await response.json();
+      console.log("Link token received:", data);
       setLinkToken(data.link_token);
       setIsAddBankDialogOpen(true);
     } catch (error: any) {
@@ -262,21 +266,28 @@ const Index = () => {
     }
 
     try {
+      console.log("Plaid success, exchanging public token...", publicToken);
       // Exchange public token for access token
-      const response = await fetch('/api/plaid/exchange-public-token', {
+      const response = await fetch(`${window.location.origin}/api/supabase/functions/v1/exchange-public-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({ publicToken }),
+        body: JSON.stringify({ 
+          publicToken, 
+          userId: session.user.id 
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('API response error:', errorData);
         throw new Error(errorData.error || 'Failed to exchange token');
       }
 
       const { access_token, accounts } = await response.json();
+      console.log("Exchange successful, received accounts:", accounts);
 
       // For each account, create a bank account record
       for (const account of accounts) {
@@ -313,6 +324,7 @@ const Index = () => {
   const { open, ready } = usePlaidLink({
     token: linkToken,
     onSuccess: (public_token, metadata) => {
+      console.log("Plaid Link Success!", public_token);
       onPlaidSuccess(public_token, metadata);
     },
     onExit: (err, metadata) => {
@@ -471,7 +483,10 @@ const Index = () => {
                 </DialogDescription>
                 {linkToken && (
                   <Button 
-                    onClick={() => open()} 
+                    onClick={() => {
+                      console.log("Opening Plaid Link with token:", linkToken);
+                      open();
+                    }} 
                     disabled={!ready} 
                     className="w-full mb-4 bg-blue-600 hover:bg-blue-700"
                   >
