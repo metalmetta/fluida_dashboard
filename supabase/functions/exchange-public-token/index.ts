@@ -1,60 +1,66 @@
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
-import { Configuration, PlaidApi, PlaidEnvironments } from "https://esm.sh/plaid@15.0.0";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { Configuration, PlaidApi, PlaidEnvironments } from "https://esm.sh/plaid@18.1.0";
 
-// Configure CORS headers
+// CORS headers for browser access
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-// Create a Supabase client
-const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+// Initialize Supabase client with service role to access database
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Initialize Plaid client
+// In a production environment, you should store these values in Supabase secrets
+const PLAID_CLIENT_ID = Deno.env.get("PLAID_CLIENT_ID") || "your_client_id";
+const PLAID_SECRET = Deno.env.get("PLAID_SECRET") || "your_secret";
+const PLAID_ENV = Deno.env.get("PLAID_ENV") || "sandbox";
+
+const configuration = new Configuration({
+  basePath: PlaidEnvironments[PLAID_ENV],
+  baseOptions: {
+    headers: {
+      'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
+      'PLAID-SECRET': PLAID_SECRET,
+    },
+  },
+});
+
+const plaidClient = new PlaidApi(configuration);
+
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders,
+    });
+  }
+
+  // Verify request method
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   try {
-    // Parse request body
-    const body = await req.json();
-    const { publicToken, userId } = body;
-
-    if (!publicToken) {
-      return new Response(
-        JSON.stringify({ error: 'Public token is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Extract request data
+    const { publicToken, userId } = await req.json();
+    
+    if (!publicToken || !userId) {
+      throw new Error('Public token and User ID are required');
     }
 
-    if (!userId) {
-      return new Response(
-        JSON.stringify({ error: 'User ID is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    console.log(`Exchanging public token for user: ${userId}`);
 
-    console.log("Exchanging public token for user:", userId);
-    
-    // Initialize Plaid client
-    const configuration = new Configuration({
-      basePath: PlaidEnvironments.sandbox,
-      baseOptions: {
-        headers: {
-          'PLAID-CLIENT-ID': '67c19c17f7e3ca0022f7bbb7',
-          'PLAID-SECRET': '46ce37a59b27903aa88c135a5adbd7',
-        },
-      },
-    });
-    
-    const plaidClient = new PlaidApi(configuration);
-
-    // Exchange public token for access token
+    // Exchange the public token for an access token
     const exchangeResponse = await plaidClient.itemPublicTokenExchange({
       public_token: publicToken,
     });
@@ -62,9 +68,9 @@ serve(async (req) => {
     const accessToken = exchangeResponse.data.access_token;
     const itemId = exchangeResponse.data.item_id;
 
-    console.log("Public token exchanged successfully for item:", itemId);
+    console.log("Public token exchanged successfully for access token");
 
-    // Get account information
+    // Get account info for the new item
     const accountsResponse = await plaidClient.accountsGet({
       access_token: accessToken,
     });
@@ -76,15 +82,26 @@ serve(async (req) => {
       JSON.stringify({ 
         access_token: accessToken,
         item_id: itemId,
-        accounts: accounts
+        accounts: accounts 
       }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
     );
   } catch (error) {
-    console.error("Error exchanging public token:", error);
+    console.error('Error exchanging public token:', error);
+    
+    // Return error response
     return new Response(
-      JSON.stringify({ error: error.message || 'Failed to exchange public token' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        error: error.message || 'Failed to exchange public token',
+        details: error.response?.data || {}
+      }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
     );
   }
 });

@@ -188,7 +188,8 @@ const Index = () => {
 
     setIsLoading(true);
     try {
-      // Updated URL to correctly access Supabase Edge Functions
+      console.log("Starting link token creation process");
+      // Direct access to the Supabase Edge Function with the correct project URL
       const response = await fetch(`https://fohvdgeknzgongfkssyc.supabase.co/functions/v1/create-link-token`, {
         method: 'POST',
         headers: {
@@ -197,6 +198,8 @@ const Index = () => {
         },
         body: JSON.stringify({ userId: session.user.id }),
       });
+
+      console.log("Link token response received, status:", response.status);
 
       if (!response.ok) {
         const errorText = await response.text(); // First try to get text in case JSON parsing fails
@@ -278,7 +281,9 @@ const Index = () => {
 
     try {
       console.log("Plaid success, exchanging public token...", publicToken);
-      // Updated URL to correctly access Supabase Edge Functions
+      console.log("Metadata received:", metadata);
+      
+      // Direct access to the Supabase Edge Function with the correct project URL
       const response = await fetch(`https://fohvdgeknzgongfkssyc.supabase.co/functions/v1/exchange-public-token`, {
         method: 'POST',
         headers: {
@@ -290,6 +295,8 @@ const Index = () => {
           userId: session.user.id 
         }),
       });
+
+      console.log("Exchange token response received, status:", response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
