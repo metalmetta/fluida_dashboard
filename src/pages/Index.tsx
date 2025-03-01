@@ -188,7 +188,8 @@ const Index = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${window.location.origin}/api/supabase/functions/v1/create-link-token`, {
+      // Updated URL to correctly access Supabase Edge Functions
+      const response = await fetch(`https://fohvdgeknzgongfkssyc.supabase.co/functions/v1/create-link-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -198,9 +199,19 @@ const Index = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorText = await response.text(); // First try to get text in case JSON parsing fails
+        console.error('API error response text:', errorText);
+        
+        let errorData;
+        try {
+          // Only try to parse as JSON if content exists
+          errorData = errorText ? JSON.parse(errorText) : { error: 'Empty response' };
+        } catch (e) {
+          errorData = { error: `Failed to parse error response: ${errorText || 'Empty response'}` };
+        }
+        
         console.error('API response error:', errorData);
-        throw new Error(errorData.error || 'Failed to create link token');
+        throw new Error(errorData.error || `Request failed with status ${response.status}`);
       }
 
       const data = await response.json();
@@ -267,8 +278,8 @@ const Index = () => {
 
     try {
       console.log("Plaid success, exchanging public token...", publicToken);
-      // Exchange public token for access token
-      const response = await fetch(`${window.location.origin}/api/supabase/functions/v1/exchange-public-token`, {
+      // Updated URL to correctly access Supabase Edge Functions
+      const response = await fetch(`https://fohvdgeknzgongfkssyc.supabase.co/functions/v1/exchange-public-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -281,9 +292,18 @@ const Index = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        console.error('API error response text:', errorText);
+        
+        let errorData;
+        try {
+          errorData = errorText ? JSON.parse(errorText) : { error: 'Empty response' };
+        } catch (e) {
+          errorData = { error: `Failed to parse error response: ${errorText || 'Empty response'}` };
+        }
+        
         console.error('API response error:', errorData);
-        throw new Error(errorData.error || 'Failed to exchange token');
+        throw new Error(errorData.error || `Request failed with status ${response.status}`);
       }
 
       const { access_token, accounts } = await response.json();
