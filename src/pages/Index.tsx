@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -12,12 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
 import { Database } from "@/types/database.types";
-import { usePlaidLink } from "react-plaid-link";
-import { Separator } from "@/components/ui/separator";
 
 type TopUp = Database['public']['Tables']['top_ups']['Row'] & {
   bank_accounts: {
@@ -40,8 +37,6 @@ const Index = () => {
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedBankId, setSelectedBankId] = useState("");
   const [topUpAmount, setTopUpAmount] = useState("");
-  const [linkToken, setLinkToken] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch bank accounts
@@ -56,11 +51,7 @@ const Index = () => {
         .order('created_at', { ascending: true });
       
       if (error) {
-        toast({
-          title: "Error",
-          description: "Error loading bank accounts",
-          variant: "destructive",
-        });
+        toast.error("Error loading bank accounts");
         throw error;
       }
       return data;
@@ -81,11 +72,7 @@ const Index = () => {
         .limit(5);
       
       if (error) {
-        toast({
-          title: "Error",
-          description: "Error loading actions",
-          variant: "destructive",
-        });
+        toast.error("Error loading actions");
         throw error;
       }
       return data.map(action => ({
@@ -110,11 +97,7 @@ const Index = () => {
         .limit(5);
       
       if (error) {
-        toast({
-          title: "Error",
-          description: "Error loading top-up history",
-          variant: "destructive",
-        });
+        toast.error("Error loading top-up history");
         throw error;
       }
       return data as TopUp[];
@@ -134,11 +117,7 @@ const Index = () => {
   const handleTopUp = async () => {
     if (!selectedBankId || !topUpAmount || !session?.user?.id) {
       if (!session?.user?.id) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to perform this action",
-          variant: "destructive",
-        });
+        toast.error("You must be logged in to perform this action");
       }
       return;
     }
@@ -147,11 +126,7 @@ const Index = () => {
       // Get the selected bank account for currency info
       const selectedBank = bankAccounts.find(bank => bank.id === selectedBankId);
       if (!selectedBank) {
-        toast({
-          title: "Error",
-          description: "Selected bank account not found",
-          variant: "destructive",
-        });
+        toast.error("Selected bank account not found");
         return;
       }
 
@@ -186,10 +161,7 @@ const Index = () => {
 
       if (actionError) throw actionError;
       
-      toast({
-        title: "Success",
-        description: "Top-up request submitted",
-      });
+      toast.success("Top-up request submitted");
       setIsTopUpDialogOpen(false);
       setSelectedBankId("");
       setTopUpAmount("");
@@ -198,79 +170,15 @@ const Index = () => {
       queryClient.invalidateQueries({ queryKey: ['actions'] });
       queryClient.invalidateQueries({ queryKey: ['topUps'] });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Error processing top-up",
-        variant: "destructive",
-      });
+      toast.error("Error processing top-up");
       console.error(error);
     }
   };
 
-  const handleOpenAddBankDialog = async () => {
-    if (!session?.user?.id) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to add a bank account",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      console.log("Starting link token creation process");
-      
-      // Use the correct Supabase project URL with the functions v1 endpoint
-      const response = await fetch(`https://fohvdgeknzgongfkssyc.supabase.co/functions/v1/create-link-token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ userId: session.user.id }),
-      });
-
-      console.log("Link token response received, status:", response.status);
-
-      if (!response.ok) {
-        let errorMessage = 'Failed to create link token';
-        
-        try {
-          const errorData = await response.json();
-          console.error('API error response:', errorData);
-          errorMessage = errorData.error || `Request failed with status ${response.status}`;
-        } catch (parseError) {
-          console.error('Failed to parse error response:', await response.text());
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
-      console.log("Link token received successfully");
-      setLinkToken(data.link_token);
-      setIsAddBankDialogOpen(true);
-    } catch (error) {
-      console.error('Error creating link token:', error);
-      toast({
-        title: "Error",
-        description: error.message || 'Failed to connect to Plaid. Please check if Plaid credentials are set correctly.',
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAddBankManually = async () => {
+  const handleAddBank = async () => {
     if (!selectedCountry || !session?.user?.id) {
       if (!session?.user?.id) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to add a bank account",
-          variant: "destructive",
-        });
+        toast.error("You must be logged in to add a bank account");
       }
       return;
     }
@@ -299,143 +207,19 @@ const Index = () => {
         throw error;
       }
       
-      toast({
-        title: "Success",
-        description: "Bank account added successfully",
-      });
+      toast.success("Bank account added successfully");
       setIsAddBankDialogOpen(false);
       setSelectedCountry("");
       
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Error adding bank account",
-        variant: "destructive",
-      });
+      toast.error("Error adding bank account");
       console.error(error);
     }
   };
 
-  const onPlaidSuccess = async (publicToken: string, metadata: any) => {
-    if (!session?.user?.id) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to add a bank account",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      console.log("Plaid success, exchanging public token...");
-      console.log("Metadata received:", metadata);
-      
-      // Use the correct Supabase project URL with the functions v1 endpoint
-      const response = await fetch(`https://fohvdgeknzgongfkssyc.supabase.co/functions/v1/exchange-public-token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ 
-          publicToken, 
-          userId: session.user.id 
-        }),
-      });
-
-      console.log("Exchange token response received, status:", response.status);
-
-      if (!response.ok) {
-        let errorMessage = 'Failed to exchange public token';
-        
-        try {
-          const errorData = await response.json();
-          console.error('API response error:', errorData);
-          errorMessage = errorData.error || `Request failed with status ${response.status}`;
-        } catch (parseError) {
-          console.error('Failed to parse error response:', await response.text());
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      const { access_token, accounts } = await response.json();
-      console.log("Exchange successful, received accounts:", accounts);
-
-      // For each account, create a bank account record
-      if (!accounts || accounts.length === 0) {
-        throw new Error("No accounts returned from Plaid");
-      }
-      
-      let addedAccounts = 0;
-      for (const account of accounts) {
-        const { data, error } = await supabase
-          .from('bank_accounts')
-          .insert([{
-            name: account.name || `Account ${account.mask || 'Unknown'}`,
-            account_number: account.mask || 'Unknown',
-            balance: account.balances.current || 0,
-            currency: account.balances.iso_currency_code || 'USD',
-            user_id: session.user.id,
-            plaid_access_token: access_token,
-            plaid_account_id: account.account_id
-          }])
-          .select();
-
-        if (error) {
-          console.error("Bank account creation error:", error);
-          continue;
-        }
-        addedAccounts++;
-      }
-
-      if (addedAccounts > 0) {
-        toast({
-          title: "Success",
-          description: `Successfully linked ${addedAccounts} bank account${addedAccounts > 1 ? 's' : ''}`,
-        });
-      } else {
-        toast({
-          title: "Warning",
-          description: "No bank accounts were linked. Please try again.",
-          variant: "destructive",
-        });
-      }
-      
-      setIsAddBankDialogOpen(false);
-      
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error.message || "Error linking bank accounts",
-        variant: "destructive",
-      });
-      console.error(error);
-    }
-  };
-
-  const { open, ready } = usePlaidLink({
-    token: linkToken,
-    onSuccess: (public_token, metadata) => {
-      console.log("Plaid Link Success!");
-      onPlaidSuccess(public_token, metadata);
-    },
-    onExit: (err, metadata) => {
-      console.log('Link exit:', err, metadata);
-      if (err) {
-        toast({
-          title: "Error",
-          description: err.display_message || err.error_message || "Error connecting to bank",
-          variant: "destructive",
-        });
-      }
-    },
-  });
-
+  // Check if user is logged in
   const isLoggedIn = !!session?.user?.id;
   if (!isLoggedIn) {
     return (
@@ -563,40 +347,17 @@ const Index = () => {
             <h3 className="text-lg font-medium">Bank Accounts Linked</h3>
             <Dialog open={isAddBankDialogOpen} onOpenChange={setIsAddBankDialogOpen}>
               <DialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleOpenAddBankDialog}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <span className="animate-spin mr-2">○</span>
-                  ) : (
-                    <Plus className="w-4 h-4 mr-2" />
-                  )}
+                <Button variant="outline" size="sm">
+                  <Plus className="w-4 h-4 mr-2" />
                   Add Bank Account
                 </Button>
               </DialogTrigger>
               <DialogContent>
-                <DialogTitle>Connect Your Bank Account</DialogTitle>
-                <DialogDescription className="mb-4">
-                  Connect your bank account securely with Plaid or add manually.
+                <DialogTitle>Add New Bank Account</DialogTitle>
+                <DialogDescription>
+                  Select your country to connect a new bank account.
                 </DialogDescription>
-                {linkToken && (
-                  <Button 
-                    onClick={() => {
-                      console.log("Opening Plaid Link with token:", linkToken);
-                      open();
-                    }} 
-                    disabled={!ready} 
-                    className="w-full mb-4 bg-blue-600 hover:bg-blue-700"
-                  >
-                    Connect with Plaid
-                  </Button>
-                )}
-                <Separator className="my-4" />
-                <h4 className="text-sm font-medium mb-2">Or add manually:</h4>
-                <div className="space-y-4 py-2">
+                <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <Label htmlFor="country">Country</Label>
                     <Select value={selectedCountry} onValueChange={setSelectedCountry}>
@@ -613,8 +374,8 @@ const Index = () => {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button onClick={handleAddBankManually} disabled={!selectedCountry}>
-                    Add Bank Account Manually
+                  <Button onClick={handleAddBank} disabled={!selectedCountry}>
+                    Add Bank Account
                   </Button>
                 </DialogFooter>
               </DialogContent>

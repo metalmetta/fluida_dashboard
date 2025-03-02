@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./components/AuthProvider";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import Index from "./pages/Index"; // Correct import path
+import Index from "./pages/Index"; // Fixed path to include the file name explicitly
 import Transactions from "./pages/transactions";
 import Vendors from "./pages/vendors";
 import Invoices from "./pages/invoices";
