@@ -1,4 +1,3 @@
-
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter } from "@/components/ui/sidebar";
 import { Home, DollarSign, Users, FileText, LogOut, Settings, ChevronDown } from "lucide-react";
 import { useAuth } from "./AuthProvider";
@@ -8,7 +7,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-
 const menuItems = [{
   icon: Home,
   label: "Home",
@@ -26,14 +24,12 @@ const menuItems = [{
   label: "Invoices",
   href: "/invoices"
 }];
-
 export function DashboardSidebar() {
   const {
     session
   } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -51,32 +47,23 @@ export function DashboardSidebar() {
     // Exact match for home page, or starts with for other pages
     return path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
   };
-
   return <Sidebar>
       <SidebarHeader className="p-4 bg-slate-50">
-        <h2 className="text-lg font-semibold">Fluida</h2>
+        <h2 className="add logo next to it\n">Fluida</h2>
       </SidebarHeader>
       <SidebarContent className="bg-slate-50">
         <SidebarGroup>
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map(item => (
-                <SidebarMenuItem key={item.label}>
+              {menuItems.map(item => <SidebarMenuItem key={item.label}>
                   <SidebarMenuButton asChild data-active={isActive(item.href)}>
-                    <a 
-                      href={item.href} 
-                      className={cn(
-                        "flex items-center gap-3 relative",
-                        isActive(item.href) && "font-medium text-primary before:absolute before:left-[-10px] before:top-0 before:h-full before:w-1 before:bg-primary before:rounded-full"
-                      )}
-                    >
+                    <a href={item.href} className={cn("flex items-center gap-3 relative", isActive(item.href) && "font-medium text-primary before:absolute before:left-[-10px] before:top-0 before:h-full before:w-1 before:bg-primary before:rounded-full")}>
                       <item.icon className={cn("h-4 w-4", isActive(item.href) && "text-primary")} />
                       <span>{item.label}</span>
                     </a>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                </SidebarMenuItem>)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

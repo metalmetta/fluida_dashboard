@@ -15,55 +15,77 @@ import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
 import { Database } from "@/types/database.types";
-
 type TopUp = Database['public']['Tables']['top_ups']['Row'] & {
   bank_accounts: {
     name: string;
     currency: string;
   } | null;
 };
-
 const COUNTRY_CURRENCY_MAP = {
   US: "USD",
   CA: "CAD",
   UK: "GBP",
-  EU: "EUR",
+  EU: "EUR"
 };
-
-const cashflowData = [
-  { month: 'Jun', amount: 3200 },
-  { month: 'Jul', amount: 4500 },
-  { month: 'Aug', amount: 2800 },
-  { month: 'Sep', amount: 7200 },
-  { month: 'Oct', amount: 7800 },
-  { month: 'Nov', amount: 11500 },
-  { month: 'Dec', amount: 9000 },
-  { month: 'Jan', amount: 14000 },
-  { month: 'Feb', amount: 15000 },
-  { month: 'Mar', amount: 16500 },
-  { month: 'Apr', amount: 18000 },
-  { month: 'May', amount: 17200 },
-];
-
+const cashflowData = [{
+  month: 'Jun',
+  amount: 3200
+}, {
+  month: 'Jul',
+  amount: 4500
+}, {
+  month: 'Aug',
+  amount: 2800
+}, {
+  month: 'Sep',
+  amount: 7200
+}, {
+  month: 'Oct',
+  amount: 7800
+}, {
+  month: 'Nov',
+  amount: 11500
+}, {
+  month: 'Dec',
+  amount: 9000
+}, {
+  month: 'Jan',
+  amount: 14000
+}, {
+  month: 'Feb',
+  amount: 15000
+}, {
+  month: 'Mar',
+  amount: 16500
+}, {
+  month: 'Apr',
+  amount: 18000
+}, {
+  month: 'May',
+  amount: 17200
+}];
 const Index = () => {
-  const { session } = useAuth();
+  const {
+    session
+  } = useAuth();
   const [isTopUpDialogOpen, setIsTopUpDialogOpen] = useState(false);
   const [isAddBankDialogOpen, setIsAddBankDialogOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedBankId, setSelectedBankId] = useState("");
   const [topUpAmount, setTopUpAmount] = useState("");
   const queryClient = useQueryClient();
-
-  const { data: bankAccounts = [] } = useQuery({
+  const {
+    data: bankAccounts = []
+  } = useQuery({
     queryKey: ['bankAccounts'],
     queryFn: async () => {
       if (!session?.user?.id) return [];
-      
-      const { data, error } = await supabase
-        .from('bank_accounts')
-        .select('*')
-        .order('created_at', { ascending: true });
-      
+      const {
+        data,
+        error
+      } = await supabase.from('bank_accounts').select('*').order('created_at', {
+        ascending: true
+      });
       if (error) {
         toast.error("Error loading bank accounts");
         throw error;
@@ -72,18 +94,18 @@ const Index = () => {
     },
     enabled: !!session?.user?.id
   });
-
-  const { data: topUps = [] } = useQuery<TopUp[]>({
+  const {
+    data: topUps = []
+  } = useQuery<TopUp[]>({
     queryKey: ['topUps'],
     queryFn: async () => {
       if (!session?.user?.id) return [];
-      
-      const { data, error } = await supabase
-        .from('top_ups')
-        .select('*, bank_accounts(name, currency)')
-        .order('created_at', { ascending: false })
-        .limit(5);
-      
+      const {
+        data,
+        error
+      } = await supabase.from('top_ups').select('*, bank_accounts(name, currency)').order('created_at', {
+        ascending: false
+      }).limit(5);
       if (error) {
         toast.error("Error loading top-up history");
         throw error;
@@ -92,14 +114,10 @@ const Index = () => {
     },
     enabled: !!session?.user?.id
   });
-
   const totalBalance = bankAccounts.reduce((sum, account) => sum + Number(account.balance), 0);
-  
   const changePercentage = 15.3;
-  
   const earnPercentage = 4;
   const earnedAmount = 262.11;
-
   const handleTopUp = async () => {
     if (!selectedBankId || !topUpAmount || !session?.user?.id) {
       if (!session?.user?.id) {
@@ -107,56 +125,51 @@ const Index = () => {
       }
       return;
     }
-    
     try {
       const selectedBank = bankAccounts.find(bank => bank.id === selectedBankId);
       if (!selectedBank) {
         toast.error("Selected bank account not found");
         return;
       }
-
-      const { data: topUpData, error: topUpError } = await supabase
-        .from('top_ups')
-        .insert([{
-          user_id: session.user.id,
-          bank_account_id: selectedBankId,
-          amount: parseFloat(topUpAmount),
-          currency: selectedBank.currency,
-          status: 'pending',
-          transaction_reference: `TOP-${Date.now()}`
-        }])
-        .select()
-        .single();
-
+      const {
+        data: topUpData,
+        error: topUpError
+      } = await supabase.from('top_ups').insert([{
+        user_id: session.user.id,
+        bank_account_id: selectedBankId,
+        amount: parseFloat(topUpAmount),
+        currency: selectedBank.currency,
+        status: 'pending',
+        transaction_reference: `TOP-${Date.now()}`
+      }]).select().single();
       if (topUpError) throw topUpError;
-
-      const { error: actionError } = await supabase
-        .from('actions')
-        .insert([{
-          type: 'Top-up',
-          amount: parseFloat(topUpAmount),
-          status: 'pending',
-          approvals_required: 2,
-          approvals_received: 0,
-          user_id: session.user.id,
-          top_up_id: topUpData.id
-        }]);
-
+      const {
+        error: actionError
+      } = await supabase.from('actions').insert([{
+        type: 'Top-up',
+        amount: parseFloat(topUpAmount),
+        status: 'pending',
+        approvals_required: 2,
+        approvals_received: 0,
+        user_id: session.user.id,
+        top_up_id: topUpData.id
+      }]);
       if (actionError) throw actionError;
-      
       toast.success("Top-up request submitted");
       setIsTopUpDialogOpen(false);
       setSelectedBankId("");
       setTopUpAmount("");
-      
-      queryClient.invalidateQueries({ queryKey: ['actions'] });
-      queryClient.invalidateQueries({ queryKey: ['topUps'] });
+      queryClient.invalidateQueries({
+        queryKey: ['actions']
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['topUps']
+      });
     } catch (error: any) {
       toast.error("Error processing top-up");
       console.error(error);
     }
   };
-
   const handleAddBank = async () => {
     if (!selectedCountry || !session?.user?.id) {
       if (!session?.user?.id) {
@@ -164,53 +177,44 @@ const Index = () => {
       }
       return;
     }
-    
     try {
       const currency = COUNTRY_CURRENCY_MAP[selectedCountry as keyof typeof COUNTRY_CURRENCY_MAP];
-      
       const accountNumber = Math.floor(1000 + Math.random() * 9000).toString();
-      
-      const { data, error } = await supabase
-        .from('bank_accounts')
-        .insert([{
-          name: `Bank ${bankAccounts.length + 1}`,
-          account_number: accountNumber,
-          balance: 0,
-          currency,
-          user_id: session.user.id
-        }])
-        .select();
-
+      const {
+        data,
+        error
+      } = await supabase.from('bank_accounts').insert([{
+        name: `Bank ${bankAccounts.length + 1}`,
+        account_number: accountNumber,
+        balance: 0,
+        currency,
+        user_id: session.user.id
+      }]).select();
       if (error) {
         console.error("Bank account creation error:", error);
         throw error;
       }
-      
       toast.success("Bank account added successfully");
       setIsAddBankDialogOpen(false);
       setSelectedCountry("");
-      
-      queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
+      queryClient.invalidateQueries({
+        queryKey: ['bankAccounts']
+      });
     } catch (error: any) {
       toast.error("Error adding bank account");
       console.error(error);
     }
   };
-
   const isLoggedIn = !!session?.user?.id;
   if (!isLoggedIn) {
-    return (
-      <DashboardLayout>
+    return <DashboardLayout>
         <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
           <h2 className="text-2xl font-semibold">Please log in</h2>
           <p className="text-muted-foreground">You need to be logged in to view your financial dashboard</p>
         </div>
-      </DashboardLayout>
-    );
+      </DashboardLayout>;
   }
-
-  return (
-    <DashboardLayout>
+  return <DashboardLayout>
       <div className="space-y-8 animate-in">
         <div className="flex items-center justify-between">
           <div>
@@ -234,23 +238,15 @@ const Index = () => {
                       <SelectValue placeholder="Select a bank account" />
                     </SelectTrigger>
                     <SelectContent>
-                      {bankAccounts.map((bank) => (
-                        <SelectItem key={bank.id} value={bank.id}>
+                      {bankAccounts.map(bank => <SelectItem key={bank.id} value={bank.id}>
                           {bank.name} (ending in {bank.account_number})
-                        </SelectItem>
-                      ))}
+                        </SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="amount">Amount</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    placeholder="Enter amount"
-                    value={topUpAmount}
-                    onChange={(e) => setTopUpAmount(e.target.value)}
-                  />
+                  <Input id="amount" type="number" placeholder="Enter amount" value={topUpAmount} onChange={e => setTopUpAmount(e.target.value)} />
                 </div>
               </div>
               <DialogFooter>
@@ -263,15 +259,18 @@ const Index = () => {
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
-          <Card className="p-6 bg-gray-900 text-white md:col-span-1">
+          <Card className="p-6 text-white md:col-span-1 bg-slate-50">
             <div className="flex items-center space-x-3 mb-4">
               <div className="p-2 rounded-full bg-gray-800">
                 <PiggyBank className="w-5 h-5 text-white" />
               </div>
-              <h3 className="text-lg font-medium">Balance</h3>
+              <h3 className="text-lg font-medium text-slate-950">Balance</h3>
             </div>
-            <p className="text-4xl font-bold mb-2">
-              ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <p className="text-4xl font-bold mb-2 text-zinc-950">
+              ${totalBalance.toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}
             </p>
             <div className="flex items-center text-green-400">
               <TrendingUp className="w-4 h-4 mr-1" />
@@ -280,14 +279,14 @@ const Index = () => {
             </div>
           </Card>
 
-          <Card className="p-6 bg-gray-900 text-white md:col-span-1">
+          <Card className="p-6 text-white md:col-span-1 bg-slate-50">
             <div className="flex items-center space-x-3 mb-4">
               <div className="p-2 rounded-full bg-gray-800">
                 <TrendingUp className="w-5 h-5 text-white" />
               </div>
-              <h3 className="text-lg font-medium">Earn</h3>
+              <h3 className="text-lg font-medium text-zinc-950">Earn</h3>
             </div>
-            <p className="text-4xl font-bold mb-2">
+            <p className="text-4xl font-bold mb-2 text-gray-950">
               {earnPercentage}%
             </p>
             <div className="text-green-400">
@@ -296,18 +295,18 @@ const Index = () => {
             </div>
           </Card>
 
-          <Card className="p-6 bg-gray-900 text-white md:col-span-1 lg:col-span-3">
+          <Card className="p-6 text-white md:col-span-1 lg:col-span-3 bg-slate-50">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center space-x-3">
                 <div className="p-2 rounded-full bg-gray-800">
                   <LucideLineChart className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-lg font-medium">Cash Flow Position</h3>
+                <h3 className="text-lg font-medium text-slate-950">Cash Flow Position</h3>
               </div>
               <div className="flex items-center text-green-400">
                 <TrendingUp className="w-4 h-4 mr-1" />
                 <span className="mr-1">{changePercentage}%</span>
-                <span className="text-gray-300 text-sm">increased vs last month</span>
+                <span className="text-sm text-gray-500">increased vs last month</span>
               </div>
             </div>
             <div className="h-[300px] w-full mt-4">
@@ -315,34 +314,29 @@ const Index = () => {
                 <AreaChart data={cashflowData}>
                   <defs>
                     <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4ade80" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#4ade80" stopOpacity={0.1}/>
+                      <stop offset="5%" stopColor="#4ade80" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#4ade80" stopOpacity={0.1} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#444444" vertical={false} />
                   <XAxis dataKey="month" stroke="#888888" />
-                  <YAxis 
-                    stroke="#888888"
-                    tickFormatter={(value) => value === 0 ? `$0k` : `$${value/1000}k`}
-                  />
-                  <Tooltip 
-                    formatter={(value) => [`$${value}`, 'Amount']}
-                    contentStyle={{ 
-                      backgroundColor: '#333',
-                      borderColor: '#555',
-                      color: '#fff'
-                    }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="amount" 
-                    stroke="#4ade80" 
-                    fillOpacity={1} 
-                    fill="url(#colorAmount)" 
-                    strokeWidth={2}
-                    dot={{ stroke: '#4ade80', strokeWidth: 2, r: 4, fill: '#333' }}
-                    activeDot={{ stroke: '#4ade80', strokeWidth: 2, r: 6, fill: '#333' }}
-                  />
+                  <YAxis stroke="#888888" tickFormatter={value => value === 0 ? `$0k` : `$${value / 1000}k`} />
+                  <Tooltip formatter={value => [`$${value}`, 'Amount']} contentStyle={{
+                  backgroundColor: '#333',
+                  borderColor: '#555',
+                  color: '#fff'
+                }} />
+                  <Area type="monotone" dataKey="amount" stroke="#4ade80" fillOpacity={1} fill="url(#colorAmount)" strokeWidth={2} dot={{
+                  stroke: '#4ade80',
+                  strokeWidth: 2,
+                  r: 4,
+                  fill: '#333'
+                }} activeDot={{
+                  stroke: '#4ade80',
+                  strokeWidth: 2,
+                  r: 6,
+                  fill: '#333'
+                }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -389,11 +383,7 @@ const Index = () => {
             </Dialog>
           </div>
           <div className="space-y-4">
-            {bankAccounts.map((bank) => (
-              <div
-                key={bank.id}
-                className="flex items-center justify-between p-4 rounded-lg hover:bg-secondary/50 transition-colors"
-              >
+            {bankAccounts.map(bank => <div key={bank.id} className="flex items-center justify-between p-4 rounded-lg hover:bg-secondary/50 transition-colors">
                 <div className="flex items-center gap-4">
                   <div className="p-2 rounded-full bg-primary/10">
                     <Building2 className="w-4 h-4 text-primary" />
@@ -407,28 +397,21 @@ const Index = () => {
                 </div>
                 <p className="font-medium">
                   {new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: bank.currency
-                  }).format(bank.balance)}
+                style: 'currency',
+                currency: bank.currency
+              }).format(bank.balance)}
                 </p>
-              </div>
-            ))}
-            {bankAccounts.length === 0 && (
-              <div className="flex items-center justify-center py-8 text-muted-foreground">
+              </div>)}
+            {bankAccounts.length === 0 && <div className="flex items-center justify-center py-8 text-muted-foreground">
                 No bank accounts linked
-              </div>
-            )}
+              </div>}
           </div>
         </Card>
 
         <Card className="p-6">
           <h3 className="text-lg font-medium mb-4">Recent Top-ups</h3>
           <div className="space-y-4">
-            {topUps.map((topUp) => (
-              <div
-                key={topUp.id}
-                className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
-              >
+            {topUps.map(topUp => <div key={topUp.id} className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
                 <div className="flex items-center gap-4">
                   <div className="p-2 rounded-full bg-primary/10">
                     <ArrowUpRight className="w-4 h-4 text-primary" />
@@ -445,33 +428,21 @@ const Index = () => {
                 <div className="flex items-center gap-4">
                   <p className="font-medium">
                     {new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: topUp.bank_accounts?.currency || 'USD'
-                    }).format(topUp.amount)}
+                  style: 'currency',
+                  currency: topUp.bank_accounts?.currency || 'USD'
+                }).format(topUp.amount)}
                   </p>
-                  <Badge
-                    variant={topUp.status === 'completed' ? "success" : "secondary"}
-                    className={cn(
-                      topUp.status === 'pending' && "bg-yellow-100 text-yellow-800",
-                      topUp.status === 'completed' && "bg-green-100 text-green-800",
-                      topUp.status === 'failed' && "bg-red-100 text-red-800"
-                    )}
-                  >
+                  <Badge variant={topUp.status === 'completed' ? "success" : "secondary"} className={cn(topUp.status === 'pending' && "bg-yellow-100 text-yellow-800", topUp.status === 'completed' && "bg-green-100 text-green-800", topUp.status === 'failed' && "bg-red-100 text-red-800")}>
                     {topUp.status}
                   </Badge>
                 </div>
-              </div>
-            ))}
-            {topUps.length === 0 && (
-              <div className="flex items-center justify-center py-8 text-muted-foreground">
+              </div>)}
+            {topUps.length === 0 && <div className="flex items-center justify-center py-8 text-muted-foreground">
                 No recent top-ups
-              </div>
-            )}
+              </div>}
           </div>
         </Card>
       </div>
-    </DashboardLayout>
-  );
+    </DashboardLayout>;
 };
-
 export default Index;
