@@ -31,3 +31,4 @@ enabled = true
 verify_jwt = true
 [functions.exchange-public-token]
 verify_jwt = true
+
