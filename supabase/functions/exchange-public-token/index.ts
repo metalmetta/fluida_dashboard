@@ -1,5 +1,6 @@
 
-import { Configuration, PlaidApi, PlaidEnvironments } from 'plaid';
+// Import Plaid from a CDN URL that works with Deno
+import { Configuration, PlaidApi, PlaidEnvironments } from 'https://esm.sh/plaid@18.2.0';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
@@ -41,19 +42,10 @@ serve(async (req) => {
 
     // Get request body
     const { publicToken, userId } = await req.json();
-    
-    if (!publicToken) {
-      console.error('No public token provided in request body');
+    if (!publicToken || !userId) {
+      console.error('Missing required parameters');
       return new Response(
-        JSON.stringify({ error: 'No public token provided' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
-    if (!userId) {
-      console.error('No user ID provided in request body');
-      return new Response(
-        JSON.stringify({ error: 'No user ID provided' }),
+        JSON.stringify({ error: 'Missing required parameters' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
@@ -86,29 +78,28 @@ serve(async (req) => {
     const plaidClient = new PlaidApi(configuration);
 
     // Exchange public token for access token
-    console.log('Calling Plaid API to exchange public token...');
+    console.log('Exchanging public token for access token...');
     const exchangeResponse = await plaidClient.itemPublicTokenExchange({
       public_token: publicToken,
     });
-    
     const accessToken = exchangeResponse.data.access_token;
     const itemId = exchangeResponse.data.item_id;
-    console.log('Successfully exchanged public token for access token');
+    console.log('Successfully exchanged public token');
 
     // Get account information
     console.log('Fetching account information...');
     const accountsResponse = await plaidClient.accountsGet({
       access_token: accessToken,
     });
-    
-    console.log(`Retrieved ${accountsResponse.data.accounts.length} accounts`);
+    const accounts = accountsResponse.data.accounts;
+    console.log(`Retrieved ${accounts.length} accounts`);
 
-    // Return the access token and account information to the client
+    // Return the access token and account info to the client
     return new Response(
-      JSON.stringify({
+      JSON.stringify({ 
         access_token: accessToken,
         item_id: itemId,
-        accounts: accountsResponse.data.accounts,
+        accounts: accounts
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
