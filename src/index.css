@@ -49,6 +49,12 @@
   }
 }
 
+@layer components {
+  .card {
+    @apply shadow-md hover:shadow-lg transition-shadow duration-300;
+  }
+}
+
 .animate-in {
   animation: animate-in 0.5s ease-out;
 }
@@ -88,4 +94,3 @@
     background-position: 0% 50%;
   }
 }
-

@@ -1,11 +1,14 @@
+
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter } from "@/components/ui/sidebar";
 import { Home, DollarSign, Users, FileText, LogOut, Settings, ChevronDown } from "lucide-react";
 import { useAuth } from "./AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+
 const menuItems = [{
   icon: Home,
   label: "Home",
@@ -23,11 +26,14 @@ const menuItems = [{
   label: "Invoices",
   href: "/invoices"
 }];
+
 export function DashboardSidebar() {
   const {
     session
   } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -39,6 +45,13 @@ export function DashboardSidebar() {
 
   // Extract user's email first letter for avatar fallback
   const userInitial = session?.user.email ? session.user.email[0].toUpperCase() : "U";
+
+  // Function to check if a menu item is active
+  const isActive = (path: string) => {
+    // Exact match for home page, or starts with for other pages
+    return path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+  };
+
   return <Sidebar>
       <SidebarHeader className="p-4 bg-slate-50">
         <h2 className="text-lg font-semibold">Fluida</h2>
@@ -48,14 +61,22 @@ export function DashboardSidebar() {
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map(item => <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.href} className="flex items-center gap-3">
-                      <item.icon className="h-4 w-4" />
+              {menuItems.map(item => (
+                <SidebarMenuItem key={item.label}>
+                  <SidebarMenuButton asChild data-active={isActive(item.href)}>
+                    <a 
+                      href={item.href} 
+                      className={cn(
+                        "flex items-center gap-3 relative",
+                        isActive(item.href) && "font-medium text-primary before:absolute before:left-[-10px] before:top-0 before:h-full before:w-1 before:bg-primary before:rounded-full"
+                      )}
+                    >
+                      <item.icon className={cn("h-4 w-4", isActive(item.href) && "text-primary")} />
                       <span>{item.label}</span>
                     </a>
                   </SidebarMenuButton>
-                </SidebarMenuItem>)}
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
