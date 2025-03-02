@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight, Building2, Plus, PiggyBank, TrendingUp, LineChart } from "lucide-react";
+import { ArrowUpRight, Building2, Plus, PiggyBank, TrendingUp, LineChart as LucideLineChart } from "lucide-react";
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, Area, AreaChart } from "recharts";
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -31,7 +30,6 @@ const COUNTRY_CURRENCY_MAP = {
   EU: "EUR",
 };
 
-// Monthly cashflow data for the chart
 const cashflowData = [
   { month: 'Jun', amount: 3200 },
   { month: 'Jul', amount: 4500 },
@@ -56,7 +54,6 @@ const Index = () => {
   const [topUpAmount, setTopUpAmount] = useState("");
   const queryClient = useQueryClient();
 
-  // Fetch bank accounts
   const { data: bankAccounts = [] } = useQuery({
     queryKey: ['bankAccounts'],
     queryFn: async () => {
@@ -76,7 +73,6 @@ const Index = () => {
     enabled: !!session?.user?.id
   });
 
-  // Fetch top-ups
   const { data: topUps = [] } = useQuery<TopUp[]>({
     queryKey: ['topUps'],
     queryFn: async () => {
@@ -97,13 +93,10 @@ const Index = () => {
     enabled: !!session?.user?.id
   });
 
-  // Calculate total balance
   const totalBalance = bankAccounts.reduce((sum, account) => sum + Number(account.balance), 0);
   
-  // Calculate change percentage (mock data for now)
   const changePercentage = 15.3;
   
-  // Calculate earn percentage and amount (mock data for now)
   const earnPercentage = 4;
   const earnedAmount = 262.11;
 
@@ -116,14 +109,12 @@ const Index = () => {
     }
     
     try {
-      // Get the selected bank account for currency info
       const selectedBank = bankAccounts.find(bank => bank.id === selectedBankId);
       if (!selectedBank) {
         toast.error("Selected bank account not found");
         return;
       }
 
-      // Create a new top-up record
       const { data: topUpData, error: topUpError } = await supabase
         .from('top_ups')
         .insert([{
@@ -139,7 +130,6 @@ const Index = () => {
 
       if (topUpError) throw topUpError;
 
-      // Create an action record for approval tracking
       const { error: actionError } = await supabase
         .from('actions')
         .insert([{
@@ -159,7 +149,6 @@ const Index = () => {
       setSelectedBankId("");
       setTopUpAmount("");
       
-      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['actions'] });
       queryClient.invalidateQueries({ queryKey: ['topUps'] });
     } catch (error: any) {
@@ -177,13 +166,10 @@ const Index = () => {
     }
     
     try {
-      // Get currency for selected country
       const currency = COUNTRY_CURRENCY_MAP[selectedCountry as keyof typeof COUNTRY_CURRENCY_MAP];
       
-      // Generate random account number
       const accountNumber = Math.floor(1000 + Math.random() * 9000).toString();
       
-      // Insert a new bank_account record in Supabase
       const { data, error } = await supabase
         .from('bank_accounts')
         .insert([{
@@ -204,7 +190,6 @@ const Index = () => {
       setIsAddBankDialogOpen(false);
       setSelectedCountry("");
       
-      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
     } catch (error: any) {
       toast.error("Error adding bank account");
@@ -212,7 +197,6 @@ const Index = () => {
     }
   };
 
-  // Check if user is logged in
   const isLoggedIn = !!session?.user?.id;
   if (!isLoggedIn) {
     return (
@@ -279,7 +263,6 @@ const Index = () => {
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
-          {/* Balance Card */}
           <Card className="p-6 bg-gray-900 text-white md:col-span-1">
             <div className="flex items-center space-x-3 mb-4">
               <div className="p-2 rounded-full bg-gray-800">
@@ -297,7 +280,6 @@ const Index = () => {
             </div>
           </Card>
 
-          {/* Earn Card */}
           <Card className="p-6 bg-gray-900 text-white md:col-span-1">
             <div className="flex items-center space-x-3 mb-4">
               <div className="p-2 rounded-full bg-gray-800">
@@ -314,12 +296,11 @@ const Index = () => {
             </div>
           </Card>
 
-          {/* Cashflow Position Card - Takes 2 columns on medium screens */}
           <Card className="p-6 bg-gray-900 text-white md:col-span-1 lg:col-span-3">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center space-x-3">
                 <div className="p-2 rounded-full bg-gray-800">
-                  <LineChart className="w-5 h-5 text-white" />
+                  <LucideLineChart className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="text-lg font-medium">Cash Flow Position</h3>
               </div>
