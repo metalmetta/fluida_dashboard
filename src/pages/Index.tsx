@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight, Building2, Plus } from "lucide-react";
-import { Line, LineChart, ResponsiveContainer, XAxis } from "recharts";
+import { ArrowUpRight, Building2, Plus, PiggyBank, TrendingUp, LineChart } from "lucide-react";
+import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, Area, AreaChart } from "recharts";
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +30,22 @@ const COUNTRY_CURRENCY_MAP = {
   UK: "GBP",
   EU: "EUR",
 };
+
+// Monthly cashflow data for the chart
+const cashflowData = [
+  { month: 'Jun', amount: 3200 },
+  { month: 'Jul', amount: 4500 },
+  { month: 'Aug', amount: 2800 },
+  { month: 'Sep', amount: 7200 },
+  { month: 'Oct', amount: 7800 },
+  { month: 'Nov', amount: 11500 },
+  { month: 'Dec', amount: 9000 },
+  { month: 'Jan', amount: 14000 },
+  { month: 'Feb', amount: 15000 },
+  { month: 'Mar', amount: 16500 },
+  { month: 'Apr', amount: 18000 },
+  { month: 'May', amount: 17200 },
+];
 
 const Index = () => {
   const { session } = useAuth();
@@ -59,31 +76,6 @@ const Index = () => {
     enabled: !!session?.user?.id
   });
 
-  // Fetch actions
-  const { data: actions = [] } = useQuery({
-    queryKey: ['actions'],
-    queryFn: async () => {
-      if (!session?.user?.id) return [];
-      
-      const { data, error } = await supabase
-        .from('actions')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(5);
-      
-      if (error) {
-        toast.error("Error loading actions");
-        throw error;
-      }
-      return data.map(action => ({
-        ...action,
-        icon: action.type.includes('Withdraw') ? Building2 : ArrowUpRight,
-        status: `${action.approvals_received}/${action.approvals_required} approved`
-      }));
-    },
-    enabled: !!session?.user?.id
-  });
-
   // Fetch top-ups
   const { data: topUps = [] } = useQuery<TopUp[]>({
     queryKey: ['topUps'],
@@ -107,12 +99,13 @@ const Index = () => {
 
   // Calculate total balance
   const totalBalance = bankAccounts.reduce((sum, account) => sum + Number(account.balance), 0);
-
-  // Generate chart data from bank accounts total over time
-  const chartData = bankAccounts.map((account, index) => ({
-    day: `Account ${index + 1}`,
-    value: account.balance
-  }));
+  
+  // Calculate change percentage (mock data for now)
+  const changePercentage = 15.3;
+  
+  // Calculate earn percentage and amount (mock data for now)
+  const earnPercentage = 4;
+  const earnedAmount = 262.11;
 
   const handleTopUp = async () => {
     if (!selectedBankId || !topUpAmount || !session?.user?.id) {
@@ -285,59 +278,92 @@ const Index = () => {
           </Dialog>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card className="p-6">
-            <h3 className="text-lg font-medium mb-4">Fluida balance</h3>
-            <p className="text-3xl font-semibold mb-6">
+        <div className="grid gap-6 md:grid-cols-3">
+          {/* Balance Card */}
+          <Card className="p-6 bg-gray-900 text-white md:col-span-1">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="p-2 rounded-full bg-gray-800">
+                <PiggyBank className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="text-lg font-medium">Balance</h3>
+            </div>
+            <p className="text-4xl font-bold mb-2">
               ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
-            <div className="h-[200px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <XAxis dataKey="day" hide />
-                  <Line
-                    type="monotone"
-                    dataKey="value"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="flex items-center text-green-400">
+              <TrendingUp className="w-4 h-4 mr-1" />
+              <span className="mr-1">{changePercentage}%</span>
+              <span className="text-gray-300 text-sm">increased vs last month</span>
             </div>
           </Card>
 
-          <Card className="p-6">
-            <h3 className="text-lg font-medium mb-4">Pending Actions</h3>
-            <div className="space-y-4">
-              {actions.map((action) => (
-                <div
-                  key={action.id}
-                  className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 rounded-full bg-primary/10">
-                      <action.icon className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{action.type}</p>
-                      <p className="text-sm text-muted-foreground">
-                        ${action.amount.toFixed(2)} USD
-                      </p>
-                    </div>
-                  </div>
-                  <Badge
-                    variant={action.approvals_received === action.approvals_required ? "success" : "outline"}
-                  >
-                    {action.status}
-                  </Badge>
+          {/* Earn Card */}
+          <Card className="p-6 bg-gray-900 text-white md:col-span-1">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="p-2 rounded-full bg-gray-800">
+                <TrendingUp className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="text-lg font-medium">Earn</h3>
+            </div>
+            <p className="text-4xl font-bold mb-2">
+              {earnPercentage}%
+            </p>
+            <div className="text-green-400">
+              <span className="mr-1">${earnedAmount}</span>
+              <span className="text-gray-300 text-sm">earned</span>
+            </div>
+          </Card>
+
+          {/* Cashflow Position Card - Takes 2 columns on medium screens */}
+          <Card className="p-6 bg-gray-900 text-white md:col-span-1 lg:col-span-3">
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 rounded-full bg-gray-800">
+                  <LineChart className="w-5 h-5 text-white" />
                 </div>
-              ))}
-              {actions.length === 0 && (
-                <div className="flex items-center justify-center py-8 text-muted-foreground">
-                  No pending actions
-                </div>
-              )}
+                <h3 className="text-lg font-medium">Cash Flow Position</h3>
+              </div>
+              <div className="flex items-center text-green-400">
+                <TrendingUp className="w-4 h-4 mr-1" />
+                <span className="mr-1">{changePercentage}%</span>
+                <span className="text-gray-300 text-sm">increased vs last month</span>
+              </div>
+            </div>
+            <div className="h-[300px] w-full mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={cashflowData}>
+                  <defs>
+                    <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4ade80" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#4ade80" stopOpacity={0.1}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#444444" vertical={false} />
+                  <XAxis dataKey="month" stroke="#888888" />
+                  <YAxis 
+                    stroke="#888888"
+                    tickFormatter={(value) => value === 0 ? `$0k` : `$${value/1000}k`}
+                  />
+                  <Tooltip 
+                    formatter={(value) => [`$${value}`, 'Amount']}
+                    contentStyle={{ 
+                      backgroundColor: '#333',
+                      borderColor: '#555',
+                      color: '#fff'
+                    }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="amount" 
+                    stroke="#4ade80" 
+                    fillOpacity={1} 
+                    fill="url(#colorAmount)" 
+                    strokeWidth={2}
+                    dot={{ stroke: '#4ade80', strokeWidth: 2, r: 4, fill: '#333' }}
+                    activeDot={{ stroke: '#4ade80', strokeWidth: 2, r: 6, fill: '#333' }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </Card>
         </div>
