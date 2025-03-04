@@ -123,6 +123,57 @@ export type Database = {
           },
         ]
       }
+      business_details: {
+        Row: {
+          address_line1: string
+          city: string
+          country: string
+          created_at: string
+          id: string
+          legal_name: string
+          postal_code: string
+          registration_number: string
+          reviewed_at: string | null
+          status: string
+          submitted_at: string | null
+          tax_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address_line1: string
+          city: string
+          country: string
+          created_at?: string
+          id?: string
+          legal_name: string
+          postal_code: string
+          registration_number: string
+          reviewed_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          tax_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address_line1?: string
+          city?: string
+          country?: string
+          created_at?: string
+          id?: string
+          legal_name?: string
+          postal_code?: string
+          registration_number?: string
+          reviewed_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          tax_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           amount: number
@@ -179,6 +230,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      kyb_documents: {
+        Row: {
+          content_type: string
+          document_type: string
+          file_name: string
+          file_path: string
+          id: string
+          rejection_reason: string | null
+          size: number
+          status: Database["public"]["Enums"]["document_status"]
+          updated_at: string
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          content_type: string
+          document_type: string
+          file_name: string
+          file_path: string
+          id?: string
+          rejection_reason?: string | null
+          size: number
+          status?: Database["public"]["Enums"]["document_status"]
+          updated_at?: string
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          content_type?: string
+          document_type?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          rejection_reason?: string | null
+          size?: number
+          status?: Database["public"]["Enums"]["document_status"]
+          updated_at?: string
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -318,6 +411,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      document_status: "pending" | "approved" | "rejected"
       top_up_status: "pending" | "completed" | "failed" | "cancelled"
     }
     CompositeTypes: {
