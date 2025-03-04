@@ -1,3 +1,4 @@
+
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter } from "@/components/ui/sidebar";
 import { Home, DollarSign, Users, FileText, LogOut, Settings, ChevronDown } from "lucide-react";
 import { useAuth } from "./AuthProvider";
@@ -7,6 +8,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+
 const menuItems = [{
   icon: Home,
   label: "Home",
@@ -24,6 +26,7 @@ const menuItems = [{
   label: "Invoices",
   href: "/invoices"
 }];
+
 export function DashboardSidebar() {
   const {
     session
@@ -47,9 +50,16 @@ export function DashboardSidebar() {
     // Exact match for home page, or starts with for other pages
     return path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
   };
+  
   return <Sidebar>
       <SidebarHeader className="p-4 bg-slate-50">
-        <h2 className="add logo next to it\n">Fluida</h2>
+        <div className="flex items-center gap-2">
+          <img 
+            src="/lovable-uploads/c5fcd48a-5238-4a4a-8441-d0012df26e15.png" 
+            alt="Fluida Logo" 
+            className="h-8"
+          />
+        </div>
       </SidebarHeader>
       <SidebarContent className="bg-slate-50">
         <SidebarGroup>
