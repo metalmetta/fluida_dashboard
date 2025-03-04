@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -17,8 +16,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
 import { useKyb, BusinessDetails } from "@/hooks/use-kyb";
 import KybDocumentUpload from "@/components/KybDocumentUpload";
+import { Check } from "lucide-react";
 
-// Define the steps for the onboarding process
 type OnboardingStep = {
   id: string;
   title: string;
@@ -77,7 +76,6 @@ export default function OnboardingFlow() {
       return;
     }
 
-    // Load existing data if any
     const loadData = async () => {
       const businessData = await fetchBusinessDetails();
       if (businessData) {
@@ -107,21 +105,18 @@ export default function OnboardingFlow() {
 
   const validateCurrentStep = () => {
     if (currentStep === 0) {
-      // Validate company details
       const { legal_name, registration_number, tax_id } = formData;
       if (!legal_name || !registration_number || !tax_id) {
         toast.error("Please fill in all required fields");
         return false;
       }
     } else if (currentStep === 1) {
-      // Validate business address
       const { address_line1, city, postal_code, country } = formData;
       if (!address_line1 || !city || !postal_code || !country) {
         toast.error("Please fill in all required fields");
         return false;
       }
     } else if (currentStep === 2) {
-      // Validate document uploads
       const requiredDocs = ["certificate_of_incorporation", "proof_of_address", "director_id"];
       const uploadedDocs = documents.map(doc => doc.document_type);
       
@@ -142,7 +137,6 @@ export default function OnboardingFlow() {
     }
 
     if (currentStep === 0 || currentStep === 1) {
-      // Save business details when moving from step 1 or 2
       const saved = await saveBusinessDetails(formData);
       if (!saved) return;
     }
