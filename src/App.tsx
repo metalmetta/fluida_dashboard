@@ -12,6 +12,8 @@ import Vendors from "./pages/vendors";
 import Invoices from "./pages/invoices";
 import Settings from "./pages/settings";
 import Auth from "./pages/auth";
+import OnboardingFlow from "./pages/onboarding";
+import PendingApproval from "./pages/pending-approval";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +28,8 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/onboarding" element={<OnboardingFlow />} />
+              <Route path="/pending-approval" element={<PendingApproval />} />
               <Route
                 path="/"
                 element={
