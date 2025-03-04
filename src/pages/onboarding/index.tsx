@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -127,6 +126,15 @@ export default function OnboardingFlow() {
     return <div>Loading...</div>;
   }
 
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Error logging out: " + error.message);
+    } else {
+      navigate("/auth"); // Redirect to auth page after logout
+    }
+  };
+
   const handleInputChange = (fieldId: string, value: string | File) => {
     setFormData((prev) => ({
       ...prev,
@@ -214,6 +222,10 @@ export default function OnboardingFlow() {
             </div>
           </div>
         </div>
+
+        <Button onClick={handleLogout} className="mb-4">
+          Logout
+        </Button>
 
         <Card>
           <CardHeader>
