@@ -55,7 +55,7 @@ export function DashboardSidebar() {
       <SidebarHeader className="p-4 bg-slate-50">
         <div className="flex items-center gap-2">
           <img 
-            src="/lovable-uploads/c5fcd48a-5238-4a4a-8441-d0012df26e15.png" 
+            src="/lovable-uploads/c5fcd48a-5238-4a4a-8441-d0012df26e15.svg" 
             alt="Fluida Logo" 
             className="h-8"
           />
