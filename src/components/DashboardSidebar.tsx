@@ -1,4 +1,3 @@
-
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter } from "@/components/ui/sidebar";
 import { Home, DollarSign, Users, FileText, LogOut, Settings, ChevronDown } from "lucide-react";
 import { useAuth } from "./AuthProvider";
@@ -42,15 +41,12 @@ export function DashboardSidebar() {
     }
   };
 
-  // Extract user's email first letter for avatar fallback
   const userInitial = session?.user.email ? session.user.email[0].toUpperCase() : "U";
 
-  // Function to check if a menu item is active
   const isActive = (path: string) => {
-    // Exact match for home page, or starts with for other pages
     return path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
   };
-  
+
   return <Sidebar>
       <SidebarHeader className="p-4 bg-slate-50">
         <div className="flex items-center gap-2">
@@ -82,17 +78,19 @@ export function DashboardSidebar() {
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2 focus:outline-none">
-                <Avatar className="h-8 w-8">
+              <DropdownMenuTrigger className="flex items-center gap-2 focus:outline-none w-full">
+                <Avatar className="h-8 w-8 flex-shrink-0">
                   <AvatarImage src="" alt="User" />
                   <AvatarFallback className="bg-primary text-primary-foreground">
                     {userInitial}
                   </AvatarFallback>
                 </Avatar>
-                <div className="text-sm">
-                  <div className="font-medium">{session?.user.email}</div>
+                <div className="text-sm min-w-0 flex-1">
+                  <div className="font-medium truncate max-w-[120px]">
+                    {session?.user.email}
+                  </div>
                 </div>
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem asChild>
