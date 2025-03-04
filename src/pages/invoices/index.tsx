@@ -26,33 +26,6 @@ interface Invoice {
   synced?: boolean;
 }
 
-const initialInvoices = [
-  {
-    id: "INV-001",
-    vendor: "Acme Corp",
-    amount: "$3,450.00",
-    date: "Feb 20, 2024",
-    status: "paid",
-    synced: true
-  },
-  {
-    id: "INV-002",
-    vendor: "Tech Solutions",
-    amount: "$1,890.00",
-    date: "Feb 18, 2024",
-    status: "pending",
-    synced: true
-  },
-  {
-    id: "INV-003",
-    vendor: "Global Services",
-    amount: "$2,750.00",
-    date: "Feb 15, 2024",
-    status: "overdue",
-    synced: false
-  },
-] as Invoice[];
-
 const getBadgeVariant = (status: Invoice['status']) => {
   switch (status) {
     case 'paid':
@@ -109,10 +82,10 @@ export default function Invoices() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Use React Query to fetch invoices from Supabase
-  const { data: invoices = initialInvoices, refetch } = useQuery({
+  const { data: invoices = [], refetch } = useQuery({
     queryKey: ['invoices'],
     queryFn: async () => {
-      if (!session?.user?.id) return initialInvoices;
+      if (!session?.user?.id) return []; // Return an empty array if no user session
       
       const { data, error } = await supabase
         .from('invoices')
@@ -122,7 +95,7 @@ export default function Invoices() {
       if (error) {
         console.error('Error fetching invoices:', error);
         toast.error('Failed to load invoices');
-        return initialInvoices;
+        return []; // Return an empty array on error
       }
 
       // Transform the data to match our Invoice interface
