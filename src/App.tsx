@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,12 +8,13 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import Index from "./pages/Index"; // Fixed path to include the file name explicitly
 import Transactions from "./pages/transactions";
 import Vendors from "./pages/vendors";
-import Invoices from "./pages/invoices";
+import Bills from "./pages/bills";
 import Settings from "./pages/settings";
 import Auth from "./pages/auth";
 import OnboardingFlow from "./pages/onboarding";
 import PendingApproval from "./pages/pending-approval";
 import NotFound from "./pages/NotFound";
+import TeamPage from "./pages/team/Index";
 
 const queryClient = new QueryClient();
 
@@ -55,10 +55,10 @@ const App = () => (
                 }
               />
               <Route
-                path="/invoices"
+                path="/bills"
                 element={
                   <ProtectedRoute>
-                    <Invoices />
+                    <Bills />
                   </ProtectedRoute>
                 }
               />
@@ -67,6 +67,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/team"
+                element={
+                  <ProtectedRoute>
+                    <TeamPage />
                   </ProtectedRoute>
                 }
               />

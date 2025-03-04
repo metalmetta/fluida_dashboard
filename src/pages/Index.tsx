@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight, Building2, Plus, PiggyBank, TrendingUp, LineChart as LucideLineChart } from "lucide-react";
+import { ArrowUpRight, Building2, Plus, PiggyBank, TrendingUp, LineChart as LucideLineChart, Send, ArrowDownToLine, ArrowUpFromLine, FileText, Receipt, Settings, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { AreaChart, ResponsiveContainer, Area, Tooltip, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import { Database } from "@/types/database.types";
 
 type TopUp = Database['public']['Tables']['top_ups']['Row'] & {
@@ -21,6 +27,16 @@ type TopUp = Database['public']['Tables']['top_ups']['Row'] & {
     name: string;
     currency: string;
   } | null;
+};
+
+type Task = {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  status: string;
+  amount: number;
+  created_at: string;
 };
 
 const COUNTRY_CURRENCY_MAP = {
@@ -92,6 +108,78 @@ const TopUpCard = ({ topUp }) => (
   </div>
 );
 
+const depositFormSchema = z.object({
+  bankId: z.string().min(1, "Please select a bank account"),
+  amount: z.string().min(1, "Please enter an amount").refine(
+    (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
+    "Please enter a valid positive amount"
+  ),
+});
+
+type DepositFormValues = z.infer<typeof depositFormSchema>;
+
+const AccountCard = ({ name, balance }: { name: string; balance: number }) => (
+  <HoverCard>
+    <HoverCardTrigger asChild>
+      <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/10 cursor-pointer">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-full bg-primary/10">
+            <Building2 className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <p className="font-medium">{name}</p>
+            <p className="text-sm text-muted-foreground">Balance</p>
+          </div>
+        </div>
+        <p className="font-medium">
+          ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+        </p>
+      </div>
+    </HoverCardTrigger>
+    <HoverCardContent>
+      <div className="space-y-2">
+        <h4 className="text-sm font-semibold">{name}</h4>
+        <div className="text-sm">
+          <p className="text-muted-foreground">Last transaction: Today</p>
+          <p className="text-muted-foreground">Status: Active</p>
+        </div>
+      </div>
+    </HoverCardContent>
+  </HoverCard>
+);
+
+const TaskCard = ({ task }: { task: Task }) => {
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle2 className="w-4 h-4 text-green-500" />;
+      case 'pending':
+        return <Clock className="w-4 h-4 text-yellow-500" />;
+      default:
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between p-4 rounded-lg hover:bg-secondary/10 transition-colors">
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-full bg-secondary">
+          {getStatusIcon(task.status)}
+        </div>
+        <div>
+          <p className="font-medium">{task.title}</p>
+          <p className="text-sm text-muted-foreground">{task.description}</p>
+        </div>
+      </div>
+      {task.amount && (
+        <p className="font-medium">
+          ${task.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+        </p>
+      )}
+    </div>
+  );
+};
+
 const Index = () => {
   const { session } = useAuth();
   const [isTopUpDialogOpen, setIsTopUpDialogOpen] = useState(false);
@@ -100,6 +188,14 @@ const Index = () => {
   const [selectedBankId, setSelectedBankId] = useState("");
   const [topUpAmount, setTopUpAmount] = useState("");
   const queryClient = useQueryClient();
+
+  const form = useForm<DepositFormValues>({
+    resolver: zodResolver(depositFormSchema),
+    defaultValues: {
+      bankId: "",
+      amount: "",
+    },
+  });
 
   const { data: bankAccounts = [] } = useQuery({
     queryKey: ['bankAccounts'],
@@ -129,37 +225,59 @@ const Index = () => {
     enabled: !!session?.user?.id
   });
 
+  const { data: tasks = [] } = useQuery<Task[]>({
+    queryKey: ['tasks'],
+    queryFn: async () => {
+      if (!session?.user?.id) return [];
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        toast.error("Error loading tasks");
+        throw error;
+      }
+      return data;
+    },
+    enabled: !!session?.user?.id
+  });
+
   const totalBalance = bankAccounts.reduce((sum, account) => sum + Number(account.balance), 0);
   const changePercentage = 15.3;
   const earnPercentage = 4;
   const earnedAmount = 262.11;
 
-  const handleTopUp = async () => {
-    if (!selectedBankId || !topUpAmount || !session?.user?.id) {
-      if (!session?.user?.id) {
-        toast.error("You must be logged in to perform this action");
-      }
+  const onSubmit = async (data: DepositFormValues) => {
+    if (!session?.user?.id) {
+      toast.error("You must be logged in to perform this action");
       return;
     }
+
     try {
-      const selectedBank = bankAccounts.find(bank => bank.id === selectedBankId);
+      const selectedBank = bankAccounts.find(bank => bank.id === data.bankId);
       if (!selectedBank) {
         toast.error("Selected bank account not found");
         return;
       }
+
+      const amount = parseFloat(data.amount);
+
       const { data: topUpData, error: topUpError } = await supabase.from('top_ups').insert([{
         user_id: session.user.id,
-        bank_account_id: selectedBankId,
-        amount: parseFloat(topUpAmount),
+        bank_account_id: data.bankId,
+        amount,
         currency: selectedBank.currency,
         status: 'pending',
         transaction_reference: `TOP-${Date.now()}`
       }]).select().single();
+
       if (topUpError) throw topUpError;
 
       await supabase.from('actions').insert([{
         type: 'Top-up',
-        amount: parseFloat(topUpAmount),
+        amount,
         status: 'pending',
         approvals_required: 2,
         approvals_received: 0,
@@ -167,14 +285,13 @@ const Index = () => {
         top_up_id: topUpData.id
       }]);
 
-      toast.success("Top-up request submitted");
+      toast.success("Deposit request submitted");
       setIsTopUpDialogOpen(false);
-      setSelectedBankId("");
-      setTopUpAmount("");
+      form.reset();
       queryClient.invalidateQueries({ queryKey: ['actions'] });
       queryClient.invalidateQueries({ queryKey: ['topUps'] });
     } catch (error: any) {
-      toast.error("Error processing top-up");
+      toast.error("Error processing deposit");
       console.error(error);
     }
   };
@@ -224,113 +341,151 @@ const Index = () => {
   return (
     <DashboardLayout>
       <div className="space-y-8 animate-in">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold">Welcome back</h1>
-            <p className="text-muted-foreground">Here's your financial overview</p>
-          </div>
-          <Dialog open={isTopUpDialogOpen} onOpenChange={setIsTopUpDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90">Top-up</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogTitle>Top-up from Bank Account</DialogTitle>
-              <DialogDescription>
-                Select a bank account and enter the amount you want to top-up.
-              </DialogDescription>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bank">Select Bank Account</Label>
-                  <Select value={selectedBankId} onValueChange={setSelectedBankId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a bank account" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {bankAccounts.map(bank => (
-                        <SelectItem key={bank.id} value={bank.id}>
-                          {bank.name} (ending in {bank.account_number})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Amount</Label>
-                  <Input id="amount" type="number" placeholder="Enter amount" value={topUpAmount} onChange={e => setTopUpAmount(e.target.value)} />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button onClick={handleTopUp} disabled={!selectedBankId || !topUpAmount}>
-                  Confirm Top-up
+        <div>
+          <h1 className="text-3xl font-semibold mb-6">Welcome, Jane</h1>
+          <div className="flex gap-2 mb-8">
+            <Dialog open={isTopUpDialogOpen} onOpenChange={setIsTopUpDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <ArrowDownToLine className="h-4 w-4" />
+                  Deposit
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogTitle>Deposit to Account</DialogTitle>
+                <DialogDescription>
+                  Select a bank account and enter the amount you want to deposit.
+                </DialogDescription>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="bankId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bank Account</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a bank account" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {bankAccounts.map(bank => (
+                                <SelectItem key={bank.id} value={bank.id}>
+                                  {bank.name} (ending in {bank.account_number})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="amount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Amount</FormLabel>
+                          <FormControl>
+                            <Input type="number" placeholder="Enter amount" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <DialogFooter>
+                      <Button type="submit">Confirm Deposit</Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+            <Button variant="outline" className="flex items-center gap-2">
+              <ArrowUpFromLine className="h-4 w-4" />
+              Withdraw
+            </Button>
+            <Button variant="outline" className="flex items-center gap-2">
+              <Receipt className="h-4 w-4" />
+              Pay Bill
+            </Button>
+            <Button variant="outline" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Create Bill
+            </Button>
+            <Button variant="outline" className="ml-auto">
+              <Settings className="h-4 w-4 mr-2" />
+              Customize
+            </Button>
+          </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card className="p-6 text-white md:col-span-1 bg-slate-50">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2 rounded-full bg-gray-800">
-                <PiggyBank className="w-5 h-5 text-white" />
-              </div>
-              <h3 className="text-lg font-medium text-slate-950">Balance</h3>
-            </div>
-            <p className="text-4xl font-bold mb-2 text-zinc-950">
-              ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </p>
-            <div className="flex items-center text-green-400">
-              <TrendingUp className="w-4 h-4 mr-1" />
-              <span className="mr-1">{changePercentage}%</span>
-              <span className="text-gray-300 text-sm">increased vs last month</span>
-            </div>
-          </Card>
-
-          <Card className="p-6 text-white md:col-span-1 bg-slate-50">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2 rounded-full bg-gray-800">
-                <TrendingUp className="w-5 h-5 text-white" />
-              </div>
-              <h3 className="text-lg font-medium text-zinc-950">Earn</h3>
-            </div>
-            <p className="text-4xl font-bold mb-2 text-gray-950">{earnPercentage}%</p>
-            <div className="text-green-400">
-              <span className="mr-1">${earnedAmount}</span>
-              <span className="text-gray-300 text-sm">earned</span>
-            </div>
-          </Card>
-
-          <Card className="p-6 text-white md:col-span-1 lg:col-span-3 bg-slate-50">
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-full bg-gray-800">
-                  <LucideLineChart className="w-5 h-5 text-white" />
+        <div className="grid gap-6 md:grid-cols-4">
+          <Card className="md:col-span-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-lg font-medium">Mercury balance</CardTitle>
+              <PiggyBank className="h-5 w-5 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-4xl font-bold">$5,144,707.08</p>
+                <div className="flex items-center space-x-4">
+                  <Badge variant="secondary" className="text-green-500">
+                    <TrendingUp className="w-4 h-4 mr-1" />
+                    +$1.7M
+                  </Badge>
+                  <Badge variant="secondary" className="text-red-500">
+                    -$412K
+                  </Badge>
                 </div>
-                <h3 className="text-lg font-medium text-slate-950">Cash Flow Position</h3>
+                <div className="h-[200px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={cashflowData}>
+                      <defs>
+                        <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#4ade80" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#4ade80" stopOpacity={0.1} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#444444" vertical={false} />
+                      <XAxis dataKey="month" stroke="#888888" />
+                      <YAxis stroke="#888888" tickFormatter={value => value === 0 ? `$0k` : `$${value / 1000}k`} />
+                      <Tooltip formatter={value => [`$${value}`, 'Amount']} contentStyle={{ backgroundColor: '#333', borderColor: '#555', color: '#fff' }} />
+                      <Area type="monotone" dataKey="amount" stroke="#4ade80" fillOpacity={1} fill="url(#colorAmount)" strokeWidth={2} dot={{ stroke: '#4ade80', strokeWidth: 2, r: 4, fill: '#333' }} activeDot={{ stroke: '#4ade80', strokeWidth: 2, r: 6, fill: '#333' }} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-              <div className="flex items-center text-green-400">
-                <TrendingUp className="w-4 h-4 mr-1" />
-                <span className="mr-1">{changePercentage}%</span>
-                <span className="text-sm text-gray-500">increased vs last month</span>
-              </div>
-            </div>
-            <div className="h-[300px] w-full mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={cashflowData}>
-                  <defs>
-                    <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4ade80" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#4ade80" stopOpacity={0.1} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#444444" vertical={false} />
-                  <XAxis dataKey="month" stroke="#888888" />
-                  <YAxis stroke="#888888" tickFormatter={value => value === 0 ? `$0k` : `$${value / 1000}k`} />
-                  <Tooltip formatter={value => [`$${value}`, 'Amount']} contentStyle={{ backgroundColor: '#333', borderColor: '#555', color: '#fff' }} />
-                  <Area type="monotone" dataKey="amount" stroke="#4ade80" fillOpacity={1} fill="url(#colorAmount)" strokeWidth={2} dot={{ stroke: '#4ade80', strokeWidth: 2, r: 4, fill: '#333' }} activeDot={{ stroke: '#4ade80', strokeWidth: 2, r: 6, fill: '#333' }} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+            </CardContent>
+          </Card>
+
+          <Card className="md:col-span-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-lg font-medium">Tasks</CardTitle>
+              <Badge variant="secondary" className="font-mono">
+                {tasks.length} pending
+              </Badge>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[300px] pr-4">
+                <div className="space-y-4">
+                  {tasks.map((task) => (
+                    <TaskCard key={task.id} task={task} />
+                  ))}
+                  {tasks.length === 0 && (
+                    <div className="flex items-center justify-center py-8 text-muted-foreground">
+                      No pending tasks
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+              {tasks.length > 0 && (
+                <Button variant="outline" className="w-full mt-4">
+                  View all tasks
+                </Button>
+              )}
+            </CardContent>
           </Card>
         </div>
 

@@ -23,15 +23,15 @@ interface Transaction {
   approvals_received: number;
   created_at: string;
   top_up_id?: string;
-  invoice_id?: string;
+  bill_id?: string;
   top_up?: {
     bank_account: {
       name: string;
       currency: string;
     };
   };
-  invoice?: {
-    invoice_number: string;
+  bill?: {
+    bill_number: string;
     vendors?: {
       name: string;
     };
@@ -56,14 +56,14 @@ export default function Transactions() {
         .from('actions')
         .select(`
           *,
-          top_up:top_ups!actions_top_up_id_fkey (
+          top_up:top_ups (
             bank_account:bank_accounts (
               name,
               currency
             )
           ),
-          invoice:invoices!actions_invoice_id_fkey (
-            invoice_number,
+          bill:bills (
+            bill_number,
             vendors (
               name
             )
@@ -123,7 +123,7 @@ export default function Transactions() {
     switch (type) {
       case 'Top-up':
         return <ArrowUpRight className="h-4 w-4 text-primary" />;
-      case 'Invoice Payment':
+      case 'Bill Payment':
         return <CreditCard className="h-4 w-4 text-primary" />;
       default:
         return <ArrowUpDown className="h-4 w-4 text-primary" />;
@@ -136,10 +136,10 @@ export default function Transactions() {
         return transaction.top_up?.bank_account?.name 
           ? `From ${transaction.top_up.bank_account.name}`
           : 'Bank top-up';
-      case 'Invoice Payment':
-        return transaction.invoice
-          ? `Invoice ${transaction.invoice.invoice_number} to ${transaction.invoice.vendors?.name || 'Unknown Vendor'}`
-          : 'Invoice payment';
+      case 'Bill Payment':
+        return transaction.bill
+          ? `Bill ${transaction.bill.bill_number} to ${transaction.bill.vendors?.name || 'Unknown Vendor'}`
+          : 'Bill payment';
       default:
         return transaction.type;
     }
