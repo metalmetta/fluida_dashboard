@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
+import { BusinessDetails } from "@/types/column.types";
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +43,28 @@ export default function Auth() {
         });
         
         if (error) throw error;
+        
+        // Only proceed to Column integration if signup was successful
+        if (data.user) {
+          const businessDetails: BusinessDetails = {
+            companyName,
+            street: "", // These will be collected during onboarding
+            city: "",
+            state: "",
+            postalCode: "",
+            email,
+          };
+
+          // Store minimal business details for later completion during onboarding
+          await supabase
+            .from("business_details")
+            .insert({
+              user_id: data.user.id,
+              company_name: companyName,
+              email: email,
+              status: "pending_onboarding"
+            });
+        }
         
         toast.success("Account created! Proceeding to KYB verification.");
         navigate("/onboarding");

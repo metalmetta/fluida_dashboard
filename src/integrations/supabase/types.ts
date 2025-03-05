@@ -14,9 +14,9 @@ export type Database = {
           amount: number
           approvals_received: number
           approvals_required: number
+          bill_id: string | null
           created_at: string
           id: string
-          invoice_id: string | null
           status: string
           top_up_id: string | null
           type: string
@@ -27,9 +27,9 @@ export type Database = {
           amount: number
           approvals_received?: number
           approvals_required?: number
+          bill_id?: string | null
           created_at?: string
           id?: string
-          invoice_id?: string | null
           status: string
           top_up_id?: string | null
           type: string
@@ -40,9 +40,9 @@ export type Database = {
           amount?: number
           approvals_received?: number
           approvals_required?: number
+          bill_id?: string | null
           created_at?: string
           id?: string
-          invoice_id?: string | null
           status?: string
           top_up_id?: string | null
           type?: string
@@ -52,9 +52,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "actions_invoice_id_fkey"
-            columns: ["invoice_id"]
+            columns: ["bill_id"]
             isOneToOne: false
-            referencedRelation: "invoices"
+            referencedRelation: "bills"
             referencedColumns: ["id"]
           },
           {
@@ -123,15 +123,15 @@ export type Database = {
           },
         ]
       }
-      invoices: {
+      bills: {
         Row: {
           amount: number
+          bill_number: string | null
           created_at: string
           date: string
           description: string | null
           due_date: string | null
           id: string
-          invoice_number: string | null
           status: string
           updated_at: string
           user_id: string | null
@@ -139,12 +139,12 @@ export type Database = {
         }
         Insert: {
           amount: number
+          bill_number?: string | null
           created_at?: string
           date: string
           description?: string | null
           due_date?: string | null
           id?: string
-          invoice_number?: string | null
           status?: string
           updated_at?: string
           user_id?: string | null
@@ -152,12 +152,12 @@ export type Database = {
         }
         Update: {
           amount?: number
+          bill_number?: string | null
           created_at?: string
           date?: string
           description?: string | null
           due_date?: string | null
           id?: string
-          invoice_number?: string | null
           status?: string
           updated_at?: string
           user_id?: string | null
@@ -180,6 +180,81 @@ export type Database = {
           },
         ]
       }
+      business_details: {
+        Row: {
+          address_line1: string
+          city: string
+          country: string
+          created_at: string
+          id: string
+          legal_name: string
+          postal_code: string
+          registration_number: string
+          reviewed_at: string | null
+          status: string
+          submitted_at: string | null
+          tax_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address_line1: string
+          city: string
+          country: string
+          created_at?: string
+          id?: string
+          legal_name: string
+          postal_code: string
+          registration_number: string
+          reviewed_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          tax_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address_line1?: string
+          city?: string
+          country?: string
+          created_at?: string
+          id?: string
+          legal_name?: string
+          postal_code?: string
+          registration_number?: string
+          reviewed_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          tax_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      feedback: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          page_path: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          page_path: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          page_path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           full_name: string | null
@@ -195,6 +270,116 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          amount: number | null
+          created_at: string
+          description: string | null
+          id: string
+          reference_id: string | null
+          reference_type: string | null
+          status: string
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      team_invite_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          team_member_id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          team_member_id: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          team_member_id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invite_tokens_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          invited_by: string | null
+          role: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          invited_by?: string | null
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string | null
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -318,6 +503,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      document_status: "pending" | "approved" | "rejected"
       top_up_status: "pending" | "completed" | "failed" | "cancelled"
     }
     CompositeTypes: {
