@@ -7,7 +7,7 @@ import { Loader2, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface BusinessDetails {
-  business_name: string;
+  legal_name: string;
   kyb_status: string;
   kyb_submitted_at: string;
 }
@@ -23,7 +23,7 @@ export default function PendingApproval() {
 
       const { data, error } = await supabase
         .from('business_details')
-        .select('business_name, kyb_status, kyb_submitted_at')
+        .select('legal_name, kyb_status, kyb_submitted_at')
         .eq('user_id', session.user.id)
         .single();
 
@@ -94,7 +94,7 @@ export default function PendingApproval() {
           <div className="space-y-4">
             <div>
               <h3 className="font-medium">Business Name</h3>
-              <p className="text-muted-foreground">{businessDetails.business_name}</p>
+              <p className="text-muted-foreground">{businessDetails.legal_name}</p>
             </div>
             <div>
               <h3 className="font-medium">Submission Date</h3>
