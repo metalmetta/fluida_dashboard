@@ -1,10 +1,12 @@
 import { useAuth } from "@/components/AuthProvider";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useEffect } from "react";
 
 interface BusinessDetails {
   legal_name: string;
@@ -15,6 +17,7 @@ interface BusinessDetails {
 export default function PendingApproval() {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: businessDetails, isLoading } = useQuery<BusinessDetails>({
     queryKey: ['businessDetails', session?.user?.id],
@@ -37,9 +40,46 @@ export default function PendingApproval() {
     enabled: !!session?.user?.id
   });
 
+  // Redirect to dashboard if KYB is already passed
+  useEffect(() => {
+    if (businessDetails?.kyb_status === 'PASSED') {
+      navigate('/');
+    }
+  }, [businessDetails?.kyb_status, navigate]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/auth');
+  };
+
+  const handleForceApprove = async () => {
+    if (!session?.user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('business_details')
+        .update({
+          kyb_status: 'PASSED',
+          kyb_completed_at: new Date().toISOString()
+        })
+        .eq('user_id', session.user.id);
+
+      if (error) throw error;
+
+      // Update user metadata with matching case
+      await supabase.auth.updateUser({
+        data: {
+          business_status: 'PASSED'
+        }
+      });
+
+      toast.success('KYB status updated to PASSED');
+      queryClient.invalidateQueries({ queryKey: ['businessDetails'] });
+      navigate('/');
+    } catch (error: any) {
+      toast.error('Error updating KYB status: ' + error.message);
+      console.error(error);
+    }
   };
 
   if (isLoading) {
@@ -130,17 +170,30 @@ export default function PendingApproval() {
             </p>
           </div>
 
-          <div className="flex gap-4">
-            <Button variant="outline" className="w-full" onClick={handleLogout}>
-              Logout
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={() => window.location.reload()}
-            >
-              Check Status
-            </Button>
+          <div className="flex flex-col gap-4">
+            <div className="flex gap-4">
+              <Button variant="outline" className="w-full" onClick={handleLogout}>
+                Logout
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => window.location.reload()}
+              >
+                Check Status
+              </Button>
+            </div>
+            
+            {/* Development-only button */}
+            {process.env.NODE_ENV === 'development' && (
+              <Button 
+                variant="default"
+                className="w-full bg-green-600 hover:bg-green-700"
+                onClick={handleForceApprove}
+              >
+                Force Approve KYB (Dev Only)
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
