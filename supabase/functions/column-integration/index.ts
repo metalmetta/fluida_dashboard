@@ -18,6 +18,8 @@ serve(async (req) => {
   try {
     const { businessDetails, userId } = await req.json();
 
+    console.log("Received request with business details:", JSON.stringify(businessDetails));
+
     // Create business entity in Column
     const entityResponse = await createBusinessEntity(businessDetails);
     
@@ -84,6 +86,8 @@ async function createBusinessEntity(businessDetails) {
     }
   };
 
+  console.log("Sending entity creation request to Column:", JSON.stringify(entityData));
+
   return fetch(`${COLUMN_BASE_URL}/entities/business`, {
     method: "POST",
     headers: {
@@ -99,6 +103,8 @@ async function createBankAccount(entityId) {
     entityId: entityId,
     name: "Business Account"
   };
+
+  console.log("Sending bank account creation request to Column:", JSON.stringify(bankAccountData));
 
   return fetch(`${COLUMN_BASE_URL}/bank-accounts`, {
     method: "POST",
