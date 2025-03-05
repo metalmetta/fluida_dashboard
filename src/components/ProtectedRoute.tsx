@@ -1,32 +1,54 @@
-
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "./AuthProvider";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { session, isLoading, businessStatus } = useAuth();
-  const location = useLocation();
+interface BusinessDetails {
+  kyb_status: string;
+}
 
+export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { session } = useAuth();
+
+  const { data: businessDetails, isLoading } = useQuery<BusinessDetails>({
+    queryKey: ['businessDetails', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+
+      const { data, error } = await supabase
+        .from('business_details')
+        .select('kyb_status')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching business details:', error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!session?.user?.id
+  });
+
+  if (!session) {
+    return <Navigate to="/auth" />;
+  }
+
+  // If we're loading, we could show a loading spinner
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
-  if (!session) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+  // If no business details found or KYB status is pending, redirect to appropriate page
+  if (!businessDetails) {
+    return <Navigate to="/onboarding" />;
   }
 
-  // Check KYB verification status
-  if (businessStatus === "pending_kyb") {
-    return <Navigate to="/onboarding" replace />;
+  if (businessDetails.kyb_status === 'PENDING') {
+    return <Navigate to="/pending-approval" />;
   }
 
-  if (businessStatus === "kyb_submitted") {
-    return <Navigate to="/pending-approval" replace />;
-  }
-
-  // Allow access only to approved businesses
-  if (businessStatus !== "approved" && location.pathname !== "/auth") {
-    return <Navigate to="/pending-approval" replace />;
-  }
-
-  return children;
-}
+  // If KYB is passed, allow access to the protected route
+  return <>{children}</>;
+};
