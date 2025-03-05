@@ -30,5 +30,7 @@ jwt_expiry = 3600
 enable_signup = true
 
 [functions]
+[functions.serve]
 port = 54328
+[functions.import_map]
 serve_floats_as_strings = false
