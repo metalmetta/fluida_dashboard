@@ -29,8 +29,7 @@ additional_redirect_urls = ["https://localhost:3000"]
 jwt_expiry = 3600
 enable_signup = true
 
+# Fixing the functions configuration structure
 [functions]
-[functions.serve]
-port = 54328
-[functions.import_map]
-serve_floats_as_strings = false
+# Removed the nested [functions.serve] and [functions.import_map] sections
+# as they were causing configuration parsing errors
