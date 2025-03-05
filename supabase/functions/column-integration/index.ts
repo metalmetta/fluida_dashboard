@@ -1,8 +1,11 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
 
 const COLUMN_API_KEY = Deno.env.get("COLUMN_API_KEY") || "";
 const COLUMN_BASE_URL = "https://api.column.com";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,9 +19,11 @@ serve(async (req) => {
   }
 
   try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { businessDetails, userId } = await req.json();
 
     console.log("Received request with business details:", JSON.stringify(businessDetails));
+    console.log("User ID:", userId);
 
     // Create business entity in Column
     const entityResponse = await createBusinessEntity(businessDetails);
@@ -49,6 +54,29 @@ serve(async (req) => {
 
     const bankAccountData = await bankAccountResponse.json();
     console.log("Created bank account:", bankAccountData);
+
+    // Update the business_details record with Column information
+    if (userId) {
+      try {
+        const { error } = await supabase
+          .from('business_details')
+          .update({
+            column_entity_id: entityData.id,
+            status: 'approved',
+            submitted_at: new Date().toISOString(),
+            reviewed_at: new Date().toISOString()
+          })
+          .eq('user_id', userId);
+
+        if (error) {
+          console.error("Error updating business_details:", error);
+        } else {
+          console.log("Updated business_details with Column entity info");
+        }
+      } catch (dbError) {
+        console.error("Failed to update business_details:", dbError);
+      }
+    }
 
     // Return the combined data
     return new Response(

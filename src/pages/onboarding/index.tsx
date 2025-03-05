@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Check, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -57,23 +56,19 @@ export default function Onboarding() {
         .from("business_details")
         .select("*")
         .eq("user_id", session.user.id)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       
       if (data) {
         // Populate form with saved data
-        setCompanyName(data.company_name || companyName);
-        setIndustry(data.industry || "");
-        setWebsite(data.website || "");
-        setPhoneNumber(data.phone || "");
-        setTaxId(data.tax_id || "");
-        setDescription(data.description || "");
-        setStreet(data.street || "");
+        setCompanyName(data.legal_name || companyName);
+        setStreet(data.address_line1 || "");
         setCity(data.city || "");
         setState(data.state || "");
         setPostalCode(data.postal_code || "");
         setCountry(data.country || "United States");
+        setTaxId(data.tax_id || "");
       }
     } catch (error) {
       console.error("Error loading business details:", error);
@@ -84,22 +79,11 @@ export default function Onboarding() {
     if (!session?.user) return;
     
     try {
-      // Check if we already have a record
-      const { data, error } = await supabase
-        .from("business_details")
-        .select("id")
-        .eq("user_id", session.user.id)
-        .single();
-      
       const businessData = {
         user_id: session.user.id,
-        company_name: companyName,
-        industry,
-        website,
-        phone: phoneNumber,
+        legal_name: companyName,
         tax_id: taxId,
-        description,
-        street,
+        address_line1: street,
         city,
         state,
         postal_code: postalCode,
@@ -107,7 +91,14 @@ export default function Onboarding() {
         status: "kyb_submitted"
       };
       
-      if (error && error.code === "PGRST116") {
+      // Check if we already have a record
+      const { data, error } = await supabase
+        .from("business_details")
+        .select("id")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      
+      if (!data) {
         // Record doesn't exist, create new
         await supabase.from("business_details").insert(businessData);
       } else {
@@ -192,7 +183,7 @@ export default function Onboarding() {
     if (!session?.user) return;
     
     try {
-      const businessDetails: BusinessDetails = {
+      const columnBusinessDetails: BusinessDetails = {
         companyName,
         street,
         city,
@@ -206,7 +197,7 @@ export default function Onboarding() {
 
       // Call our edge function to create Column entity and bank account
       const response = await supabase.functions.invoke("column-integration", {
-        body: { businessDetails, userId: session.user.id }
+        body: { businessDetails: columnBusinessDetails, userId: session.user.id }
       });
 
       if (response.error) {
@@ -215,14 +206,11 @@ export default function Onboarding() {
 
       const { data } = response;
 
-      // Save Column IDs to the business_details table
+      // Mark business as approved
       await supabase
         .from("business_details")
         .update({
-          column_entity_id: data.entity.id,
-          column_bank_account_id: data.bankAccount.id,
-          column_routing_number: data.bankAccount.routingNumber,
-          column_account_number: data.bankAccount.accountNumber
+          status: "approved"
         })
         .eq("user_id", session.user.id);
 

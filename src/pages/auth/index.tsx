@@ -44,30 +44,33 @@ export default function Auth() {
         
         if (error) throw error;
         
-        // Only proceed to Column integration if signup was successful
+        // Only proceed if signup was successful
         if (data.user) {
-          const businessDetails: BusinessDetails = {
-            companyName,
-            street: "", // These will be collected during onboarding
-            city: "",
-            state: "",
-            postalCode: "",
-            email,
-          };
-
-          // Store minimal business details for later completion during onboarding
-          await supabase
+          // Create entry in business_details table
+          const { error: businessError } = await supabase
             .from("business_details")
             .insert({
               user_id: data.user.id,
-              company_name: companyName,
-              email: email,
-              status: "pending_onboarding"
+              legal_name: companyName,
+              status: "pending_kyb",
+              country: "US", // Default values
+              postal_code: "",
+              city: "",
+              address_line1: "",
+              tax_id: "",
+              registration_number: ""
             });
+            
+          if (businessError) {
+            console.error("Error creating business record:", businessError);
+            toast.error("Account created but couldn't initialize business profile");
+          } else {
+            console.log("Business record created successfully");
+          }
+          
+          toast.success("Account created! Proceeding to KYB verification.");
+          navigate("/onboarding");
         }
-        
-        toast.success("Account created! Proceeding to KYB verification.");
-        navigate("/onboarding");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
