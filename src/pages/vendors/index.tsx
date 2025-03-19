@@ -1,102 +1,91 @@
 
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
+import { Search, Plus, Edit, Save, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { AddVendorDialog } from "./components/AddVendorDialog";
-import { VendorList } from "./components/VendorList";
-import { useAuth } from "@/components/AuthProvider";
+
+interface Vendor {
+  id: string;
+  name: string;
+  email: string;
+  status: string;
+  lastPayment: string;
+}
+
+const initialVendors = [
+  {
+    id: "V1",
+    name: "Acme Corporation",
+    email: "billing@acme.com",
+    status: "Active",
+    lastPayment: "Feb 15, 2024",
+  },
+  {
+    id: "V2",
+    name: "Tech Solutions Inc",
+    email: "accounts@techsolutions.com",
+    status: "Active",
+    lastPayment: "Feb 10, 2024",
+  },
+  {
+    id: "V3",
+    name: "Global Services Ltd",
+    email: "finance@globalservices.com",
+    status: "Active",
+    lastPayment: "Feb 5, 2024",
+  },
+];
 
 export default function Vendors() {
-  const { session } = useAuth();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [vendors, setVendors] = useState<Vendor[]>(initialVendors);
+  const [isAddingVendor, setIsAddingVendor] = useState(false);
   const [editingVendor, setEditingVendor] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<any>(null);
+  const [newVendor, setNewVendor] = useState({ name: "", email: "" });
+  const [editForm, setEditForm] = useState<Vendor | null>(null);
 
-  const { data: vendors = [], refetch } = useQuery({
-    queryKey: ['vendors'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('vendors')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        toast.error("Error loading vendors");
-        throw error;
-      }
-      return data;
-    }
-  });
-
-  const filteredVendors = vendors.filter(vendor =>
-    vendor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    vendor.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const handleEditVendor = (vendor: any) => {
-    setEditingVendor(vendor.id);
-    setEditForm(vendor);
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editForm) return;
-
-    try {
-      const { error } = await supabase
-        .from('vendors')
-        .update({
-          name: editForm.name,
-          email: editForm.email,
-          address: editForm.address,
-          wallet_address: editForm.wallet_address
-        })
-        .eq('id', editForm.id);
-
-      if (error) throw error;
-
-      toast.success("Vendor updated successfully");
-      setEditingVendor(null);
-      setEditForm(null);
-      refetch();
-    } catch (error: any) {
-      toast.error("Error updating vendor");
-      console.error(error);
-    }
-  };
-
-  const handleAddVendor = async (newVendor: any) => {
-    if (!session?.user?.id) {
-      toast.error("You must be logged in to add vendors");
+  const handleAddVendor = () => {
+    if (!newVendor.name || !newVendor.email) {
+      toast.error("Please fill in all fields");
       return;
     }
 
-    try {
-      const { error } = await supabase
-        .from('vendors')
-        .insert([{
-          user_id: session.user.id, // Add user_id to link vendor to current user
-          name: newVendor.name,
-          email: newVendor.email,
-          address: newVendor.address,
-          country: newVendor.country,
-          wallet_address: newVendor.walletAddress,
-          bank_name: newVendor.bankDetails.bankName,
-          bank_account_number: newVendor.bankDetails.accountNumber,
-          bank_routing_number: newVendor.bankDetails.routingNumber,
-          bank_holder_name: newVendor.bankDetails.accountHolderName,
-          status: 'active'
-        }]);
+    const vendor: Vendor = {
+      id: `V${vendors.length + 1}`,
+      name: newVendor.name,
+      email: newVendor.email,
+      status: "Active",
+      lastPayment: "N/A",
+    };
 
-      if (error) throw error;
+    setVendors([...vendors, vendor]);
+    setNewVendor({ name: "", email: "" });
+    setIsAddingVendor(false);
+    toast.success("Vendor added successfully");
+  };
 
-      toast.success("Vendor added successfully");
-      refetch();
-    } catch (error: any) {
-      toast.error("Error adding vendor");
-      console.error(error);
+  const handleEditVendor = (vendorId: string) => {
+    const vendor = vendors.find((v) => v.id === vendorId);
+    if (vendor) {
+      setEditingVendor(vendorId);
+      setEditForm(vendor);
     }
+  };
+
+  const handleSaveEdit = () => {
+    if (!editForm) return;
+
+    setVendors(
+      vendors.map((vendor) =>
+        vendor.id === editForm.id ? editForm : vendor
+      )
+    );
+    setEditingVendor(null);
+    setEditForm(null);
+    toast.success("Vendor updated successfully");
   };
 
   return (
@@ -104,20 +93,130 @@ export default function Vendors() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-semibold">Vendors</h1>
-          <AddVendorDialog onAddVendor={handleAddVendor} />
+          <Button onClick={() => setIsAddingVendor(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Vendor
+          </Button>
         </div>
 
-        <VendorList
-          vendors={filteredVendors}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          editingVendor={editingVendor}
-          editForm={editForm}
-          onEditVendor={handleEditVendor}
-          onSaveEdit={handleSaveEdit}
-          onCancelEdit={() => setEditingVendor(null)}
-          onEditFormChange={setEditForm}
-        />
+        <Card>
+          <div className="p-6 space-y-6">
+            {isAddingVendor && (
+              <div className="border rounded-lg p-4 mb-4 space-y-4">
+                <h3 className="font-medium">Add New Vendor</h3>
+                <div className="space-y-4">
+                  <Input
+                    placeholder="Vendor Name"
+                    value={newVendor.name}
+                    onChange={(e) =>
+                      setNewVendor({ ...newVendor, name: e.target.value })
+                    }
+                  />
+                  <Input
+                    type="email"
+                    placeholder="Email Address"
+                    value={newVendor.email}
+                    onChange={(e) =>
+                      setNewVendor({ ...newVendor, email: e.target.value })
+                    }
+                  />
+                  <div className="flex gap-2">
+                    <Button onClick={handleAddVendor}>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsAddingVendor(false);
+                        setNewVendor({ name: "", email: "" });
+                      }}
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input placeholder="Search vendors..." className="pl-9" />
+            </div>
+
+            <div className="divide-y">
+              {vendors.map((vendor) => (
+                <div
+                  key={vendor.id}
+                  className="flex items-center justify-between py-4"
+                >
+                  <div className="flex items-center gap-4">
+                    <Avatar />
+                    {editingVendor === vendor.id ? (
+                      <div className="space-y-2">
+                        <Input
+                          value={editForm?.name}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm!, name: e.target.value })
+                          }
+                          className="max-w-[200px]"
+                        />
+                        <Input
+                          value={editForm?.email}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm!, email: e.target.value })
+                          }
+                          className="max-w-[200px]"
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="font-medium">{vendor.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {vendor.email}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm text-muted-foreground mr-4">
+                      Last payment: {vendor.lastPayment}
+                    </div>
+                    {editingVendor === vendor.id ? (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={handleSaveEdit}
+                        >
+                          <Save className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditingVendor(null);
+                            setEditForm(null);
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleEditVendor(vendor.id)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
       </div>
     </DashboardLayout>
   );
