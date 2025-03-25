@@ -39,17 +39,16 @@ export function ViewInvoiceDialog({
     }
   }, [invoice]);
 
-  const handleStatusChange = async (newStatus: Invoice['status']) => {
+  const handleUpdateStatus = async () => {
     if (!invoice) return;
     
-    setStatus(newStatus);
     setIsUpdating(true);
     
     try {
-      await onStatusChange(invoice.id, newStatus);
+      await onStatusChange(invoice.id, status);
       toast({
         title: "Status updated",
-        description: `Invoice status changed to ${newStatus}.`
+        description: `Invoice status changed to ${status}.`
       });
     } catch (error) {
       console.error("Error updating status:", error);
@@ -124,7 +123,7 @@ export function ViewInvoiceDialog({
             </label>
             <Select
               value={status}
-              onValueChange={(value) => handleStatusChange(value as Invoice['status'])}
+              onValueChange={(value) => setStatus(value as Invoice['status'])}
               disabled={isUpdating}
             >
               <SelectTrigger id="status" className="w-full">
@@ -144,7 +143,13 @@ export function ViewInvoiceDialog({
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button variant="default">Update</Button>
+            <Button 
+              variant="default" 
+              onClick={handleUpdateStatus} 
+              disabled={isUpdating}
+            >
+              {isUpdating ? "Updating..." : "Update"}
+            </Button>
           </DialogFooter>
         </div>
         
