@@ -20,6 +20,10 @@ interface PaymentMethod {
   id: string;
   label: string;
   type: string;
+  details?: {
+    iban?: string;
+    accountNumber?: string;
+  };
 }
 
 export function PaymentDetailsStep({
@@ -39,14 +43,15 @@ export function PaymentDetailsStep({
       // We need to use the "as any" type assertion since the TypeScript types don't know about our payment_methods table
       supabase
         .from('payment_methods' as any)
-        .select('id, label, type')
+        .select('id, label, type, details')
         .eq('user_id', user.id)
         .then(({ data, error }) => {
           if (!error && data) {
             setPaymentMethods(data.map((method: any) => ({
               id: method.id,
               label: method.label,
-              type: method.type
+              type: method.type,
+              details: method.details
             })));
           }
           setLoading(false);
@@ -81,6 +86,26 @@ export function PaymentDetailsStep({
     return paymentMethods.filter(method => 
       method.type === "usdc"
     );
+  };
+
+  // Format the bank account display to show currency and last 4 digits of IBAN
+  const formatBankAccountLabel = (account: PaymentMethod) => {
+    const currency = account.type.toUpperCase();
+    const iban = account.details?.iban || "";
+    const accountNumber = account.details?.accountNumber || "";
+    
+    let lastDigits = "";
+    if (iban && iban.length >= 4) {
+      lastDigits = iban.slice(-4);
+    } else if (accountNumber && accountNumber.length >= 4) {
+      lastDigits = accountNumber.slice(-4);
+    }
+    
+    if (lastDigits) {
+      return `${account.label} (${currency} - ****${lastDigits})`;
+    }
+    
+    return `${account.label} (${currency})`;
   };
 
   return (
@@ -120,7 +145,7 @@ export function PaymentDetailsStep({
                 {getBankAccounts().length > 0 ? (
                   getBankAccounts().map(account => (
                     <SelectItem key={account.id} value={account.id}>
-                      {account.label}
+                      {formatBankAccountLabel(account)}
                     </SelectItem>
                   ))
                 ) : (
