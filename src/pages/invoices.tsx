@@ -1,3 +1,4 @@
+
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,57 +11,53 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Download } from "lucide-react";
+import { Plus, Download, RefreshCw, FileText } from "lucide-react";
 import { useState } from "react";
+import { useInvoices } from "@/hooks/useInvoices";
+import { format } from "date-fns";
 
-const invoices = [
-  {
-    id: "INV-001",
-    date: "2024-01-15",
-    client: "Acme Corp",
-    amount: "$1,200.00",
-    status: "Paid",
-    method: "Credit Card",
-    dueDate: "2024-02-15",
-    product: "Consulting Services",
-  },
-  {
-    id: "INV-002",
-    date: "2024-01-18",
-    client: "Tech Solutions",
-    amount: "$3,500.00",
-    status: "Unpaid",
-    method: "Bank Transfer",
-    dueDate: "2024-02-18",
-    product: "Software License",
-  },
-  {
-    id: "INV-003",
-    date: "2024-01-20",
-    client: "Global Services",
-    amount: "$2,800.00",
-    status: "Draft",
-    method: "PayPal",
-    dueDate: "2024-02-20",
-    product: "Marketing Campaign",
-  },
-];
-
-type InvoiceStatus = "Draft" | "Unpaid" | "Paid" | "Void";
+type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
 
 export default function Invoices() {
   const [selectedStatus, setSelectedStatus] = useState<InvoiceStatus | null>(null);
+  const { invoices, isLoading, addSampleInvoices, fetchInvoices } = useInvoices();
 
   const statusCounts = {
-    Draft: invoices.filter((inv) => inv.status === "Draft").length,
-    Unpaid: invoices.filter((inv) => inv.status === "Unpaid").length,
-    Paid: invoices.filter((inv) => inv.status === "Paid").length,
-    Void: invoices.filter((inv) => inv.status === "Void").length,
+    draft: invoices.filter((inv) => inv.status === "draft").length,
+    sent: invoices.filter((inv) => inv.status === "sent").length,
+    paid: invoices.filter((inv) => inv.status === "paid").length,
+    overdue: invoices.filter((inv) => inv.status === "overdue").length,
+    cancelled: invoices.filter((inv) => inv.status === "cancelled").length,
   };
 
   const filteredInvoices = selectedStatus
     ? invoices.filter((inv) => inv.status === selectedStatus)
     : invoices;
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "MMM dd, yyyy");
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  const getStatusBadgeVariant = (status: InvoiceStatus) => {
+    switch (status) {
+      case "paid":
+        return "success";
+      case "sent":
+        return "secondary";
+      case "draft":
+        return "outline";
+      case "overdue":
+        return "destructive";
+      case "cancelled":
+        return "outline";
+      default:
+        return "outline";
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -70,24 +67,36 @@ export default function Invoices() {
             <h1 className="text-3xl font-semibold">Invoices</h1>
             <p className="text-muted-foreground">Manage your invoices</p>
           </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Create invoice
-          </Button>
+          <div className="flex gap-2">
+            {invoices.length === 0 && (
+              <Button onClick={addSampleInvoices} variant="outline">
+                <FileText className="h-4 w-4 mr-2" />
+                Add Sample Data
+              </Button>
+            )}
+            <Button onClick={fetchInvoices} variant="outline" disabled={isLoading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Create invoice
+            </Button>
+          </div>
         </div>
 
         <div className="flex space-x-6 border-b">
-          {(["Draft", "Unpaid", "Paid", "Void"] as const).map((status) => (
+          {(["draft", "sent", "paid", "overdue", "cancelled"] as const).map((status) => (
             <button
               key={status}
-              onClick={() => setSelectedStatus(status)}
+              onClick={() => setSelectedStatus(selectedStatus === status ? null : status)}
               className={`flex items-center space-x-2 pb-4 ${
                 selectedStatus === status
                   ? "border-b-2 border-primary"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <span>{status}</span>
+              <span className="capitalize">{status}</span>
               <span className="rounded-full bg-muted px-2 py-0.5 text-sm">
                 {statusCounts[status]}
               </span>
@@ -96,32 +105,53 @@ export default function Invoices() {
         </div>
 
         <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Customer</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead>Due date</TableHead>
-                <TableHead>Invoice #</TableHead>
-                <TableHead>Product/service</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredInvoices.map((invoice) => (
-                <TableRow key={invoice.id}>
-                  <TableCell>{invoice.client}</TableCell>
-                  <TableCell>{invoice.amount}</TableCell>
-                  <TableCell>{invoice.method}</TableCell>
-                  <TableCell>{invoice.dueDate}</TableCell>
-                  <TableCell>{invoice.id}</TableCell>
-                  <TableCell>{invoice.product}</TableCell>
+          {isLoading ? (
+            <div className="flex justify-center items-center p-8">
+              <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : invoices.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-8 text-center">
+              <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium">No invoices found</h3>
+              <p className="text-muted-foreground mt-2">
+                You don't have any invoices yet. Add sample data or create a new invoice.
+              </p>
+              <Button onClick={addSampleInvoices} className="mt-4">
+                Add Sample Invoices
+              </Button>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Due date</TableHead>
+                  <TableHead>Invoice #</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredInvoices.map((invoice) => (
+                  <TableRow key={invoice.id}>
+                    <TableCell>{invoice.client_name}</TableCell>
+                    <TableCell>${invoice.amount.toFixed(2)}</TableCell>
+                    <TableCell>{invoice.payment_method || "—"}</TableCell>
+                    <TableCell>{formatDate(invoice.due_date)}</TableCell>
+                    <TableCell>{invoice.invoice_number}</TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusBadgeVariant(invoice.status)}>
+                        {invoice.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </Card>
       </div>
     </DashboardLayout>
   );
-} 
+}
