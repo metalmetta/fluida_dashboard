@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Mail, Phone, Loader2, MapPin, Building } from "lucide-react";
+import { Search, Mail, Phone, Loader2, MapPin, Building } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -18,7 +18,7 @@ import { useContacts } from "@/hooks/useContacts";
 import { AddContactDialog } from "@/components/AddContactDialog";
 
 export default function Contacts() {
-  const { contacts, isLoading, addSampleContacts } = useContacts();
+  const { contacts, isLoading } = useContacts();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
 
@@ -44,11 +44,6 @@ export default function Contacts() {
             <p className="text-muted-foreground">Manage your business contacts</p>
           </div>
           <div className="flex gap-2">
-            {contacts.length === 0 && !isLoading && (
-              <Button variant="outline" onClick={addSampleContacts}>
-                Add Sample Contacts
-              </Button>
-            )}
             <AddContactDialog />
           </div>
         </div>
