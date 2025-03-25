@@ -17,6 +17,11 @@ interface PaymentDetailsStepProps {
   onNext: () => void;
 }
 
+interface PaymentMethod {
+  id: string;
+  label: string;
+}
+
 export function PaymentDetailsStep({
   form,
   setForm,
@@ -24,15 +29,16 @@ export function PaymentDetailsStep({
   onNext
 }: PaymentDetailsStepProps) {
   const { user } = useAuth();
-  const [paymentMethods, setPaymentMethods] = useState<{id: string, label: string}[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
       setLoading(true);
+      // We need to use the "as any" type assertion since the TypeScript types don't know about our payment_methods table
       supabase
-        .from('payment_methods')
-        .select('id, type, label, is_default')
+        .from('payment_methods' as any)
+        .select('id, label')
         .eq('user_id', user.id)
         .then(({ data, error }) => {
           if (!error && data) {

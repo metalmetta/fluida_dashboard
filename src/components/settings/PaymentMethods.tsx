@@ -37,8 +37,9 @@ export default function PaymentMethods() {
     
     try {
       setLoading(true);
+      // Use type assertion to handle the custom table
       const { data, error } = await supabase
-        .from('payment_methods')
+        .from('payment_methods' as any)
         .select('*')
         .eq('user_id', user.id);
       
@@ -152,7 +153,7 @@ export default function PaymentMethods() {
       // If we're setting this as default, update any existing default
       if (isDefault) {
         await supabase
-          .from('payment_methods')
+          .from('payment_methods' as any)
           .update({ is_default: false })
           .eq('user_id', user.id)
           .eq('is_default', true);
@@ -160,7 +161,7 @@ export default function PaymentMethods() {
 
       // Insert the new payment method
       const { error } = await supabase
-        .from('payment_methods')
+        .from('payment_methods' as any)
         .insert({
           user_id: user.id,
           type: newPaymentMethod.type,
@@ -200,7 +201,7 @@ export default function PaymentMethods() {
     
     try {
       const { error } = await supabase
-        .from('payment_methods')
+        .from('payment_methods' as any)
         .delete()
         .eq('id', id)
         .eq('user_id', user.id);
@@ -229,14 +230,14 @@ export default function PaymentMethods() {
     try {
       // First, clear any existing default
       await supabase
-        .from('payment_methods')
+        .from('payment_methods' as any)
         .update({ is_default: false })
         .eq('user_id', user.id)
         .eq('is_default', true);
       
       // Set the new default
       const { error } = await supabase
-        .from('payment_methods')
+        .from('payment_methods' as any)
         .update({ is_default: true })
         .eq('id', id)
         .eq('user_id', user.id);
