@@ -51,7 +51,7 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
       bill_number: "",
       category: "",
       description: "",
-      status: "Draft",
+      status: "Draft", // Explicitly set default status to "Draft"
       issue_date: new Date(),
       due_date: new Date(new Date().setDate(new Date().getDate() + 30)),
     },
@@ -65,7 +65,7 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
         vendor: values.vendor,
         amount: values.amount,
         bill_number: values.bill_number,
-        status: values.status,
+        status: "Draft", // Force status to "Draft" regardless of selected value
         issue_date: values.issue_date.toISOString().split('T')[0],
         due_date: values.due_date.toISOString().split('T')[0],
         category: values.category,

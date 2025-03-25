@@ -39,6 +39,7 @@ export default function Bills() {
   };
 
   const handleAddBill = async (billData: BillFormData) => {
+    // The status is set to Draft in the useBills.addBill function
     await addBill(billData);
   };
   
