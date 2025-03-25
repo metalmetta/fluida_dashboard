@@ -38,17 +38,16 @@ export function ViewBillDialog({
     }
   }, [bill]);
 
-  const handleStatusChange = async (newStatus: Bill['status']) => {
+  const handleUpdateStatus = async () => {
     if (!bill) return;
     
-    setStatus(newStatus);
     setIsUpdating(true);
     
     try {
-      await onStatusChange(bill.id, newStatus);
+      await onStatusChange(bill.id, status);
       toast({
         title: "Status updated",
-        description: `Bill status changed to ${newStatus}.`
+        description: `Bill status changed to ${status}.`
       });
     } catch (error) {
       console.error("Error updating status:", error);
@@ -123,7 +122,7 @@ export function ViewBillDialog({
             </label>
             <Select
               value={status}
-              onValueChange={(value) => handleStatusChange(value as Bill['status'])}
+              onValueChange={(value) => setStatus(value as Bill['status'])}
               disabled={isUpdating}
             >
               <SelectTrigger id="status" className="w-full">
@@ -142,7 +141,13 @@ export function ViewBillDialog({
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button variant="default">Update</Button>
+            <Button 
+              variant="default" 
+              onClick={handleUpdateStatus} 
+              disabled={isUpdating}
+            >
+              {isUpdating ? "Updating..." : "Update"}
+            </Button>
           </DialogFooter>
         </div>
         
