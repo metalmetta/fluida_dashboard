@@ -25,7 +25,13 @@ export function useContacts() {
         throw error;
       }
 
-      setContacts(data || []);
+      // Ensure the type is properly cast as our Contact type
+      const typedContacts = data?.map(contact => ({
+        ...contact,
+        type: contact.type as 'Customer' | 'Vendor' | 'Other'
+      })) || [];
+      
+      setContacts(typedContacts);
     } catch (error) {
       console.error("Error fetching contacts:", error);
       toast({
@@ -35,6 +41,51 @@ export function useContacts() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const addContact = async (contactData: Omit<Contact, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to add a contact",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const newContact = {
+        ...contactData,
+        user_id: user.id
+      };
+
+      const { data, error } = await supabase
+        .from("contacts")
+        .insert([newContact])
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: "Contact added successfully"
+      });
+
+      // Refresh the contacts list
+      fetchContacts();
+      
+      return data?.[0];
+    } catch (error) {
+      console.error("Error adding contact:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add contact",
+        variant: "destructive"
+      });
+      return null;
     }
   };
 
@@ -125,6 +176,7 @@ export function useContacts() {
     contacts, 
     isLoading, 
     fetchContacts, 
+    addContact,
     addSampleContacts 
   };
 }

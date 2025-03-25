@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useContacts } from "@/hooks/useContacts";
+import { AddContactDialog } from "@/components/AddContactDialog";
 
 export default function Contacts() {
   const { contacts, isLoading, addSampleContacts } = useContacts();
@@ -48,10 +49,7 @@ export default function Contacts() {
                 Add Sample Contacts
               </Button>
             )}
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Contact
-            </Button>
+            <AddContactDialog />
           </div>
         </div>
 
