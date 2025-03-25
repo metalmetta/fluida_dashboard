@@ -36,7 +36,7 @@ export default function Invoices() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-semibold">Invoices</h1>
-          <Button>Upload Invoice</Button>
+          <Button>Create Invoice</Button>
         </div>
 
         <Card>
