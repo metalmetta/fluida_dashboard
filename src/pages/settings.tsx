@@ -1,3 +1,7 @@
+
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,8 +24,120 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { User, Building2, CheckSquare, Users, CreditCard } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [profileData, setProfileData] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    companyName: "",
+    taxId: "",
+    address: "",
+    city: "",
+    state: "",
+    zip: ""
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadProfileData() {
+      try {
+        setLoading(true);
+        if (user) {
+          // Fetch user profile data from profiles table
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          
+          if (error) {
+            throw error;
+          }
+
+          if (data) {
+            setProfileData({
+              fullName: data.full_name || '',
+              email: user.email || '',
+              phone: '',
+              companyName: data.company_name || '',
+              taxId: '',
+              address: '',
+              city: '',
+              state: '',
+              zip: ''
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error loading profile data:', error);
+        toast({
+          title: "Error loading profile",
+          description: "Could not load your profile information",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadProfileData();
+  }, [user, toast]);
+
+  const handleSaveProfile = async () => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: profileData.fullName,
+          company_name: profileData.companyName
+        })
+        .eq('id', user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSaveCompany = async () => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          company_name: profileData.companyName
+        })
+        .eq('id', user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Company Details Updated",
+        description: "Your company information has been updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating company details:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update company details",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -71,20 +187,37 @@ export default function Settings() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="name">Full Name</Label>
-                      <Input id="name" placeholder="Your name" />
+                      <Input 
+                        id="name" 
+                        placeholder="Your name" 
+                        value={profileData.fullName}
+                        onChange={(e) => setProfileData({...profileData, fullName: e.target.value})}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <Input id="email" type="email" placeholder="Your email" />
+                      <Input 
+                        id="email" 
+                        type="email" 
+                        placeholder="Your email" 
+                        value={profileData.email}
+                        onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                        disabled
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" placeholder="Your phone number" />
+                    <Input 
+                      id="phone" 
+                      placeholder="Your phone number" 
+                      value={profileData.phone}
+                      onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                    />
                   </div>
                 </div>
 
-                <Button>Save Changes</Button>
+                <Button onClick={handleSaveProfile}>Save Changes</Button>
               </div>
             </Card>
           </TabsContent>
@@ -96,33 +229,63 @@ export default function Settings() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="company-name">Company Name</Label>
-                      <Input id="company-name" placeholder="Company name" />
+                      <Input 
+                        id="company-name" 
+                        placeholder="Company name" 
+                        value={profileData.companyName}
+                        onChange={(e) => setProfileData({...profileData, companyName: e.target.value})}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="tax-id">Tax ID</Label>
-                      <Input id="tax-id" placeholder="Tax ID number" />
+                      <Input 
+                        id="tax-id" 
+                        placeholder="Tax ID number" 
+                        value={profileData.taxId}
+                        onChange={(e) => setProfileData({...profileData, taxId: e.target.value})}
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="address">Address</Label>
-                    <Input id="address" placeholder="Company address" />
+                    <Input 
+                      id="address" 
+                      placeholder="Company address" 
+                      value={profileData.address}
+                      onChange={(e) => setProfileData({...profileData, address: e.target.value})}
+                    />
                   </div>
                   <div className="grid gap-4 md:grid-cols-3">
                     <div className="space-y-2">
                       <Label htmlFor="city">City</Label>
-                      <Input id="city" placeholder="City" />
+                      <Input 
+                        id="city" 
+                        placeholder="City" 
+                        value={profileData.city}
+                        onChange={(e) => setProfileData({...profileData, city: e.target.value})}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="state">State</Label>
-                      <Input id="state" placeholder="State" />
+                      <Input 
+                        id="state" 
+                        placeholder="State" 
+                        value={profileData.state}
+                        onChange={(e) => setProfileData({...profileData, state: e.target.value})}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="zip">ZIP Code</Label>
-                      <Input id="zip" placeholder="ZIP code" />
+                      <Input 
+                        id="zip" 
+                        placeholder="ZIP code" 
+                        value={profileData.zip}
+                        onChange={(e) => setProfileData({...profileData, zip: e.target.value})}
+                      />
                     </div>
                   </div>
                 </div>
-                <Button>Save Company Details</Button>
+                <Button onClick={handleSaveCompany}>Save Company Details</Button>
               </div>
             </Card>
           </TabsContent>
@@ -270,4 +433,4 @@ export default function Settings() {
       </div>
     </DashboardLayout>
   );
-} 
+}
