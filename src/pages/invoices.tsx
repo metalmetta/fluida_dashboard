@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -16,7 +17,7 @@ type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
 
 export default function Invoices() {
   const [selectedStatus, setSelectedStatus] = useState<InvoiceStatus | null>(null);
-  const { invoices, isLoading, addSampleInvoices, fetchInvoices } = useInvoices();
+  const { invoices, isLoading, addSampleInvoices, fetchInvoices, formatPaymentMethod } = useInvoices();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
@@ -131,7 +132,7 @@ export default function Invoices() {
     { header: "Amount", accessorKey: "amount" as keyof Invoice,
       cell: (item: Invoice) => `$${item.amount.toFixed(2)}` },
     { header: "Method", accessorKey: "payment_method" as keyof Invoice,
-      cell: (item: Invoice) => item.payment_method || "—" },
+      cell: (item: Invoice) => formatPaymentMethod(item.payment_method) },
     { header: "Due date", accessorKey: "due_date" as keyof Invoice,
       cell: (item: Invoice) => formatDate(item.due_date) },
     { header: "Invoice #", accessorKey: "invoice_number" as keyof Invoice },

@@ -67,7 +67,8 @@ export function ViewInvoiceDialog({
               issue_date: invoice.issue_date,
               due_date: invoice.due_date,
               amount: invoice.amount,
-              description: invoice.description
+              description: invoice.description,
+              payment_method: invoice.payment_method
             }}
           />
         </div>

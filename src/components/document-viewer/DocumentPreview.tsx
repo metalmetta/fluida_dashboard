@@ -13,6 +13,7 @@ interface DocumentPreviewProps {
     amount: number;
     description?: string;
     category?: string;
+    payment_method?: string;
   };
 }
 
@@ -20,7 +21,17 @@ export function DocumentPreview({ documentType, documentData }: DocumentPreviewP
   const isInvoice = documentType === "invoice";
   const entityLabel = isInvoice ? "Client" : "Vendor";
   const documentLabel = isInvoice ? "INVOICE" : "BILL";
-  const entityNameKey = isInvoice ? "client_name" : "vendor";
+  
+  // Format payment method for display
+  const formatPaymentMethod = (method?: string) => {
+    if (!method) return "";
+    
+    if (method === "bank_transfer") return "Bank Transfer";
+    if (method === "blockchain_transfer") return "Blockchain Transfer";
+    if (method === "credit_card") return "Credit Card";
+    
+    return method; // Return original if it's a custom value
+  };
   
   return (
     <div className="w-full max-w-md bg-white shadow-lg rounded-md">
@@ -51,6 +62,13 @@ export function DocumentPreview({ documentType, documentData }: DocumentPreviewP
           <div className="mb-6">
             <h4 className="text-sm uppercase text-gray-500 mb-2">Category</h4>
             <p>{documentData.category}</p>
+          </div>
+        )}
+        
+        {documentData.payment_method && (
+          <div className="mb-6">
+            <h4 className="text-sm uppercase text-gray-500 mb-2">Payment Method</h4>
+            <p>{formatPaymentMethod(documentData.payment_method)}</p>
           </div>
         )}
         

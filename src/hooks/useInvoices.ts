@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Invoice } from "@/types/invoice";
@@ -21,7 +20,6 @@ export function useInvoices() {
         throw error;
       }
 
-      // Ensure data matches Invoice type with proper status type
       const typedData = data.map(invoice => ({
         ...invoice,
         status: invoice.status as Invoice['status']
@@ -121,7 +119,6 @@ export function useInvoices() {
         description: "Sample invoices added successfully"
       });
 
-      // Fetch the updated invoices
       fetchInvoices();
     } catch (error) {
       console.error("Error adding sample invoices:", error);
@@ -137,5 +134,23 @@ export function useInvoices() {
     fetchInvoices();
   }, []);
 
-  return { invoices, isLoading, fetchInvoices, addSampleInvoices };
+  // Helper function to format payment method for display
+  const formatPaymentMethod = (paymentMethod: string | undefined): string => {
+    if (!paymentMethod) return "—";
+    
+    if (paymentMethod === "bank_transfer") return "Bank Transfer";
+    if (paymentMethod === "blockchain_transfer") return "Blockchain Transfer";
+    if (paymentMethod === "credit_card") return "Credit Card";
+    
+    // For payment methods stored as IDs, we'll just display a generic label
+    return "Custom Method";
+  };
+
+  return { 
+    invoices, 
+    isLoading, 
+    fetchInvoices, 
+    addSampleInvoices,
+    formatPaymentMethod 
+  };
 }
