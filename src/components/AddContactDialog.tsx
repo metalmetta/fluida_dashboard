@@ -2,7 +2,7 @@
 import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { Plus } from "lucide-react";
-import { ContactFormData } from "@/types/contact";
+import { Contact, ContactFormData } from "@/types/contact";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -48,14 +48,14 @@ const formSchema = z.object({
 type AddContactDialogProps = {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  defaultContactType?: "Customer" | "Vendor" | "Other";
-  onSuccess?: () => void;
+  defaultType?: "Customer" | "Vendor" | "Other";
+  onSuccess?: (newContact: Contact) => void;
 };
 
 export function AddContactDialog({ 
   open, 
   onOpenChange,
-  defaultContactType = "Customer",
+  defaultType = "Customer",
   onSuccess 
 }: AddContactDialogProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -75,7 +75,7 @@ export function AddContactDialog({
       company: "",
       email: "",
       phone: "",
-      type: defaultContactType,
+      type: defaultType,
       logo: undefined,
     },
   });
@@ -112,7 +112,7 @@ export function AddContactDialog({
         form.reset();
         setLogoPreview(null);
         toast({ title: "Success", description: "Contact added successfully" });
-        if (onSuccess) onSuccess();
+        if (onSuccess) onSuccess(result);
       }
     } catch (error) {
       toast({

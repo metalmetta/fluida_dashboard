@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { format, addDays } from "date-fns";
 import { CalendarIcon, Plus, MinusCircle, Check, UserPlus } from "lucide-react";
@@ -45,7 +44,6 @@ export function CreateInvoiceDialog({
   const [commandOpen, setCommandOpen] = useState(false);
   const [contactSearchTerm, setContactSearchTerm] = useState("");
   
-  // State for AddContactDialog
   const [addContactDialogOpen, setAddContactDialogOpen] = useState(false);
 
   const getNextInvoiceNumber = () => {
@@ -201,7 +199,6 @@ export function CreateInvoiceDialog({
   };
 
   const handleSelectContact = useCallback((contact: Contact) => {
-    // Update form with all available contact data
     setForm(prevForm => ({
       ...prevForm,
       client_name: contact.name,
@@ -536,7 +533,6 @@ export function CreateInvoiceDialog({
           </div>
         </div>
 
-        {/* Invoice preview section */}
         <div className="md:w-2/5 bg-gray-50 p-6 border-l overflow-y-auto hidden md:block">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex justify-between mb-8">
