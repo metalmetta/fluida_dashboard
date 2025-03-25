@@ -1,4 +1,3 @@
-
 import {
   Sidebar,
   SidebarContent,
@@ -19,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar } from "@/components/ui/avatar";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 
 const menuItems = [
   { icon: FileText, label: "Invoices", href: "/invoices" },
@@ -31,30 +30,16 @@ const menuItems = [
 const userMenuItems = [
   { icon: Settings, label: "Settings", href: "/settings" },
   { icon: HelpCircle, label: "Support", href: "/support" },
-  { icon: LogOut, label: "Logout", action: "logout" },
+  { icon: LogOut, label: "Logout", href: "/logout" },
 ];
 
 export function DashboardSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, signOut } = useAuth();
 
   const handleNavigation = (path: string) => {
     navigate(path);
   };
-
-  const handleUserAction = async (action: string | undefined, href: string | undefined) => {
-    if (action === "logout") {
-      await signOut();
-      navigate("/auth");
-    } else if (href) {
-      navigate(href);
-    }
-  };
-
-  // Extract user details
-  const userEmail = user?.email || "user@example.com";
-  const userName = user?.user_metadata?.full_name || userEmail.split("@")[0];
 
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-white">
@@ -106,8 +91,8 @@ export function DashboardSidebar() {
             <DropdownMenuTrigger className="flex items-center gap-3 w-full p-4 hover:bg-secondary/50 transition-colors">
               <Avatar />
               <div className="text-left flex-1">
-                <p className="font-medium">{userName}</p>
-                <p className="text-sm text-muted-foreground">{userEmail}</p>
+                <p className="font-medium">John Doe</p>
+                <p className="text-sm text-muted-foreground">john@example.com</p>
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </DropdownMenuTrigger>
@@ -117,7 +102,7 @@ export function DashboardSidebar() {
                 return (
                   <DropdownMenuItem 
                     key={item.label} 
-                    onClick={() => handleUserAction(item.action, item.href)}
+                    onClick={() => handleNavigation(item.href)}
                     className={`flex items-center gap-2 cursor-pointer ${
                       isActive ? 'text-[#2606EB] bg-[#2606EB]/5' : ''
                     }`}
