@@ -1,9 +1,11 @@
+
+import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Mail, Phone } from "lucide-react";
+import { Plus, Search, Mail, Phone, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -12,32 +14,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const contacts = [
-  {
-    name: "Alice Johnson",
-    company: "Tech Innovators",
-    email: "alice@techinnovators.com",
-    phone: "+1 (555) 123-4567",
-    type: "Vendor",
-  },
-  {
-    name: "Bob Smith",
-    company: "Global Solutions",
-    email: "bob@globalsolutions.com",
-    phone: "+1 (555) 234-5678",
-    type: "Customer",
-  },
-  {
-    name: "Carol Williams",
-    company: "Design Masters",
-    email: "carol@designmasters.com",
-    phone: "+1 (555) 345-6789",
-    type: "Vendor",
-  },
-];
+import { useContacts } from "@/hooks/useContacts";
 
 export default function Contacts() {
+  const { contacts, isLoading, addSampleContacts } = useContacts();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+
+  // Filter contacts based on search query and type filter
+  const filteredContacts = contacts.filter((contact) => {
+    const matchesSearch = 
+      contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (contact.company && contact.company.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (contact.email && contact.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (contact.phone && contact.phone.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesType = typeFilter === "all" || contact.type.toLowerCase() === typeFilter.toLowerCase();
+    
+    return matchesSearch && matchesType;
+  });
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -46,10 +42,17 @@ export default function Contacts() {
             <h1 className="text-3xl font-semibold">Contacts</h1>
             <p className="text-muted-foreground">Manage your business contacts</p>
           </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Contact
-          </Button>
+          <div className="flex gap-2">
+            {contacts.length === 0 && (
+              <Button variant="outline" onClick={addSampleContacts}>
+                Add Sample Contacts
+              </Button>
+            )}
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Contact
+            </Button>
+          </div>
         </div>
 
         <Card className="p-6">
@@ -60,64 +63,90 @@ export default function Contacts() {
                 <Input
                   placeholder="Search contacts..."
                   className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
             </div>
-            <Select defaultValue="all">
+            <Select 
+              defaultValue="all" 
+              value={typeFilter}
+              onValueChange={setTypeFilter}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Contacts</SelectItem>
-                <SelectItem value="vendor">Vendors</SelectItem>
                 <SelectItem value="customer">Customers</SelectItem>
+                <SelectItem value="vendor">Vendors</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {contacts.map((contact, index) => (
-              <div
-                key={index}
-                className="p-4 rounded-lg border hover:border-primary/50 transition-colors"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <Avatar />
-                    <div>
-                      <p className="font-medium">{contact.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {contact.company}
-                      </p>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : filteredContacts.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-muted-foreground mb-4">No contacts found</p>
+              {contacts.length === 0 ? (
+                <Button onClick={addSampleContacts}>Add Sample Contacts</Button>
+              ) : (
+                <p className="text-sm">Try adjusting your search or filter</p>
+              )}
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {filteredContacts.map((contact) => (
+                <div
+                  key={contact.id}
+                  className="p-4 rounded-lg border hover:border-primary/50 transition-colors"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <Avatar />
+                      <div>
+                        <p className="font-medium">{contact.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {contact.company || "No company"}
+                        </p>
+                      </div>
                     </div>
+                    <Badge variant="outline">{contact.type}</Badge>
                   </div>
-                  <Badge variant="outline">{contact.type}</Badge>
+                  <div className="space-y-2">
+                    {contact.email && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <a
+                          href={`mailto:${contact.email}`}
+                          className="text-primary hover:underline"
+                        >
+                          {contact.email}
+                        </a>
+                      </div>
+                    )}
+                    {contact.phone && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <a
+                          href={`tel:${contact.phone}`}
+                          className="text-primary hover:underline"
+                        >
+                          {contact.phone}
+                        </a>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <a
-                      href={`mailto:${contact.email}`}
-                      className="text-primary hover:underline"
-                    >
-                      {contact.email}
-                    </a>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <a
-                      href={`tel:${contact.phone}`}
-                      className="text-primary hover:underline"
-                    >
-                      {contact.phone}
-                    </a>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
     </DashboardLayout>
   );
-} 
+}
