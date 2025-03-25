@@ -19,6 +19,7 @@ const loginSchema = z.object({
 
 const signupSchema = loginSchema.extend({
   fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
+  companyName: z.string().min(2, { message: "Company name must be at least 2 characters." }),
   confirmPassword: z.string().min(6, { message: "Password must be at least 6 characters." }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match.",
@@ -45,6 +46,7 @@ export default function Auth() {
     defaultValues: {
       email: "",
       fullName: "",
+      companyName: "",
       password: "",
       confirmPassword: "",
     },
@@ -60,7 +62,7 @@ export default function Auth() {
 
   const onSignupSubmit = async (data: SignupFormValues) => {
     try {
-      await signUp(data.email, data.password, data.fullName);
+      await signUp(data.email, data.password, data.fullName, data.companyName);
       setActiveTab("login");
     } catch (error) {
       console.error("Signup error:", error);
@@ -138,6 +140,19 @@ export default function Auth() {
                         <FormLabel>Full Name</FormLabel>
                         <FormControl>
                           <Input placeholder="John Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={signupForm.control}
+                    name="companyName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Company Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Acme Inc." {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
