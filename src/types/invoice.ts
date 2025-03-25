@@ -40,6 +40,7 @@ export interface InvoiceFormData {
     iban?: string;
     accountNumber?: string;
     bank_name?: string;
+    solanaAddress?: string;
   };
   payment_instructions?: string;
   terms?: string;

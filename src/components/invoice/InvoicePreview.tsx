@@ -19,7 +19,7 @@ export function InvoicePreview({
     if (!form.payment_method) return "";
     
     if (form.payment_method_details) {
-      const { label, type, iban, accountNumber, bank_name } = form.payment_method_details;
+      const { label, type, iban, accountNumber, bank_name, solanaAddress } = form.payment_method_details;
       
       let details = label || "";
       
@@ -35,6 +35,10 @@ export function InvoicePreview({
         details += `\nIBAN: ${iban}`;  // Display full IBAN
       } else if (accountNumber) {
         details += `\nAccount Number: ${accountNumber}`;
+      }
+      
+      if (solanaAddress) {
+        details += `\nWallet Address: ${solanaAddress}`;
       }
       
       return details;

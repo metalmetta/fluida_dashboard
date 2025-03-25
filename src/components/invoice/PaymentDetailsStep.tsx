@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
@@ -92,16 +91,25 @@ export function PaymentDetailsStep({
     const selectedMethod = paymentMethods.find(method => method.id === methodId);
     
     if (selectedMethod) {
+      // Create appropriate payment_method_details based on the type
+      const details: any = {
+        label: selectedMethod.label,
+        type: selectedMethod.type
+      };
+      
+      // Add specific fields based on the payment method type
+      if (selectedMethod.type === 'usdc') {
+        details.solanaAddress = selectedMethod.details?.solanaAddress;
+      } else {
+        details.iban = selectedMethod.details?.iban;
+        details.accountNumber = selectedMethod.details?.accountNumber;
+        details.bank_name = selectedMethod.details?.bank_name;
+      }
+      
       setForm({ 
         ...form, 
         payment_method: methodId,
-        payment_method_details: {
-          label: selectedMethod.label,
-          type: selectedMethod.type,
-          iban: selectedMethod.details?.iban,
-          accountNumber: selectedMethod.details?.accountNumber,
-          bank_name: selectedMethod.details?.bank_name
-        }
+        payment_method_details: details
       });
     } else {
       setForm({ ...form, payment_method: methodId });
