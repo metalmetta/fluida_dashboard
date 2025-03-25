@@ -109,7 +109,7 @@ export default function Bills() {
 
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Forward invoices to <span className="font-medium">bills@ap.acctual.com</span>
+            Forward invoices to <span className="font-medium">bills@getfluida.com</span>
           </div>
         </div>
 
