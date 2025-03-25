@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Invoice } from "@/types/invoice";
@@ -134,16 +135,25 @@ export function useInvoices() {
     fetchInvoices();
   }, []);
 
-  // Helper function to format payment method for display
+  // Improved helper function to format payment method for display
   const formatPaymentMethod = (paymentMethod: string | undefined): string => {
     if (!paymentMethod) return "—";
     
+    // Handle the standard payment methods
     if (paymentMethod === "bank_transfer") return "Bank Transfer";
     if (paymentMethod === "blockchain_transfer") return "Blockchain Transfer";
     if (paymentMethod === "credit_card") return "Credit Card";
     
-    // For payment methods stored as IDs, we'll just display a generic label
-    return "Custom Method";
+    // For payment methods already in readable format (e.g. "Bank Transfer" from sample data)
+    if (paymentMethod === "Bank Transfer") return "Bank Transfer";
+    if (paymentMethod === "Credit Card") return "Credit Card";
+    if (paymentMethod === "PayPal") return "PayPal";
+    
+    // For any other values, make them title case for better display
+    return paymentMethod
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   return { 
