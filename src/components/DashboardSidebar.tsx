@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar } from "@/components/ui/avatar";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 
 const menuItems = [
@@ -35,6 +35,7 @@ const userMenuItems = [
 
 export function DashboardSidebar() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleNavigation = (path: string) => {
     navigate(path);
@@ -61,17 +62,25 @@ export function DashboardSidebar() {
             <SidebarGroupLabel>Menu</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {menuItems.map((item) => (
-                  <SidebarMenuItem key={item.label}>
-                    <SidebarMenuButton
-                      onClick={() => handleNavigation(item.href)}
-                      className="flex items-center gap-3 w-full"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {menuItems.map((item) => {
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <SidebarMenuItem key={item.label}>
+                      <SidebarMenuButton
+                        onClick={() => handleNavigation(item.href)}
+                        className={`flex items-center gap-3 w-full relative ${
+                          isActive ? 'text-[#2606EB] bg-[#2606EB]/5' : ''
+                        }`}
+                      >
+                        {isActive && (
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#2606EB] rounded-r" />
+                        )}
+                        <item.icon className={`h-4 w-4 ${isActive ? 'text-[#2606EB]' : ''}`} />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -88,16 +97,21 @@ export function DashboardSidebar() {
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" side="right" className="w-56">
-              {userMenuItems.map((item) => (
-                <DropdownMenuItem 
-                  key={item.label} 
-                  onClick={() => handleNavigation(item.href)}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </DropdownMenuItem>
-              ))}
+              {userMenuItems.map((item) => {
+                const isActive = location.pathname === item.href;
+                return (
+                  <DropdownMenuItem 
+                    key={item.label} 
+                    onClick={() => handleNavigation(item.href)}
+                    className={`flex items-center gap-2 cursor-pointer ${
+                      isActive ? 'text-[#2606EB] bg-[#2606EB]/5' : ''
+                    }`}
+                  >
+                    <item.icon className={`h-4 w-4 ${isActive ? 'text-[#2606EB]' : ''}`} />
+                    <span>{item.label}</span>
+                  </DropdownMenuItem>
+                );
+              })}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
