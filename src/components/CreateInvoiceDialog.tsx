@@ -234,9 +234,10 @@ export function CreateInvoiceDialog({
 
     try {
       // When adding a new contact, include all collected data
+      // Explicitly type as 'Customer' to match ContactFormData type
       const contactData = {
         ...newContactData,
-        type: "Customer",
+        type: 'Customer' as const, // Use a const assertion to ensure correct type
         logo: null
       };
       
