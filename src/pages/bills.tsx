@@ -1,8 +1,9 @@
+
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, AlertCircle, ArrowRightLeft } from "lucide-react";
+import { Plus, Calendar, AlertCircle, ArrowRightLeft, RefreshCcw } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -12,47 +13,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useState } from "react";
-
-const bills = [
-  {
-    id: "BILL-001",
-    vendor: "Office Supplies Co",
-    amount: "$850.00",
-    dueDate: "2024-02-01",
-    status: "Draft",
-    category: "Supplies",
-  },
-  {
-    id: "BILL-002",
-    vendor: "Internet Services",
-    amount: "$199.99",
-    dueDate: "2024-01-28",
-    status: "Ready for payment",
-    category: "Utilities",
-  },
-  {
-    id: "BILL-003",
-    vendor: "Marketing Agency",
-    amount: "$3,500.00",
-    dueDate: "2024-02-15",
-    status: "Paid",
-    category: "Marketing",
-  },
-];
-
-const statusCounts = {
-  Draft: bills.filter(bill => bill.status === "Draft").length,
-  Approve: bills.filter(bill => bill.status === "Approve").length,
-  "Ready for payment": bills.filter(bill => bill.status === "Ready for payment").length,
-  Paid: bills.filter(bill => bill.status === "Paid").length,
-};
+import { useBills } from "@/hooks/useBills";
+import { formatCurrency } from "@/lib/utils";
 
 export default function Bills() {
+  const { bills, isLoading, addSampleBills } = useBills();
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
   const filteredBills = selectedStatus
     ? bills.filter(bill => bill.status === selectedStatus)
     : bills;
+
+  // Count bills by status
+  const statusCounts = {
+    Draft: bills.filter(bill => bill.status === "Draft").length,
+    Approve: bills.filter(bill => bill.status === "Approve").length,
+    "Ready for payment": bills.filter(bill => bill.status === "Ready for payment").length,
+    Paid: bills.filter(bill => bill.status === "Paid").length,
+  };
 
   return (
     <DashboardLayout>
@@ -60,6 +38,10 @@ export default function Bills() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-semibold">Bills</h1>
           <div className="flex gap-3">
+            <Button variant="outline" onClick={addSampleBills} disabled={isLoading}>
+              <RefreshCcw className="h-4 w-4 mr-2" />
+              Add Sample Bills
+            </Button>
             <Button variant="outline">
               <ArrowRightLeft className="h-4 w-4 mr-2" />
               Transfer funds
@@ -117,38 +99,58 @@ export default function Bills() {
         </div>
 
         <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Bill ID</TableHead>
-                <TableHead>Vendor</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredBills.map((bill) => (
-                <TableRow key={bill.id}>
-                  <TableCell className="font-medium">{bill.id}</TableCell>
-                  <TableCell>{bill.vendor}</TableCell>
-                  <TableCell>{bill.category}</TableCell>
-                  <TableCell>{bill.amount}</TableCell>
-                  <TableCell>{bill.dueDate}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={bill.status === "Ready for payment" ? "destructive" : "outline"}
-                    >
-                      {bill.status}
-                    </Badge>
-                  </TableCell>
+          {isLoading ? (
+            <div className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-sm text-muted-foreground">Loading bills...</p>
+            </div>
+          ) : filteredBills.length === 0 ? (
+            <div className="p-8 text-center">
+              <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground" />
+              <h3 className="mt-2 text-lg font-medium">No bills found</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {selectedStatus
+                  ? `No bills with status "${selectedStatus}"`
+                  : "You don't have any bills yet"}
+              </p>
+              <Button onClick={addSampleBills} variant="outline" className="mt-4">
+                Add sample bills
+              </Button>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Bill ID</TableHead>
+                  <TableHead>Vendor</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredBills.map((bill) => (
+                  <TableRow key={bill.id}>
+                    <TableCell className="font-medium">{bill.bill_number}</TableCell>
+                    <TableCell>{bill.vendor}</TableCell>
+                    <TableCell>{bill.category || "N/A"}</TableCell>
+                    <TableCell>{formatCurrency(bill.amount)}</TableCell>
+                    <TableCell>{new Date(bill.due_date).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={bill.status === "Ready for payment" ? "destructive" : "outline"}
+                      >
+                        {bill.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </Card>
       </div>
     </DashboardLayout>
   );
-} 
+}
