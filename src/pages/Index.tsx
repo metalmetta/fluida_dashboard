@@ -1,4 +1,3 @@
-
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,10 +41,9 @@ const Index = () => {
       <div className="space-y-8 animate-in">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-semibold">Welcome back</h1>
+            <h1 className="text-3xl font-semibold">Welcome back, John Doe</h1>
             <p className="text-muted-foreground">Here's your financial overview</p>
           </div>
-          <Button className="bg-primary hover:bg-primary/90">Send Payment</Button>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">

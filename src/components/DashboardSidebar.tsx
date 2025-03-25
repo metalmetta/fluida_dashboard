@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const menuItems = [
   { icon: FileText, label: "Invoices", href: "/invoices" },
@@ -35,66 +36,72 @@ const userMenuItems = [
 export function DashboardSidebar() {
   const navigate = useNavigate();
 
-  const handleNavigation = (href: string) => {
-    navigate(href);
+  const handleNavigation = (path: string) => {
+    navigate(path);
   };
 
   return (
-    <Sidebar className="flex flex-col h-screen">
-      <SidebarHeader className="p-4">
-        <button 
-          onClick={() => handleNavigation("/")}
-          className="text-lg font-semibold hover:text-primary transition-colors"
-        >
-          Fluida
-        </button>
-      </SidebarHeader>
-      
-      <SidebarContent className="flex-1">
-        <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton
-                    onClick={() => handleNavigation(item.href)}
-                    className="flex items-center gap-3 w-full"
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
+    <div className="flex h-screen w-64 flex-col border-r bg-white">
+      <Sidebar className="flex flex-col h-screen">
+        <SidebarHeader className="p-4">
+          <button 
+            onClick={() => handleNavigation("/")}
+            className="hover:opacity-80 transition-opacity"
+          >
+            <img 
+              src="/logo.png" 
+              alt="Logo" 
+              className="h-28 w-auto"
+            />
+          </button>
+        </SidebarHeader>
+        
+        <SidebarContent className="flex-1">
+          <SidebarGroup>
+            <SidebarGroupLabel>Menu</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {menuItems.map((item) => (
+                  <SidebarMenuItem key={item.label}>
+                    <SidebarMenuButton
+                      onClick={() => handleNavigation(item.href)}
+                      className="flex items-center gap-3 w-full"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
 
-      <div className="mt-auto border-t">
-        <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-3 w-full p-4 hover:bg-secondary/50 transition-colors">
-            <Avatar />
-            <div className="text-left flex-1">
-              <p className="font-medium">John Doe</p>
-              <p className="text-sm text-muted-foreground">john@example.com</p>
-            </div>
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" side="right" className="w-56">
-            {userMenuItems.map((item) => (
-              <DropdownMenuItem 
-                key={item.label} 
-                onClick={() => handleNavigation(item.href)}
-                className="flex items-center gap-2 cursor-pointer"
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.label}</span>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </Sidebar>
+        <div className="mt-auto border-t">
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-3 w-full p-4 hover:bg-secondary/50 transition-colors">
+              <Avatar />
+              <div className="text-left flex-1">
+                <p className="font-medium">John Doe</p>
+                <p className="text-sm text-muted-foreground">john@example.com</p>
+              </div>
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" side="right" className="w-56">
+              {userMenuItems.map((item) => (
+                <DropdownMenuItem 
+                  key={item.label} 
+                  onClick={() => handleNavigation(item.href)}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </Sidebar>
+    </div>
   );
 }
