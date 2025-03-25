@@ -17,6 +17,7 @@ export interface Contact {
   country?: string;
   tax_id?: string;
   wallet_address?: string;
+  logo_url?: string;
   logo?: File | null;
 }
 

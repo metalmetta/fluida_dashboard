@@ -56,37 +56,61 @@ export type Database = {
       }
       contacts: {
         Row: {
+          address: string | null
+          city: string | null
           company: string | null
+          country: string | null
           created_at: string
           email: string | null
           id: string
+          logo_url: string | null
           name: string
           phone: string | null
+          state: string | null
+          tax_id: string | null
           type: string
           updated_at: string
           user_id: string
+          wallet_address: string | null
+          zip: string | null
         }
         Insert: {
+          address?: string | null
+          city?: string | null
           company?: string | null
+          country?: string | null
           created_at?: string
           email?: string | null
           id?: string
+          logo_url?: string | null
           name: string
           phone?: string | null
+          state?: string | null
+          tax_id?: string | null
           type: string
           updated_at?: string
           user_id: string
+          wallet_address?: string | null
+          zip?: string | null
         }
         Update: {
+          address?: string | null
+          city?: string | null
           company?: string | null
+          country?: string | null
           created_at?: string
           email?: string | null
           id?: string
+          logo_url?: string | null
           name?: string
           phone?: string | null
+          state?: string | null
+          tax_id?: string | null
           type?: string
           updated_at?: string
           user_id?: string
+          wallet_address?: string | null
+          zip?: string | null
         }
         Relationships: []
       }

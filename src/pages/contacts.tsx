@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Mail, Phone, Loader2 } from "lucide-react";
+import { Plus, Search, Mail, Phone, Loader2, MapPin, Building } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -18,7 +18,7 @@ import { useContacts } from "@/hooks/useContacts";
 import { AddContactDialog } from "@/components/AddContactDialog";
 
 export default function Contacts() {
-  const { contacts, isLoading } = useContacts();
+  const { contacts, isLoading, addSampleContacts } = useContacts();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
 
@@ -38,18 +38,23 @@ export default function Contacts() {
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold">Contacts</h1>
             <p className="text-muted-foreground">Manage your business contacts</p>
           </div>
-          <div>
+          <div className="flex gap-2">
+            {contacts.length === 0 && !isLoading && (
+              <Button variant="outline" onClick={addSampleContacts}>
+                Add Sample Contacts
+              </Button>
+            )}
             <AddContactDialog />
           </div>
         </div>
 
-        <Card className="p-6">
-          <div className="flex gap-4 mb-6">
+        <Card className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -66,7 +71,7 @@ export default function Contacts() {
               value={typeFilter}
               onValueChange={setTypeFilter}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Filter by type" />
               </SelectTrigger>
               <SelectContent>
@@ -96,7 +101,13 @@ export default function Contacts() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <Avatar />
+                      {contact.logo_url ? (
+                        <Avatar className="h-10 w-10 border">
+                          <img src={contact.logo_url} alt={`${contact.name} logo`} />
+                        </Avatar>
+                      ) : (
+                        <Avatar className="h-10 w-10" />
+                      )}
                       <div>
                         <p className="font-medium">{contact.name}</p>
                         <p className="text-sm text-muted-foreground">
@@ -127,6 +138,18 @@ export default function Contacts() {
                         >
                           {contact.phone}
                         </a>
+                      </div>
+                    )}
+                    {contact.address && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span className="truncate">{contact.address}</span>
+                      </div>
+                    )}
+                    {contact.tax_id && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Building className="h-4 w-4 text-muted-foreground" />
+                        <span>Tax ID: {contact.tax_id}</span>
                       </div>
                     )}
                   </div>
