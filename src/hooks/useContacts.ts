@@ -55,8 +55,35 @@ export function useContacts() {
     }
 
     try {
+      // Handle logo upload if present
+      let logoUrl = null;
+      if (contactData.logo) {
+        const file = contactData.logo;
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('contact-logos')
+          .upload(filePath, file);
+          
+        if (uploadError) {
+          throw uploadError;
+        }
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('contact-logos')
+          .getPublicUrl(filePath);
+          
+        logoUrl = publicUrl;
+      }
+
+      // Create contact without the File object (can't be stored in DB)
+      const { logo, ...contactDataWithoutLogo } = contactData;
+      
       const newContact = {
-        ...contactData,
+        ...contactDataWithoutLogo,
+        logo_url: logoUrl,
         user_id: user.id
       };
 

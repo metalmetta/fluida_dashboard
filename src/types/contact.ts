@@ -17,6 +17,7 @@ export interface Contact {
   country?: string;
   tax_id?: string;
   wallet_address?: string;
+  logo?: File | null;
 }
 
 export type ContactFormData = Omit<Contact, 'id' | 'user_id' | 'created_at' | 'updated_at'>;

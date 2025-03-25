@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { ContactFormData } from "@/types/contact";
 import { useContacts } from "@/hooks/useContacts";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export function AddContactDialog() {
   const [open, setOpen] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const { addContact } = useContacts();
   const { toast } = useToast();
   const form = useForm<ContactFormData>({
@@ -48,14 +49,37 @@ export function AddContactDialog() {
       country: "",
       tax_id: "",
       wallet_address: "",
+      logo: undefined,
     },
   });
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type !== "image/jpeg" && file.type !== "image/jpg") {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload a JPEG image",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setLogoPreview(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+      form.setValue("logo", file);
+    }
+  };
 
   const onSubmit = async (data: ContactFormData) => {
     try {
       const result = await addContact(data);
       if (result) {
         form.reset();
+        setLogoPreview(null);
         setOpen(false);
       }
     } catch (error) {
@@ -118,6 +142,35 @@ export function AddContactDialog() {
 
               <FormField
                 control={form.control}
+                name="logo"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>Logo (JPEG)</FormLabel>
+                    <div className="flex items-start gap-4">
+                      <div className="flex-1">
+                        <Input
+                          type="file"
+                          accept=".jpg,.jpeg,image/jpeg"
+                          onChange={handleLogoChange}
+                          className="w-full"
+                        />
+                      </div>
+                      {logoPreview && (
+                        <div className="w-16 h-16 rounded-md overflow-hidden border">
+                          <img 
+                            src={logoPreview} 
+                            alt="Logo preview" 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
                 name="company"
                 render={({ field }) => (
                   <FormItem>
@@ -172,25 +225,6 @@ export function AddContactDialog() {
                   </FormItem>
                 )}
               />
-
-              <div className="pt-4 border-t">
-                <h3 className="text-lg font-medium mb-4">Payment details</h3>
-                <FormField
-                  control={form.control}
-                  name="wallet_address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Wallet address</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Select or add a wallet"
-                          {...field}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
 
               <div className="pt-4 border-t">
                 <h3 className="text-lg font-medium mb-4">Billing details</h3>
@@ -251,7 +285,7 @@ export function AddContactDialog() {
                     name="zip"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Zip Code</FormLabel>
+                        <FormLabel>ZIP Code</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Enter ZIP..."
@@ -288,6 +322,25 @@ export function AddContactDialog() {
                       <FormControl>
                         <Input
                           placeholder="Enter tax ID..."
+                          {...field}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="pt-4 border-t">
+                <h3 className="text-lg font-medium mb-4">Payment details</h3>
+                <FormField
+                  control={form.control}
+                  name="wallet_address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Wallet address</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Select or add a wallet"
                           {...field}
                         />
                       </FormControl>
