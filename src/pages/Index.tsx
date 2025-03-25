@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { ArrowUpRight, Building2 } from "lucide-react";
 import { Line, LineChart, ResponsiveContainer, XAxis } from "recharts";
+import { useAuth } from "@/contexts/AuthContext";
 
 const data = [
   { day: "Jan 13", value: 245000 },
@@ -36,12 +37,15 @@ const actions = [
 ];
 
 const Index = () => {
+  const { user } = useAuth();
+  const userName = user?.user_metadata?.full_name || "there";
+
   return (
     <DashboardLayout>
       <div className="space-y-8 animate-in">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-semibold">Welcome back, John Doe</h1>
+            <h1 className="text-3xl font-semibold">Welcome back, {userName}</h1>
             <p className="text-muted-foreground">Here's your financial overview</p>
           </div>
         </div>
