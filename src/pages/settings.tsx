@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/DashboardLayout";
@@ -21,14 +21,15 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Avatar } from "@/components/ui/avatar";
-import { User, Building2, CheckSquare, Users, CreditCard } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { User, Building2, CheckSquare, Users, CreditCard, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [profileData, setProfileData] = useState({
     fullName: "",
     email: "",
@@ -38,9 +39,11 @@ export default function Settings() {
     address: "",
     city: "",
     state: "",
-    zip: ""
+    zip: "",
+    avatarUrl: ""
   });
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     async function loadProfileData() {
@@ -68,7 +71,8 @@ export default function Settings() {
               address: '',
               city: '',
               state: '',
-              zip: ''
+              zip: '',
+              avatarUrl: data.avatar_url || ''
             });
           }
         }
@@ -86,6 +90,81 @@ export default function Settings() {
 
     loadProfileData();
   }, [user, toast]);
+
+  const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      if (!event.target.files || event.target.files.length === 0) {
+        return;
+      }
+
+      const file = event.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user?.id}/${crypto.randomUUID()}.${fileExt}`;
+
+      setUploading(true);
+
+      // Upload the file to Supabase storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get the public URL
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // Update the avatar URL in the profiles table
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: data.publicUrl })
+        .eq('id', user?.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Update local state
+      setProfileData({
+        ...profileData,
+        avatarUrl: data.publicUrl
+      });
+
+      toast({
+        title: "Avatar Updated",
+        description: "Your profile picture has been updated successfully",
+      });
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload avatar",
+        variant: "destructive"
+      });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  const getInitials = (name: string) => {
+    if (!name) return "U";
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   const handleSaveProfile = async () => {
     try {
@@ -174,9 +253,30 @@ export default function Settings() {
             <Card className="p-6">
               <div className="space-y-8">
                 <div className="flex items-center gap-6">
-                  <Avatar className="h-20 w-20" />
+                  <Avatar className="h-20 w-20">
+                    {profileData.avatarUrl ? (
+                      <AvatarImage src={profileData.avatarUrl} alt={profileData.fullName} />
+                    ) : (
+                      <AvatarFallback>{getInitials(profileData.fullName)}</AvatarFallback>
+                    )}
+                  </Avatar>
                   <div>
-                    <Button variant="outline" className="mb-2">Change Avatar</Button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={uploadAvatar}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <Button 
+                      variant="outline" 
+                      className="mb-2"
+                      onClick={triggerFileInput}
+                      disabled={uploading}
+                    >
+                      {uploading ? "Uploading..." : "Change Avatar"}
+                      {!uploading && <Upload className="ml-2 h-4 w-4" />}
+                    </Button>
                     <p className="text-sm text-muted-foreground">
                       JPG, GIF or PNG. Max size of 800K
                     </p>

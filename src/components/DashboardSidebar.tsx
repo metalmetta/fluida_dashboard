@@ -17,10 +17,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const menuItems = [
   { icon: FileText, label: "Invoices", href: "/invoices" },
@@ -40,6 +42,34 @@ export function DashboardSidebar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchUserProfile() {
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('avatar_url, full_name')
+            .eq('id', user.id)
+            .single();
+
+          if (error) {
+            console.error('Error fetching profile:', error);
+            return;
+          }
+
+          if (data?.avatar_url) {
+            setAvatarUrl(data.avatar_url);
+          }
+        } catch (error) {
+          console.error('Error:', error);
+        }
+      }
+    }
+
+    fetchUserProfile();
+  }, [user]);
 
   const handleNavigation = (path: string) => {
     navigate(path);
@@ -69,6 +99,17 @@ export function DashboardSidebar() {
   // Extract user details
   const userEmail = user?.email || "user@example.com";
   const userName = user?.user_metadata?.full_name || userEmail.split("@")[0];
+
+  // Get initials for avatar fallback
+  const getInitials = (name: string) => {
+    if (!name) return "U";
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-white">
@@ -118,7 +159,13 @@ export function DashboardSidebar() {
         <div className="mt-auto border-t">
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-3 w-full p-4 hover:bg-secondary/50 transition-colors">
-              <Avatar />
+              <Avatar>
+                {avatarUrl ? (
+                  <AvatarImage src={avatarUrl} alt={userName} />
+                ) : (
+                  <AvatarFallback>{getInitials(userName)}</AvatarFallback>
+                )}
+              </Avatar>
               <div className="text-left flex-1">
                 <p className="font-medium">{userName}</p>
                 <p className="text-sm text-muted-foreground">{userEmail}</p>
