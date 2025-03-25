@@ -39,12 +39,13 @@ export interface InvoiceFormData {
     type?: string;
     iban?: string;
     accountNumber?: string;
+    bank_name?: string;
   };
   payment_instructions?: string;
   terms?: string;
 }
 
-export type InvoiceFormStep = 'customer' | 'items' | 'payment' | 'terms';
+export type InvoiceFormStep = 'customer' | 'items' | 'payment';
 
 export interface PaymentMethod {
   id: string;

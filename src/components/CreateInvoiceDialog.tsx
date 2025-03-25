@@ -14,7 +14,6 @@ import { AddContactDialog } from "@/components/AddContactDialog";
 import { CustomerDetailsStep } from "@/components/invoice/CustomerDetailsStep";
 import { LineItemsStep } from "@/components/invoice/LineItemsStep";
 import { PaymentDetailsStep } from "@/components/invoice/PaymentDetailsStep";
-import { TermsStep } from "@/components/invoice/TermsStep";
 import { InvoicePreview } from "@/components/invoice/InvoicePreview";
 
 interface CreateInvoiceDialogProps {
@@ -229,9 +228,6 @@ export function CreateInvoiceDialog({
       case "items":
         setCurrentStep("payment");
         break;
-      case "payment":
-        setCurrentStep("terms");
-        break;
       default:
         break;
     }
@@ -244,9 +240,6 @@ export function CreateInvoiceDialog({
         break;
       case "payment":
         setCurrentStep("items");
-        break;
-      case "terms":
-        setCurrentStep("payment");
         break;
       default:
         break;
@@ -289,17 +282,8 @@ export function CreateInvoiceDialog({
             form={form}
             setForm={setForm}
             onPrevious={previousStep}
-            onNext={nextStep}
-          />
-        );
-      case "terms":
-        return (
-          <TermsStep
-            form={form}
-            setForm={setForm}
-            isSubmitting={isSubmitting}
-            onPrevious={previousStep}
             onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
           />
         );
       default:
@@ -312,8 +296,7 @@ export function CreateInvoiceDialog({
     const steps = [
       { key: "customer", label: "Customer" },
       { key: "items", label: "Line Items" },
-      { key: "payment", label: "Payment" },
-      { key: "terms", label: "Terms" }
+      { key: "payment", label: "Payment" }
     ];
 
     return (

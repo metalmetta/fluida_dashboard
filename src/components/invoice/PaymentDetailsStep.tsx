@@ -1,62 +1,80 @@
+
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { InvoiceFormData } from "@/types/invoice";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { ArrowLeft } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { InvoiceFormData, PaymentMethod } from "@/types/invoice";
+import { usePaymentMethods } from "@/components/settings/payment-methods/usePaymentMethods";
 
 interface PaymentDetailsStepProps {
   form: InvoiceFormData;
   setForm: (form: InvoiceFormData) => void;
   onPrevious: () => void;
-  onNext: () => void;
-}
-
-interface PaymentMethod {
-  id: string;
-  label: string;
-  type: string;
-  details?: {
-    iban?: string;
-    accountNumber?: string;
-  };
+  onSubmit: () => void;
+  isSubmitting: boolean;
 }
 
 export function PaymentDetailsStep({
   form,
   setForm,
   onPrevious,
-  onNext
+  onSubmit,
+  isSubmitting
 }: PaymentDetailsStepProps) {
-  const { user } = useAuth();
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedPaymentType, setSelectedPaymentType] = useState(form.payment_method || "");
+  const [selectedPaymentType, setSelectedPaymentType] = useState<string>(form.payment_method || "");
+  const { paymentMethods, isLoading } = usePaymentMethods();
 
+  // Set initial payment type based on form data
   useEffect(() => {
-    if (user) {
-      setLoading(true);
-      // We need to use the "as any" type assertion since the TypeScript types don't know about our payment_methods table
-      supabase
-        .from('payment_methods' as any)
-        .select('id, label, type, details')
-        .eq('user_id', user.id)
-        .then(({ data, error }) => {
-          if (!error && data) {
-            setPaymentMethods(data.map((method: any) => ({
-              id: method.id,
-              label: method.label,
-              type: method.type,
-              details: method.details
-            })));
+    if (form.payment_method) {
+      // Check if it's one of our known types or a specific method
+      if (
+        form.payment_method === "bank_transfer" ||
+        form.payment_method === "blockchain_transfer" ||
+        form.payment_method === "credit_card"
+      ) {
+        setSelectedPaymentType(form.payment_method);
+      } else {
+        // Try to determine the type from available payment methods
+        const method = paymentMethods.find(
+          (method) => method.id === form.payment_method
+        );
+        if (method) {
+          if (["usd", "eur", "gbp"].includes(method.type)) {
+            setSelectedPaymentType("bank_transfer");
+          } else if (method.type === "usdc") {
+            setSelectedPaymentType("blockchain_transfer");
           }
-          setLoading(false);
-        });
+        }
+      }
     }
-  }, [user]);
+  }, [form.payment_method, paymentMethods]);
+
+  // Filter for fiat bank accounts (USD, EUR, GBP)
+  const bankAccounts = paymentMethods.filter((method) =>
+    ["usd", "eur", "gbp"].includes(method.type)
+  );
+
+  // Filter for crypto wallets (USDC)
+  const cryptoWallets = paymentMethods.filter(
+    (method) => method.type === "usdc"
+  );
+
+  // Format display label for bank accounts
+  const formatBankAccountLabel = (method: PaymentMethod) => {
+    const currency = method.type.toUpperCase();
+    // Display the last 4 digits of IBAN if available
+    if (method.details.iban) {
+      const iban = method.details.iban;
+      const lastFour = iban.slice(-4);
+      return `${method.label} (${currency}) - ****${lastFour}`;
+    }
+    return `${method.label} (${currency})`;
+  };
 
   // Handle payment method type selection
   const handlePaymentTypeChange = (value: string) => {
@@ -81,7 +99,8 @@ export function PaymentDetailsStep({
           label: selectedMethod.label,
           type: selectedMethod.type,
           iban: selectedMethod.details?.iban,
-          accountNumber: selectedMethod.details?.accountNumber
+          accountNumber: selectedMethod.details?.accountNumber,
+          bank_name: selectedMethod.details?.bank_name
         }
       });
     } else {
@@ -90,119 +109,91 @@ export function PaymentDetailsStep({
   };
 
   // Filter payment methods based on type (bank accounts or blockchain wallets)
-  const getBankAccounts = () => {
-    return paymentMethods.filter(method => 
-      method.type === "usd" || method.type === "eur" || method.type === "gbp"
-    );
+  const getAvailableMethodsByType = () => {
+    if (selectedPaymentType === "bank_transfer") {
+      return bankAccounts;
+    } else if (selectedPaymentType === "blockchain_transfer") {
+      return cryptoWallets;
+    }
+    return [];
   };
 
-  const getBlockchainWallets = () => {
-    return paymentMethods.filter(method => 
-      method.type === "usdc"
-    );
-  };
-
-  // Format the bank account display to show currency and last 4 digits of IBAN
-  const formatBankAccountLabel = (account: PaymentMethod) => {
-    const currency = account.type.toUpperCase();
-    const iban = account.details?.iban || "";
-    const accountNumber = account.details?.accountNumber || "";
-    
-    let lastDigits = "";
-    if (iban && iban.length >= 4) {
-      lastDigits = iban.slice(-4);
-    } else if (accountNumber && accountNumber.length >= 4) {
-      lastDigits = accountNumber.slice(-4);
-    }
-    
-    if (lastDigits) {
-      return `${account.label} (${currency} - ****${lastDigits})`;
-    }
-    
-    return `${account.label} (${currency})`;
-  };
+  // Determine if a specific selection is required
+  const needsSpecificSelection =
+    selectedPaymentType === "bank_transfer" ||
+    selectedPaymentType === "blockchain_transfer";
 
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-medium">Payment Details</h3>
-      
+
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="payment_type">Payment Method Type</Label>
-          <Select
+          <Label>Payment Method</Label>
+          <RadioGroup
             value={selectedPaymentType}
             onValueChange={handlePaymentTypeChange}
+            className="grid grid-cols-1 gap-4 sm:grid-cols-3"
           >
-            <SelectTrigger id="payment_type">
-              <SelectValue placeholder="Select a payment method type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-              <SelectItem value="blockchain_transfer">Blockchain Transfer</SelectItem>
-              <SelectItem value="credit_card">Credit Card</SelectItem>
-            </SelectContent>
-          </Select>
+            <div className="flex items-center space-x-2 rounded-md border p-4">
+              <RadioGroupItem value="bank_transfer" id="bank_transfer" />
+              <Label htmlFor="bank_transfer" className="flex-1 cursor-pointer">
+                Bank Transfer
+              </Label>
+            </div>
+
+            <div className="flex items-center space-x-2 rounded-md border p-4">
+              <RadioGroupItem value="blockchain_transfer" id="blockchain_transfer" />
+              <Label htmlFor="blockchain_transfer" className="flex-1 cursor-pointer">
+                Blockchain Transfer
+              </Label>
+            </div>
+
+            <div className="flex items-center space-x-2 rounded-md border p-4">
+              <RadioGroupItem value="credit_card" id="credit_card" />
+              <Label htmlFor="credit_card" className="flex-1 cursor-pointer">
+                Credit Card
+              </Label>
+            </div>
+          </RadioGroup>
         </div>
-        
-        {/* Bank Transfer dropdown - show only if bank_transfer is selected */}
-        {selectedPaymentType === "bank_transfer" && (
+
+        {needsSpecificSelection && getAvailableMethodsByType().length > 0 && (
           <div className="space-y-2">
-            <Label htmlFor="bank_account">Select Bank Account</Label>
+            <Label>
+              {selectedPaymentType === "bank_transfer"
+                ? "Select Bank Account"
+                : "Select Wallet Address"}
+            </Label>
             <Select
-              value={form.payment_method === "bank_transfer" ? "" : form.payment_method}
+              value={form.payment_method}
               onValueChange={handleSpecificMethodChange}
             >
-              <SelectTrigger id="bank_account">
-                <SelectValue placeholder="Select a bank account" />
+              <SelectTrigger>
+                <SelectValue placeholder="Select an account" />
               </SelectTrigger>
               <SelectContent>
-                {getBankAccounts().length > 0 ? (
-                  getBankAccounts().map(account => (
-                    <SelectItem key={account.id} value={account.id}>
-                      {formatBankAccountLabel(account)}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no_accounts" disabled>No bank accounts available</SelectItem>
-                )}
+                {getAvailableMethodsByType().map((method) => (
+                  <SelectItem key={method.id} value={method.id}>
+                    {selectedPaymentType === "bank_transfer"
+                      ? formatBankAccountLabel(method)
+                      : method.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
         )}
 
-        {/* Blockchain Transfer dropdown - show only if blockchain_transfer is selected */}
-        {selectedPaymentType === "blockchain_transfer" && (
-          <div className="space-y-2">
-            <Label htmlFor="wallet_address">Select Wallet Address</Label>
-            <Select
-              value={form.payment_method === "blockchain_transfer" ? "" : form.payment_method}
-              onValueChange={handleSpecificMethodChange}
-            >
-              <SelectTrigger id="wallet_address">
-                <SelectValue placeholder="Select a wallet address" />
-              </SelectTrigger>
-              <SelectContent>
-                {getBlockchainWallets().length > 0 ? (
-                  getBlockchainWallets().map(wallet => (
-                    <SelectItem key={wallet.id} value={wallet.id}>
-                      {wallet.label}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no_wallets" disabled>No wallet addresses available</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        
         <div className="space-y-2">
           <Label htmlFor="payment_instructions">Payment Instructions</Label>
           <Textarea
             id="payment_instructions"
-            placeholder="Add payment instructions, bank details, or other payment information..."
+            placeholder="Add any specific instructions for payment..."
             value={form.payment_instructions || ""}
-            onChange={(e) => setForm({ ...form, payment_instructions: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, payment_instructions: e.target.value })
+            }
             className="min-h-[100px]"
           />
         </div>
@@ -213,9 +204,8 @@ export function PaymentDetailsStep({
           <ArrowLeft className="h-4 w-4 mr-2" />
           Previous
         </Button>
-        <Button onClick={onNext}>
-          Next
-          <ArrowRight className="h-4 w-4 ml-2" />
+        <Button onClick={onSubmit} disabled={isSubmitting}>
+          {isSubmitting ? "Creating..." : "Create Invoice"}
         </Button>
       </div>
     </div>

@@ -19,12 +19,16 @@ export function InvoicePreview({
     if (!form.payment_method) return "";
     
     if (form.payment_method_details) {
-      const { label, type, iban, accountNumber } = form.payment_method_details;
+      const { label, type, iban, accountNumber, bank_name } = form.payment_method_details;
       
       let details = label || "";
       
       if (type) {
         details += ` (${type.toUpperCase()})`;
+      }
+      
+      if (bank_name) {
+        details += `\nBank: ${bank_name}`;
       }
       
       if (iban) {
