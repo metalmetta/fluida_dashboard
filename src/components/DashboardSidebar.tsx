@@ -20,6 +20,7 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const menuItems = [
   { icon: FileText, label: "Invoices", href: "/invoices" },
@@ -38,6 +39,7 @@ export function DashboardSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { toast } = useToast();
 
   const handleNavigation = (path: string) => {
     navigate(path);
@@ -45,8 +47,20 @@ export function DashboardSidebar() {
 
   const handleUserAction = async (action: string | undefined, href: string | undefined) => {
     if (action === "logout") {
-      await signOut();
-      navigate("/auth");
+      try {
+        await signOut();
+        toast({
+          title: "Logged out successfully",
+          description: "You have been logged out of your account.",
+        });
+        navigate("/auth");
+      } catch (error: any) {
+        toast({
+          title: "Error signing out",
+          description: error.message || "There was a problem signing out.",
+          variant: "destructive",
+        });
+      }
     } else if (href) {
       navigate(href);
     }

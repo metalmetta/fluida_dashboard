@@ -26,7 +26,7 @@ export default function App() {
           <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
-          <Route path="/logout" element={<Navigate to="/" />} />
+          <Route path="/logout" element={<Navigate to="/auth" />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Toaster />
