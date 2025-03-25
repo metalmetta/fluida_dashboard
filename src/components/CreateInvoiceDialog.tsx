@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { format, addDays } from "date-fns";
-import { CalendarIcon, Plus, MinusCircle, Check, UserPlus } from "lucide-react";
+import { CalendarIcon, Plus, MinusCircle, Check, UserPlus, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -15,13 +15,11 @@ import { useContacts } from "@/hooks/useContacts";
 import { Contact } from "@/types/contact";
 import { AddContactDialog } from "@/components/AddContactDialog";
 import { 
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList 
-} from "@/components/ui/command";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface CreateInvoiceDialogProps {
   open: boolean;
@@ -41,7 +39,7 @@ export function CreateInvoiceDialog({
   const { toast } = useToast();
   const { contacts, isLoading: contactsLoading, addContact, fetchContacts } = useContacts();
   const [customerContacts, setCustomerContacts] = useState<Contact[]>([]);
-  const [commandOpen, setCommandOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [contactSearchTerm, setContactSearchTerm] = useState("");
   
   const [addContactDialogOpen, setAddContactDialogOpen] = useState(false);
@@ -210,7 +208,7 @@ export function CreateInvoiceDialog({
       client_country: contact.country || "",
       client_tax_id: contact.tax_id || ""
     }));
-    setCommandOpen(false);
+    setDropdownOpen(false);
   }, []);
 
   const handleAddContactSuccess = useCallback((newContact: Contact) => {
@@ -245,75 +243,71 @@ export function CreateInvoiceDialog({
                 <div className="space-y-2">
                   <Label htmlFor="client_name">Contact</Label>
                   <div className="relative">
-                    <Popover open={commandOpen} onOpenChange={setCommandOpen}>
-                      <PopoverTrigger asChild>
+                    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+                      <DropdownMenuTrigger asChild>
                         <Button
                           variant="outline"
-                          role="combobox"
-                          aria-expanded={commandOpen}
-                          className="w-full justify-between"
+                          className="w-full justify-between bg-white"
                         >
                           {form.client_name || "Select a customer..."}
+                          <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
                         </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="p-0" align="start" side="bottom" style={{ width: "300px" }}>
-                        <Command>
-                          <CommandInput 
-                            placeholder="Search customers..." 
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent 
+                        className="w-[300px] max-h-[300px] overflow-auto p-0"
+                        align="start"
+                      >
+                        <div className="p-2">
+                          <Input
+                            placeholder="Search customers..."
                             value={contactSearchTerm}
-                            onValueChange={setContactSearchTerm}
+                            onChange={(e) => setContactSearchTerm(e.target.value)}
+                            className="mb-2"
                           />
-                          <CommandList>
-                            <CommandEmpty>
-                              No customers found.
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="w-full mt-2"
-                                onClick={() => {
-                                  setAddContactDialogOpen(true);
-                                  setCommandOpen(false);
-                                }}
-                              >
-                                <UserPlus className="h-4 w-4 mr-2" />
-                                Add new customer
-                              </Button>
-                            </CommandEmpty>
-                            <CommandGroup>
-                              {filteredContacts.map((contact) => (
-                                <CommandItem
-                                  key={contact.id}
-                                  onSelect={() => handleSelectContact(contact)}
-                                  className="flex items-center"
-                                >
+                        </div>
+                        
+                        {filteredContacts.length > 0 ? (
+                          filteredContacts.map((contact) => (
+                            <DropdownMenuItem
+                              key={contact.id}
+                              onSelect={() => handleSelectContact(contact)}
+                              className="cursor-pointer p-2"
+                            >
+                              <div className="flex items-center w-full">
+                                <span className="flex-1">
                                   {contact.name}
                                   {contact.company && (
                                     <span className="ml-2 text-muted-foreground text-xs">
                                       ({contact.company})
                                     </span>
                                   )}
-                                  {form.client_name === contact.name && (
-                                    <Check className="ml-auto h-4 w-4" />
-                                  )}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                            <CommandGroup>
-                              <CommandItem
-                                onSelect={() => {
-                                  setAddContactDialogOpen(true);
-                                  setCommandOpen(false);
-                                }}
-                                className="flex items-center text-primary"
-                              >
-                                <UserPlus className="h-4 w-4 mr-2" />
-                                Add new customer
-                              </CommandItem>
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                                </span>
+                                {form.client_name === contact.name && (
+                                  <Check className="h-4 w-4 ml-2" />
+                                )}
+                              </div>
+                            </DropdownMenuItem>
+                          ))
+                        ) : (
+                          <div className="p-2 text-center text-sm text-gray-500">
+                            No customers found.
+                          </div>
+                        )}
+                        
+                        <DropdownMenuItem
+                          className="cursor-pointer border-t p-2 mt-2"
+                          onSelect={() => {
+                            setAddContactDialogOpen(true);
+                            setDropdownOpen(false);
+                          }}
+                        >
+                          <div className="flex items-center text-primary">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add new customer
+                          </div>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                   {!form.client_name && (
                     <p className="text-sm text-red-500">Select a customer</p>
