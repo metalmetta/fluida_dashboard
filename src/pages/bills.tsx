@@ -16,12 +16,15 @@ import {
 import { useBills } from "@/hooks/useBills";
 import { formatCurrency } from "@/lib/utils";
 import { AddBillDialog } from "@/components/AddBillDialog";
-import { BillFormData } from "@/types/bill";
+import { BillFormData, Bill } from "@/types/bill";
+import { ViewBillDialog } from "@/components/ViewBillDialog";
 
 export default function Bills() {
-  const { bills, isLoading, addBill } = useBills();
+  const { bills, isLoading, addBill, updateBillStatus } = useBills();
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [addBillDialogOpen, setAddBillDialogOpen] = useState(false);
+  const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
+  const [viewBillDialogOpen, setViewBillDialogOpen] = useState(false);
 
   const filteredBills = selectedStatus
     ? bills.filter(bill => bill.status === selectedStatus)
@@ -37,6 +40,15 @@ export default function Bills() {
 
   const handleAddBill = async (billData: BillFormData) => {
     await addBill(billData);
+  };
+  
+  const handleViewBill = (bill: Bill) => {
+    setSelectedBill(bill);
+    setViewBillDialogOpen(true);
+  };
+  
+  const handleStatusChange = async (billId: string, newStatus: Bill['status']) => {
+    await updateBillStatus(billId, newStatus);
   };
 
   return (
@@ -135,7 +147,11 @@ export default function Bills() {
               </TableHeader>
               <TableBody>
                 {filteredBills.map((bill) => (
-                  <TableRow key={bill.id}>
+                  <TableRow 
+                    key={bill.id} 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleViewBill(bill)}
+                  >
                     <TableCell className="font-medium">{bill.bill_number}</TableCell>
                     <TableCell>{bill.vendor}</TableCell>
                     <TableCell>{bill.category || "N/A"}</TableCell>
@@ -160,6 +176,13 @@ export default function Bills() {
         open={addBillDialogOpen} 
         onOpenChange={setAddBillDialogOpen} 
         onSubmit={handleAddBill} 
+      />
+      
+      <ViewBillDialog
+        open={viewBillDialogOpen}
+        onOpenChange={setViewBillDialogOpen}
+        bill={selectedBill}
+        onStatusChange={handleStatusChange}
       />
     </DashboardLayout>
   );

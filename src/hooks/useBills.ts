@@ -89,6 +89,41 @@ export function useBills() {
     }
   };
 
+  const updateBillStatus = async (billId: string, newStatus: Bill['status']) => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to update a bill",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("bills")
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq("id", billId)
+        .eq("user_id", user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update the bill in the local state
+      setBills(prevBills => 
+        prevBills.map(bill => 
+          bill.id === billId ? { ...bill, status: newStatus } : bill
+        )
+      );
+
+      return true;
+    } catch (error) {
+      console.error("Error updating bill status:", error);
+      throw error;
+    }
+  };
+
   const addSampleBills = async () => {
     if (!user) {
       toast({
@@ -167,6 +202,7 @@ export function useBills() {
     isLoading, 
     fetchBills, 
     addBill,
-    addSampleBills 
+    addSampleBills,
+    updateBillStatus
   };
 }
