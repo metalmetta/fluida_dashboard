@@ -67,7 +67,7 @@ export default function Support() {
               </div>
               <h3 className="font-medium">Email Support</h3>
               <p className="text-sm text-muted-foreground">
-                support@vendorpay.com
+                support@getfluida.com
               </p>
               <Button className="mt-2" variant="outline">
                 Send Email
