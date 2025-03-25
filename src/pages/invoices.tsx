@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Download, RefreshCw, FileText } from "lucide-react";
+import { Plus, Download, FileText } from "lucide-react";
 import { useInvoices } from "@/hooks/useInvoices";
 import { format } from "date-fns";
 import { CreateInvoiceDialog } from "@/components/CreateInvoiceDialog";
@@ -98,17 +98,13 @@ export default function Invoices() {
             <h1 className="text-3xl font-semibold">Invoices</h1>
             <p className="text-muted-foreground">Manage your invoices</p>
           </div>
-          <div className="flex gap-2">
+          <div>
             {invoices.length === 0 && (
               <Button onClick={addSampleInvoices} variant="outline">
                 <FileText className="h-4 w-4 mr-2" />
                 Add Sample Data
               </Button>
             )}
-            <Button onClick={fetchInvoices} variant="outline" disabled={isLoading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-              Refresh
-            </Button>
             <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Create invoice
@@ -138,7 +134,7 @@ export default function Invoices() {
         <Card>
           {isLoading ? (
             <div className="flex justify-center items-center p-8">
-              <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+              <FileText className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : invoices.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-8 text-center">

@@ -18,7 +18,7 @@ import { useContacts } from "@/hooks/useContacts";
 import { AddContactDialog } from "@/components/AddContactDialog";
 
 export default function Contacts() {
-  const { contacts, isLoading, addSampleContacts } = useContacts();
+  const { contacts, isLoading } = useContacts();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
 
@@ -43,12 +43,7 @@ export default function Contacts() {
             <h1 className="text-3xl font-semibold">Contacts</h1>
             <p className="text-muted-foreground">Manage your business contacts</p>
           </div>
-          <div className="flex gap-2">
-            {contacts.length === 0 && (
-              <Button variant="outline" onClick={addSampleContacts}>
-                Add Sample Contacts
-              </Button>
-            )}
+          <div>
             <AddContactDialog />
           </div>
         </div>
@@ -90,11 +85,7 @@ export default function Contacts() {
           ) : filteredContacts.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-muted-foreground mb-4">No contacts found</p>
-              {contacts.length === 0 ? (
-                <Button onClick={addSampleContacts}>Add Sample Contacts</Button>
-              ) : (
-                <p className="text-sm">Try adjusting your search or filter</p>
-              )}
+              <p className="text-sm">Try adjusting your search or filter</p>
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
