@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,8 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogFooter 
+  DialogFooter,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { 
   Tabs, 
@@ -48,11 +49,23 @@ export function AddPaymentMethodDialog({
 }: AddPaymentMethodDialogProps) {
   const [activeTab, setActiveTab] = useState("fiat");
 
+  // Update the payment method type when changing tabs
+  useEffect(() => {
+    if (activeTab === "fiat") {
+      onInputChange('type', 'usd');
+    } else if (activeTab === "crypto") {
+      onInputChange('type', 'usdc');
+    }
+  }, [activeTab, onInputChange]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add Payment Method</DialogTitle>
+          <DialogDescription>
+            Add a new payment method to use in your invoices
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-4">
