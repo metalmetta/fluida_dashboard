@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Contact } from "@/types/contact";
+import { Contact, ContactFormData } from "@/types/contact";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -25,7 +24,6 @@ export function useContacts() {
         throw error;
       }
 
-      // Ensure the type is properly cast as our Contact type
       const typedContacts = data?.map(contact => ({
         ...contact,
         type: contact.type as 'Customer' | 'Vendor' | 'Other'
@@ -44,7 +42,7 @@ export function useContacts() {
     }
   };
 
-  const addContact = async (contactData: Omit<Contact, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const addContact = async (contactData: ContactFormData) => {
     if (!user) {
       toast({
         title: "Error",
@@ -55,7 +53,6 @@ export function useContacts() {
     }
 
     try {
-      // Handle logo upload if present
       let logoUrl = null;
       if (contactData.logo) {
         const file = contactData.logo;
@@ -78,7 +75,6 @@ export function useContacts() {
         logoUrl = publicUrl;
       }
 
-      // Create contact without the File object (can't be stored in DB)
       const { logo, ...contactDataWithoutLogo } = contactData;
       
       const newContact = {
@@ -101,7 +97,6 @@ export function useContacts() {
         description: "Contact added successfully"
       });
 
-      // Refresh the contacts list
       fetchContacts();
       
       return data?.[0];
@@ -181,7 +176,6 @@ export function useContacts() {
         description: "Sample contacts added successfully"
       });
 
-      // Fetch the updated contacts
       fetchContacts();
     } catch (error) {
       console.error("Error adding sample contacts:", error);

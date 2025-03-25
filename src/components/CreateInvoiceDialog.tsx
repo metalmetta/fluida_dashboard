@@ -207,6 +207,7 @@ export function CreateInvoiceDialog({
   };
 
   const handleSelectContact = (contact: Contact) => {
+    // Update form with all available contact data
     setForm({
       ...form,
       client_name: contact.name,
@@ -232,13 +233,17 @@ export function CreateInvoiceDialog({
     }
 
     try {
-      const newContact = await addContact({
+      // When adding a new contact, include all collected data
+      const contactData = {
         ...newContactData,
         type: "Customer",
         logo: null
-      });
+      };
+      
+      const newContact = await addContact(contactData);
 
       if (newContact) {
+        // Populate form with the newly created contact data
         handleSelectContact(newContact as Contact);
         setIsAddingNewContact(false);
         toast({
