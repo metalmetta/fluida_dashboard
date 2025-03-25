@@ -35,15 +35,7 @@ export function LoginForm() {
       await signIn(data.email, data.password);
     } catch (error) {
       console.error("Login error:", error);
-      if (error instanceof Error) {
-        form.setError("root", {
-          message: error.message,
-        });
-      } else {
-        form.setError("root", {
-          message: "An unexpected error occurred. Please try again.",
-        });
-      }
+      // Form error is now handled in the AuthContext
     } finally {
       setIsLoading(false);
     }
