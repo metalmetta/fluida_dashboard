@@ -60,7 +60,14 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
-      await onSubmit(values as BillFormData);
+      // Convert Date objects to ISO strings for API compatibility
+      const formattedData: BillFormData = {
+        ...values,
+        issue_date: values.issue_date.toISOString().split('T')[0], // Format as YYYY-MM-DD
+        due_date: values.due_date.toISOString().split('T')[0], // Format as YYYY-MM-DD
+      };
+      
+      await onSubmit(formattedData);
       form.reset();
       onOpenChange(false);
       toast({
