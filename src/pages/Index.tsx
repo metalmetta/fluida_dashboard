@@ -1,4 +1,3 @@
-
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { ArrowUpRight, Building2 } from "lucide-react";
 import { Line, LineChart, ResponsiveContainer, XAxis } from "recharts";
-import { useAuth } from "@/context/AuthContext";
 
 const data = [
   { day: "Jan 13", value: 245000 },
@@ -38,14 +36,12 @@ const actions = [
 ];
 
 const Index = () => {
-  const { user } = useAuth();
-
   return (
     <DashboardLayout>
       <div className="space-y-8 animate-in">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-semibold">Welcome back, {user?.fullName || "User"}</h1>
+            <h1 className="text-3xl font-semibold">Welcome back, John Doe</h1>
             <p className="text-muted-foreground">Here's your financial overview</p>
           </div>
         </div>

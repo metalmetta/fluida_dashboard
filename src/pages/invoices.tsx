@@ -12,7 +12,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, Download } from "lucide-react";
 import { useState } from "react";
-import { CreateInvoiceDialog } from "@/components/CreateInvoiceDialog";
 
 const invoices = [
   {
@@ -51,7 +50,6 @@ type InvoiceStatus = "Draft" | "Unpaid" | "Paid" | "Void";
 
 export default function Invoices() {
   const [selectedStatus, setSelectedStatus] = useState<InvoiceStatus | null>(null);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const statusCounts = {
     Draft: invoices.filter((inv) => inv.status === "Draft").length,
@@ -72,10 +70,7 @@ export default function Invoices() {
             <h1 className="text-3xl font-semibold">Invoices</h1>
             <p className="text-muted-foreground">Manage your invoices</p>
           </div>
-          <Button 
-            onClick={() => setCreateDialogOpen(true)}
-            className="bg-[#2606EB] hover:bg-[#2606EB]/90"
-          >
+          <Button>
             <Plus className="h-4 w-4 mr-2" />
             Create invoice
           </Button>
@@ -88,7 +83,7 @@ export default function Invoices() {
               onClick={() => setSelectedStatus(status)}
               className={`flex items-center space-x-2 pb-4 ${
                 selectedStatus === status
-                  ? "border-b-2 border-[#2606EB]"
+                  ? "border-b-2 border-primary"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -127,11 +122,6 @@ export default function Invoices() {
           </Table>
         </Card>
       </div>
-
-      <CreateInvoiceDialog 
-        open={createDialogOpen} 
-        onOpenChange={setCreateDialogOpen} 
-      />
     </DashboardLayout>
   );
 } 

@@ -1,6 +1,9 @@
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { Toaster } from "@/components/ui/toaster";
 import Index from "@/pages/Index";
+import Auth from "@/pages/auth";
 import Invoices from "@/pages/invoices";
 import Payments from "@/pages/payments";
 import Bills from "@/pages/bills";
@@ -8,18 +11,14 @@ import Contacts from "@/pages/contacts";
 import Settings from "@/pages/settings";
 import Support from "@/pages/support";
 import NotFound from "@/pages/NotFound";
-import AuthIndex from "@/pages/auth/index";
-import LoginPage from "@/pages/auth/login";
-import SignupPage from "@/pages/auth/signup";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from "@/context/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function App() {
   return (
-    <Router>
-      <AuthProvider>
+    <AuthProvider>
+      <Router>
         <Routes>
+          <Route path="/auth" element={<Auth />} />
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
           <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
           <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
@@ -27,14 +26,11 @@ export default function App() {
           <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
-          <Route path="/logout" element={<Navigate to="/auth/login" />} />
-          <Route path="/auth" element={<AuthIndex />} />
-          <Route path="/auth/login" element={<LoginPage />} />
-          <Route path="/auth/signup" element={<SignupPage />} />
+          <Route path="/logout" element={<Navigate to="/" />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Toaster />
-      </AuthProvider>
-    </Router>
+      </Router>
+    </AuthProvider>
   );
 }
