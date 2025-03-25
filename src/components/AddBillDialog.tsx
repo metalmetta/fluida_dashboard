@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CalendarIcon, UploadIcon, X } from "lucide-react";
+import { CalendarIcon, UploadIcon, X, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -62,14 +62,14 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
     try {
       // Convert Date objects to ISO strings for API compatibility
       const formattedData: BillFormData = {
-        vendor: values.vendor,          // Explicitly add required fields
-        amount: values.amount,          // to ensure they are not optional
+        vendor: values.vendor,
+        amount: values.amount,
         bill_number: values.bill_number,
         status: values.status,
-        issue_date: values.issue_date.toISOString().split('T')[0], // Format as YYYY-MM-DD
-        due_date: values.due_date.toISOString().split('T')[0],     // Format as YYYY-MM-DD
-        category: values.category,      // Optional fields
-        description: values.description // Optional fields
+        issue_date: values.issue_date.toISOString().split('T')[0],
+        due_date: values.due_date.toISOString().split('T')[0],
+        category: values.category,
+        description: values.description
       };
       
       await onSubmit(formattedData);
@@ -93,15 +93,15 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-md p-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle>New bill</DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Summary</h2>
+            <div className="px-6 space-y-5 overflow-y-auto max-h-[70vh]">
+              <h2 className="text-lg font-medium">Summary</h2>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -110,9 +110,9 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                     name="vendor"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Vendor</FormLabel>
+                        <FormLabel className="text-sm text-muted-foreground">Contact</FormLabel>
                         <FormControl>
-                          <Input placeholder="Vendor name" {...field} />
+                          <Input placeholder="Search or add" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -126,7 +126,7 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                     name="bill_number"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Bill #</FormLabel>
+                        <FormLabel className="text-sm text-muted-foreground">Invoice #</FormLabel>
                         <FormControl>
                           <Input placeholder="Add number..." {...field} />
                         </FormControl>
@@ -144,23 +144,23 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                     name="issue_date"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                        <FormLabel>Issue date</FormLabel>
+                        <FormLabel className="text-sm text-muted-foreground">Invoice date</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
                                 variant={"outline"}
                                 className={cn(
-                                  "pl-3 text-left font-normal",
+                                  "w-full pl-3 text-left font-normal flex justify-start",
                                   !field.value && "text-muted-foreground"
                                 )}
                               >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
                                 {field.value ? (
                                   format(field.value, "MMM dd, yyyy")
                                 ) : (
                                   <span>Pick a date</span>
                                 )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
@@ -186,23 +186,23 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                     name="due_date"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                        <FormLabel>Due date</FormLabel>
+                        <FormLabel className="text-sm text-muted-foreground">Due date</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
                                 variant={"outline"}
                                 className={cn(
-                                  "pl-3 text-left font-normal",
+                                  "w-full pl-3 text-left font-normal flex justify-start",
                                   !field.value && "text-muted-foreground"
                                 )}
                               >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
                                 {field.value ? (
                                   format(field.value, "MMM dd, yyyy")
                                 ) : (
                                   <span>Pick a date</span>
                                 )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
@@ -211,7 +211,7 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                               mode="single"
                               selected={field.value}
                               onSelect={field.onChange}
-                              initialFocus 
+                              initialFocus
                               className="pointer-events-auto"
                             />
                           </PopoverContent>
@@ -223,16 +223,16 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <FormField
-                    control={form.control}
-                    name="amount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Amount</FormLabel>
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm text-muted-foreground">Amount</FormLabel>
+                      <div className="flex">
                         <FormControl>
-                          <div className="relative">
+                          <div className="relative flex-1">
                             <span className="absolute left-3 top-2.5">$</span>
                             <Input 
                               type="number" 
@@ -247,69 +247,24 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                             />
                           </div>
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div>
-                  <FormField
-                    control={form.control}
-                    name="category"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Category</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          value={field.value || ""}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                          </FormControl>
+                        <Select defaultValue="USD">
+                          <SelectTrigger className="w-28 ml-2">
+                            <SelectValue placeholder="USD" />
+                          </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Utilities">Utilities</SelectItem>
-                            <SelectItem value="Supplies">Supplies</SelectItem>
-                            <SelectItem value="Marketing">Marketing</SelectItem>
-                            <SelectItem value="Rent">Rent</SelectItem>
-                            <SelectItem value="Services">Services</SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
+                            <SelectItem value="USD">USD</SelectItem>
+                            <SelectItem value="EUR">EUR</SelectItem>
+                            <SelectItem value="GBP">GBP</SelectItem>
                           </SelectContent>
                         </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Draft">Draft</SelectItem>
-                          <SelectItem value="Ready for payment">Ready for payment</SelectItem>
-                          <SelectItem value="Paid">Paid</SelectItem>
-                          <SelectItem value="Approve">Approve</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+              
+              <h2 className="text-lg font-medium pt-2">Invoice details</h2>
               
               <div>
                 <FormField
@@ -317,10 +272,10 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel className="text-sm text-muted-foreground">Memo</FormLabel>
                       <FormControl>
                         <Textarea 
-                          placeholder="Add description..." 
+                          placeholder="Add memo..." 
                           className="resize-none h-20"
                           {...field}
                         />
@@ -331,25 +286,54 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                 />
               </div>
               
-              <div className="border border-dashed rounded-md p-6 flex flex-col items-center justify-center">
-                <UploadIcon className="h-10 w-10 text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">Drop invoice or <span className="text-primary underline">browse files</span></p>
+              <h2 className="text-lg font-medium pt-2">Payment details</h2>
+              
+              <div>
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm text-muted-foreground">Asset</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value || ""}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select an asset" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Checking">Checking Account</SelectItem>
+                          <SelectItem value="Savings">Savings Account</SelectItem>
+                          <SelectItem value="CreditCard">Credit Card</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="bg-gray-50 mx-auto py-16 px-6 rounded-lg flex flex-col items-center justify-center">
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <UploadIcon className="h-6 w-6 text-gray-400" />
+                  <p className="text-sm text-gray-500">
+                    Drop invoice or <span className="text-blue-500 hover:underline">browse files</span>
+                  </p>
+                </div>
               </div>
             </div>
             
-            <DialogFooter className="flex justify-between sm:justify-between">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+            <div className="flex justify-end items-center p-4 border-t">
+              <Button type="button" variant="outline" className="mr-2" onClick={() => onOpenChange(false)}>
+                Save draft
               </Button>
-              <div className="space-x-2">
-                <Button type="submit" variant="outline" disabled={isSubmitting}>
-                  Save draft
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Saving..." : "Save"}
-                </Button>
-              </div>
-            </DialogFooter>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : "Ready for payment"}
+              </Button>
+            </div>
           </form>
         </Form>
       </DialogContent>
