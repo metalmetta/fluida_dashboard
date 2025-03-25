@@ -2,7 +2,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, AlertCircle } from "lucide-react";
+import { Plus, Calendar, AlertCircle, ArrowRightLeft } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useState } from "react";
 
 const bills = [
   {
@@ -18,7 +19,7 @@ const bills = [
     vendor: "Office Supplies Co",
     amount: "$850.00",
     dueDate: "2024-02-01",
-    status: "Upcoming",
+    status: "Draft",
     category: "Supplies",
   },
   {
@@ -26,7 +27,7 @@ const bills = [
     vendor: "Internet Services",
     amount: "$199.99",
     dueDate: "2024-01-28",
-    status: "Overdue",
+    status: "Ready for payment",
     category: "Utilities",
   },
   {
@@ -34,78 +35,85 @@ const bills = [
     vendor: "Marketing Agency",
     amount: "$3,500.00",
     dueDate: "2024-02-15",
-    status: "Upcoming",
+    status: "Paid",
     category: "Marketing",
   },
 ];
 
-const upcomingPayments = [
-  {
-    vendor: "Office Supplies Co",
-    amount: "$850.00",
-    dueDate: "Feb 1, 2024",
-  },
-  {
-    vendor: "Marketing Agency",
-    amount: "$3,500.00",
-    dueDate: "Feb 15, 2024",
-  },
-];
+const statusCounts = {
+  Draft: bills.filter(bill => bill.status === "Draft").length,
+  Approve: bills.filter(bill => bill.status === "Approve").length,
+  "Ready for payment": bills.filter(bill => bill.status === "Ready for payment").length,
+  Paid: bills.filter(bill => bill.status === "Paid").length,
+};
 
 export default function Bills() {
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+
+  const filteredBills = selectedStatus
+    ? bills.filter(bill => bill.status === selectedStatus)
+    : bills;
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold">Bills</h1>
-            <p className="text-muted-foreground">Track and manage your bills</p>
+          <h1 className="text-3xl font-semibold">Bills</h1>
+          <div className="flex gap-3">
+            <Button variant="outline">
+              <ArrowRightLeft className="h-4 w-4 mr-2" />
+              Transfer funds
+            </Button>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add bill
+            </Button>
           </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Bill
-          </Button>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-6">
-              <Calendar className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-medium">Upcoming Payments</h3>
-            </div>
-            <div className="space-y-4">
-              {upcomingPayments.map((payment, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
-                >
-                  <div>
-                    <p className="font-medium">{payment.vendor}</p>
-                    <p className="text-sm text-muted-foreground">Due {payment.dueDate}</p>
-                  </div>
-                  <p className="font-medium">{payment.amount}</p>
-                </div>
-              ))}
-            </div>
-          </Card>
+        <div className="flex gap-8 border-b pb-1">
+          <button
+            onClick={() => setSelectedStatus("Draft")}
+            className={`flex items-center gap-2 pb-2 ${
+              selectedStatus === "Draft" ? "border-b-2 border-primary" : ""
+            }`}
+          >
+            Draft
+            <Badge variant="secondary" className="rounded-full">{statusCounts.Draft}</Badge>
+          </button>
+          <button
+            onClick={() => setSelectedStatus("Approve")}
+            className={`flex items-center gap-2 pb-2 ${
+              selectedStatus === "Approve" ? "border-b-2 border-primary" : ""
+            }`}
+          >
+            Approve
+            <Badge variant="secondary" className="rounded-full">{statusCounts.Approve}</Badge>
+          </button>
+          <button
+            onClick={() => setSelectedStatus("Ready for payment")}
+            className={`flex items-center gap-2 pb-2 ${
+              selectedStatus === "Ready for payment" ? "border-b-2 border-primary" : ""
+            }`}
+          >
+            Ready for payment
+            <Badge variant="secondary" className="rounded-full">{statusCounts["Ready for payment"]}</Badge>
+          </button>
+          <button
+            onClick={() => setSelectedStatus("Paid")}
+            className={`flex items-center gap-2 pb-2 ${
+              selectedStatus === "Paid" ? "border-b-2 border-primary" : ""
+            }`}
+          >
+            Paid
+            <Badge variant="secondary" className="rounded-full">{statusCounts.Paid}</Badge>
+          </button>
+        </div>
 
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-6">
-              <AlertCircle className="h-5 w-5 text-destructive" />
-              <h3 className="text-lg font-medium">Overdue Bills</h3>
-            </div>
-            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-medium">Internet Services</p>
-                <Badge variant="destructive">3 days overdue</Badge>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">Due Jan 28, 2024</p>
-              <div className="flex items-center justify-between">
-                <p className="font-bold">$199.99</p>
-                <Button variant="destructive" size="sm">Pay Now</Button>
-              </div>
-            </div>
-          </Card>
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Forward invoices to <span className="font-medium">bills@ap.acctual.com</span>
+          </div>
         </div>
 
         <Card>
@@ -121,7 +129,7 @@ export default function Bills() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {bills.map((bill) => (
+              {filteredBills.map((bill) => (
                 <TableRow key={bill.id}>
                   <TableCell className="font-medium">{bill.id}</TableCell>
                   <TableCell>{bill.vendor}</TableCell>
@@ -130,7 +138,7 @@ export default function Bills() {
                   <TableCell>{bill.dueDate}</TableCell>
                   <TableCell>
                     <Badge
-                      variant={bill.status === "Overdue" ? "destructive" : "outline"}
+                      variant={bill.status === "Ready for payment" ? "destructive" : "outline"}
                     >
                       {bill.status}
                     </Badge>
