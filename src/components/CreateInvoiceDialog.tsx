@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
 import { CalendarIcon, Plus, MinusCircle, Check } from "lucide-react";
@@ -290,7 +291,7 @@ export function CreateInvoiceDialog({
                               {form.client_name || "Select a customer..."}
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="p-0" align="start" side="bottom" width="300px">
+                          <PopoverContent className="p-0" align="start" side="bottom" style={{ width: "300px" }}>
                             <Command>
                               <CommandInput 
                                 placeholder="Search customers..." 
@@ -635,5 +636,7 @@ export function CreateInvoiceDialog({
             )}
           </div>
         </div>
-        
-        {!
+      </DialogContent>
+    </Dialog>
+  );
+}
