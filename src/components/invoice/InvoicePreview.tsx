@@ -32,7 +32,7 @@ export function InvoicePreview({
       }
       
       if (iban) {
-        details += `\nIBAN: ${iban}`;
+        details += `\nIBAN: ${iban}`;  // Display full IBAN
       } else if (accountNumber) {
         details += `\nAccount Number: ${accountNumber}`;
       }
@@ -127,13 +127,6 @@ export function InvoicePreview({
           <h4 className="font-medium text-gray-500 mb-2">PAYMENT METHOD</h4>
           <p className="whitespace-pre-line">{formatPaymentMethodDetails()}</p>
           {form.payment_instructions && <p className="mt-2">{form.payment_instructions}</p>}
-        </div>
-      )}
-      
-      {form.terms && (
-        <div className="mt-6 pt-4 border-t text-sm">
-          <h4 className="font-medium text-gray-500 mb-2">TERMS & CONDITIONS</h4>
-          <p>{form.terms}</p>
         </div>
       )}
       

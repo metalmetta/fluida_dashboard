@@ -26,7 +26,7 @@ export function PaymentDetailsStep({
   isSubmitting
 }: PaymentDetailsStepProps) {
   const [selectedPaymentType, setSelectedPaymentType] = useState<string>(form.payment_method || "");
-  const { paymentMethods, isLoading } = usePaymentMethods();
+  const { paymentMethods, loading } = usePaymentMethods();
 
   // Set initial payment type based on form data
   useEffect(() => {
