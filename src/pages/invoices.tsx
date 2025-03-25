@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -109,7 +108,6 @@ export default function Invoices() {
 
       if (error) throw error;
       
-      // Refresh invoices list
       await fetchInvoices();
     } catch (error) {
       console.error("Error updating invoice status:", error);
@@ -119,6 +117,12 @@ export default function Invoices() {
         variant: "destructive"
       });
       throw error;
+    }
+  };
+
+  const handleStatusChange = (status: string | null) => {
+    if (status === null || ["draft", "sent", "paid", "overdue", "cancelled"].includes(status)) {
+      setSelectedStatus(status as InvoiceStatus | null);
     }
   };
 
@@ -142,17 +146,18 @@ export default function Invoices() {
           description="Manage your invoices"
           statusFilters={statusFilters}
           selectedStatus={selectedStatus}
-          onStatusChange={setSelectedStatus}
+          onStatusChange={handleStatusChange}
           actionButtons={[
             ...(invoices.length === 0 ? [{
               icon: FileText,
               label: "Add Sample Data",
-              variant: "outline",
+              variant: "outline" as const,
               onClick: addSampleInvoices
             }] : []),
             {
               icon: Plus,
               label: "Create invoice",
+              variant: "default" as const,
               onClick: () => setCreateDialogOpen(true)
             }
           ]}
