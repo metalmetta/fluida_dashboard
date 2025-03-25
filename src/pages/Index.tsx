@@ -7,17 +7,17 @@ import { ArrowUpRight, Building2 } from "lucide-react";
 import { Line, LineChart, ResponsiveContainer, XAxis } from "recharts";
 
 const data = [
-  { day: "Jan 13", value: 1200000 },
-  { day: "Jan 14", value: 1180000 },
-  { day: "Jan 15", value: 1190000 },
-  { day: "Jan 16", value: 1180000 },
-  { day: "Jan 17", value: 1170000 },
-  { day: "Jan 18", value: 1185000 },
-  { day: "Jan 19", value: 1220000 },
-  { day: "Jan 20", value: 1230000 },
-  { day: "Jan 21", value: 1250000 },
-  { day: "Jan 22", value: 1240000 },
-  { day: "Jan 23", value: 1260000 },
+  { day: "Jan 13", value: 245000 },
+  { day: "Jan 14", value: 873000 },
+  { day: "Jan 15", value: 567000 },
+  { day: "Jan 16", value: 912000 },
+  { day: "Jan 17", value: 156000 },
+  { day: "Jan 18", value: 789000 },
+  { day: "Jan 19", value: 345000 },
+  { day: "Jan 20", value: 678000 },
+  { day: "Jan 21", value: 923000 },
+  { day: "Jan 22", value: 432000 },
+  { day: "Jan 23", value: 867000 },
 ];
 
 const actions = [
@@ -49,7 +49,7 @@ const Index = () => {
         <div className="grid gap-6 md:grid-cols-2">
           <Card className="p-6">
             <h3 className="text-lg font-medium mb-4">Balance</h3>
-            <p className="text-3xl font-semibold mb-6">$1,200,234.00</p>
+            <p className="text-3xl font-semibold mb-6">$867,000</p>
             <div className="h-[200px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data}>
