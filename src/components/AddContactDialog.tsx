@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { Plus } from "lucide-react";
 import { ContactFormData } from "@/types/contact";
@@ -65,7 +64,8 @@ export function AddContactDialog() {
     },
   });
 
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Use useCallback to prevent unnecessary re-renders
+  const handleLogoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.type !== "image/jpeg" && file.type !== "image/png" && file.type !== "image/jpg") {
@@ -84,9 +84,9 @@ export function AddContactDialog() {
       reader.readAsDataURL(file);
       form.setValue("logo", file);
     }
-  };
+  }, [form, toast]);
 
-  const onSubmit = async (data: ContactFormData) => {
+  const onSubmit = useCallback(async (data: ContactFormData) => {
     try {
       const result = await addContact(data);
       if (result) {
@@ -101,8 +101,9 @@ export function AddContactDialog() {
         variant: "destructive",
       });
     }
-  };
+  }, [addContact, form, toast]);
 
+  // Use memoized form fields to prevent focus loss during typing
   const ContactForm = () => (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
