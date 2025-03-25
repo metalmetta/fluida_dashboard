@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { Plus } from "lucide-react";
@@ -63,7 +62,6 @@ export function AddContactDialog({
   const { toast } = useToast();
   const { addContact } = useContacts();
 
-  // Controlled or uncontrolled dialog
   const isControlled = open !== undefined && onOpenChange !== undefined;
   const isOpen = isControlled ? open : isDialogOpen;
   const setIsOpen = isControlled ? onOpenChange : setIsDialogOpen;
@@ -80,7 +78,6 @@ export function AddContactDialog({
     },
   });
 
-  // Use useCallback to prevent unnecessary re-renders
   const handleLogoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -112,7 +109,13 @@ export function AddContactDialog({
         form.reset();
         setLogoPreview(null);
         toast({ title: "Success", description: "Contact added successfully" });
-        if (onSuccess) onSuccess(result);
+        
+        const typedContact: Contact = {
+          ...result,
+          type: result.type as 'Customer' | 'Vendor' | 'Other'
+        };
+        
+        if (onSuccess) onSuccess(typedContact);
       }
     } catch (error) {
       toast({
@@ -123,7 +126,6 @@ export function AddContactDialog({
     }
   }, [addContact, form, toast, setIsOpen, onSuccess]);
 
-  // Use memoized form fields to prevent focus loss during typing
   const ContactForm = () => (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -273,7 +275,6 @@ export function AddContactDialog({
     </Form>
   );
 
-  // If controlled externally, just render the dialog
   if (isControlled) {
     return (
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -290,7 +291,6 @@ export function AddContactDialog({
     );
   }
 
-  // Uncontrolled dialog with trigger button
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>

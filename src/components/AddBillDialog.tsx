@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -47,7 +46,6 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
   const { contacts, isLoading: isLoadingContacts } = useContacts();
   const [addContactDialogOpen, setAddContactDialogOpen] = useState(false);
   
-  // Filter contacts to only vendors
   const vendorContacts = contacts.filter(contact => contact.type === 'Vendor');
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -58,7 +56,7 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
       bill_number: "",
       category: "",
       description: "",
-      status: "Draft", // Explicitly set default status to "Draft"
+      status: "Draft",
       issue_date: new Date(),
       due_date: new Date(new Date().setDate(new Date().getDate() + 30)),
     },
@@ -67,12 +65,11 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
   const handleSubmit = useCallback(async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
-      // Convert Date objects to ISO strings for API compatibility
       const formattedData: BillFormData = {
         vendor: values.vendor,
         amount: values.amount,
         bill_number: values.bill_number,
-        status: "Draft", // Force status to "Draft" regardless of selected value
+        status: "Draft",
         issue_date: values.issue_date.toISOString().split('T')[0],
         due_date: values.due_date.toISOString().split('T')[0],
         category: values.category,
@@ -98,7 +95,6 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
     }
   }, [form, onSubmit, onOpenChange, toast]);
 
-  // Handler for when a new contact is added
   const handleContactAdded = useCallback(() => {
     setAddContactDialogOpen(false);
   }, []);
@@ -382,11 +378,10 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
         </DialogContent>
       </Dialog>
 
-      {/* Add Contact Dialog */}
       <AddContactDialog 
         open={addContactDialogOpen} 
         onOpenChange={setAddContactDialogOpen}
-        defaultContactType="Vendor"
+        defaultType="Vendor"
         onSuccess={handleContactAdded}
       />
     </>
