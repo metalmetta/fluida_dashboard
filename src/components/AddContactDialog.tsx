@@ -1,32 +1,27 @@
+
 import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { Plus } from "lucide-react";
 import { ContactFormData } from "@/types/contact";
-import { useContacts } from "@/hooks/useContacts";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
   DialogTrigger,
-  DialogClose,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetClose,
-} from "@/components/ui/sheet";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -37,29 +32,50 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useContacts } from "@/hooks/useContacts";
 
-export function AddContactDialog() {
-  const [open, setOpen] = useState(false);
+const formSchema = z.object({
+  name: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
+  }),
+  company: z.string().optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  phone: z.string().optional(),
+  type: z.enum(["Customer", "Vendor", "Other"]),
+  logo: z.any().optional(),
+});
+
+type AddContactDialogProps = {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  defaultContactType?: "Customer" | "Vendor" | "Other";
+  onSuccess?: () => void;
+};
+
+export function AddContactDialog({ 
+  open, 
+  onOpenChange,
+  defaultContactType = "Customer",
+  onSuccess 
+}: AddContactDialogProps) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const { addContact } = useContacts();
   const { toast } = useToast();
-  const isMobile = useIsMobile();
-  
-  const form = useForm<ContactFormData>({
+  const { addContact } = useContacts();
+
+  // Controlled or uncontrolled dialog
+  const isControlled = open !== undefined && onOpenChange !== undefined;
+  const isOpen = isControlled ? open : isDialogOpen;
+  const setIsOpen = isControlled ? onOpenChange : setIsDialogOpen;
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      email: "",
       company: "",
+      email: "",
       phone: "",
-      type: "Customer",
-      address: "",
-      city: "",
-      state: "",
-      zip: "",
-      country: "",
-      tax_id: "",
-      wallet_address: "",
+      type: defaultContactType,
       logo: undefined,
     },
   });
@@ -71,16 +87,18 @@ export function AddContactDialog() {
       if (file.type !== "image/jpeg" && file.type !== "image/png" && file.type !== "image/jpg") {
         toast({
           title: "Invalid file type",
-          description: "Please upload a JPEG or PNG image",
+          description: "Please upload a JPG or PNG image",
           variant: "destructive",
         });
         return;
       }
-      
+
       const reader = new FileReader();
-      reader.onload = (event) => {
-        setLogoPreview(event.target?.result as string);
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setLogoPreview(result);
       };
+
       reader.readAsDataURL(file);
       form.setValue("logo", file);
     }
@@ -90,118 +108,106 @@ export function AddContactDialog() {
     try {
       const result = await addContact(data);
       if (result) {
+        setIsOpen(false);
         form.reset();
         setLogoPreview(null);
-        setOpen(false);
+        toast({ title: "Success", description: "Contact added successfully" });
+        if (onSuccess) onSuccess();
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to add contact",
+        description: "Failed to add contact. Please try again.",
         variant: "destructive",
       });
     }
-  }, [addContact, form, toast]);
+  }, [addContact, form, toast, setIsOpen, onSuccess]);
 
   // Use memoized form fields to prevent focus loss during typing
   const ContactForm = () => (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Contact name"
-                    {...field}
-                    required
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
+          {logoPreview && (
+            <div className="relative w-20 h-20 mx-auto mb-4">
+              <img
+                src={logoPreview}
+                alt="Contact logo preview"
+                className="w-full h-full object-cover rounded-full"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="absolute -top-2 -right-2 rounded-full p-0 w-6 h-6"
+                onClick={() => {
+                  setLogoPreview(null);
+                  form.setValue("logo", undefined);
+                }}
+              >
+                <span className="sr-only">Remove image</span>
+                ✕
+              </Button>
+            </div>
+          )}
 
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="contact@email.com"
-                    type="email"
-                    {...field}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="company"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter company" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-          <FormField
-            control={form.control}
-            name="logo"
-            render={() => (
-              <FormItem>
-                <FormLabel>Logo (JPEG/PNG)</FormLabel>
-                <div className="flex items-start gap-4">
-                  <div className="flex-1">
-                    <Input
-                      type="file"
-                      accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                      onChange={handleLogoChange}
-                      className="w-full"
-                    />
-                  </div>
-                  {logoPreview && (
-                    <div className="w-16 h-16 rounded-md overflow-hidden border">
-                      <img 
-                        src={logoPreview} 
-                        alt="Logo preview" 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                </div>
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="company"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Company</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Company name"
-                    {...field}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Phone number"
-                    {...field}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter email" type="email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter phone" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <FormField
             control={form.control}
@@ -215,7 +221,7 @@ export function AddContactDialog() {
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select contact type" />
+                      <SelectValue placeholder="Select a type" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -224,188 +230,81 @@ export function AddContactDialog() {
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
+                <FormMessage />
               </FormItem>
             )}
           />
 
-          <div className="pt-4 border-t">
-            <h3 className="text-lg font-medium mb-4">Billing details</h3>
-            
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Enter address..."
-                      {...field}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>City</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Enter city..."
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="state"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>State</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Enter state..."
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+          <FormItem>
+            <FormLabel>Logo (optional)</FormLabel>
+            <div className="flex items-center justify-center w-full">
+              <label
+                htmlFor="logo-upload"
+                className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+              >
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <p className="mb-2 text-sm text-gray-500">
+                    <span className="font-semibold">Click to upload</span> or drag and drop
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    PNG, JPG (MAX. 2MB)
+                  </p>
+                </div>
+                <input
+                  id="logo-upload"
+                  type="file"
+                  className="hidden"
+                  accept="image/png, image/jpeg, image/jpg"
+                  onChange={handleLogoChange}
+                  aria-describedby="logo-upload-description"
+                />
+              </label>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <FormField
-                control={form.control}
-                name="zip"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ZIP Code</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Enter ZIP..."
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="country"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Country</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Enter country..."
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="tax_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tax ID</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Enter tax ID..."
-                      {...field}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="pt-4 border-t">
-            <h3 className="text-lg font-medium mb-4">Payment details</h3>
-            <FormField
-              control={form.control}
-              name="wallet_address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Wallet address</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Select or add a wallet"
-                      {...field}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
+            <p id="logo-upload-description" className="sr-only">
+              Upload a company logo or profile picture. Accepts PNG or JPG format.
+            </p>
+          </FormItem>
         </div>
 
-        <div className="flex justify-end gap-2 mt-6">
-          {isMobile ? (
-            <SheetClose asChild>
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </SheetClose>
-          ) : (
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </DialogClose>
-          )}
-          <Button type="submit">Add</Button>
-        </div>
+        <DialogFooter>
+          <Button type="submit">Add Contact</Button>
+        </DialogFooter>
       </form>
     </Form>
   );
 
-  // Render different components for mobile and desktop
-  if (isMobile) {
+  // If controlled externally, just render the dialog
+  if (isControlled) {
     return (
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Contact
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="bottom" className="h-[90vh] pt-6 sm:max-w-none">
-          <SheetHeader className="mb-2">
-            <SheetTitle>Add contact</SheetTitle>
-          </SheetHeader>
-          <div className="overflow-y-auto max-h-[calc(90vh-70px)] pr-2">
-            <ContactForm />
-          </div>
-        </SheetContent>
-      </Sheet>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Contact</DialogTitle>
+            <DialogDescription>
+              Create a new contact to use in your invoices and bills.
+            </DialogDescription>
+          </DialogHeader>
+          <ContactForm />
+        </DialogContent>
+      </Dialog>
     );
   }
 
+  // Uncontrolled dialog with trigger button
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
-          Add Contact
+          Add contact
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add contact</DialogTitle>
-          <DialogDescription>Add a new contact to your network</DialogDescription>
+          <DialogTitle>Add New Contact</DialogTitle>
+          <DialogDescription>
+            Create a new contact to use in your invoices and bills.
+          </DialogDescription>
         </DialogHeader>
         <ContactForm />
       </DialogContent>
