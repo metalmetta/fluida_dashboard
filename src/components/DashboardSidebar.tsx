@@ -42,7 +42,12 @@ export function DashboardSidebar() {
   return (
     <Sidebar className="flex flex-col h-screen">
       <SidebarHeader className="p-4">
-        <h2 className="text-lg font-semibold">Fluida</h2>
+        <button 
+          onClick={() => handleNavigation("/")}
+          className="text-lg font-semibold hover:text-primary transition-colors"
+        >
+          Fluida
+        </button>
       </SidebarHeader>
       
       <SidebarContent className="flex-1">

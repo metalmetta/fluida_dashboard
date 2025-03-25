@@ -1,12 +1,12 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import Index from "./pages/Index";
-import Invoices from "./pages/invoices";
-import Payments from "./pages/payments";
-import Bills from "./pages/bills";
-import Contacts from "./pages/contacts";
-import Settings from "./pages/settings";
-import Support from "./pages/support";
-import NotFound from "./pages/NotFound";
+import Index from "@/pages/Index";
+import Invoices from "@/pages/invoices";
+import Payments from "@/pages/payments";
+import Bills from "@/pages/bills";
+import Contacts from "@/pages/contacts";
+import Settings from "@/pages/settings";
+import Support from "@/pages/support";
+import NotFound from "@/pages/NotFound";
 
 export default function App() {
   return (
