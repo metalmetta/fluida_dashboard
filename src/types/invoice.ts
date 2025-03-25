@@ -34,6 +34,12 @@ export interface InvoiceFormData {
   }[];
   notes?: string;
   payment_method?: string;
+  payment_method_details?: {
+    label?: string;
+    type?: string;
+    iban?: string;
+    accountNumber?: string;
+  };
   payment_instructions?: string;
   terms?: string;
 }

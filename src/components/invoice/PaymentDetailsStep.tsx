@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -62,17 +61,32 @@ export function PaymentDetailsStep({
   // Handle payment method type selection
   const handlePaymentTypeChange = (value: string) => {
     setSelectedPaymentType(value);
-    setForm({ ...form, payment_method: value });
-
-    // Reset any selected specific payment method
-    if (value === "credit_card") {
-      setForm({ ...form, payment_method: "credit_card" });
-    }
+    setForm({ 
+      ...form, 
+      payment_method: value,
+      // Reset payment method details when changing payment type
+      payment_method_details: undefined
+    });
   };
 
   // Handle specific payment method selection for bank or blockchain
   const handleSpecificMethodChange = (methodId: string) => {
-    setForm({ ...form, payment_method: methodId });
+    const selectedMethod = paymentMethods.find(method => method.id === methodId);
+    
+    if (selectedMethod) {
+      setForm({ 
+        ...form, 
+        payment_method: methodId,
+        payment_method_details: {
+          label: selectedMethod.label,
+          type: selectedMethod.type,
+          iban: selectedMethod.details?.iban,
+          accountNumber: selectedMethod.details?.accountNumber
+        }
+      });
+    } else {
+      setForm({ ...form, payment_method: methodId });
+    }
   };
 
   // Filter payment methods based on type (bank accounts or blockchain wallets)

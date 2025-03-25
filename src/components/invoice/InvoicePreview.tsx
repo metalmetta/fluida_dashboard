@@ -14,6 +14,40 @@ export function InvoicePreview({
   companyEmail,
   calculateTotal
 }: InvoicePreviewProps) {
+  // Helper to format payment method details
+  const formatPaymentMethodDetails = () => {
+    if (!form.payment_method) return "";
+    
+    if (form.payment_method_details) {
+      const { label, type, iban, accountNumber } = form.payment_method_details;
+      
+      let details = label || "";
+      
+      if (type) {
+        details += ` (${type.toUpperCase()})`;
+      }
+      
+      if (iban) {
+        details += `\nIBAN: ${iban}`;
+      } else if (accountNumber) {
+        details += `\nAccount Number: ${accountNumber}`;
+      }
+      
+      return details;
+    }
+    
+    // Fallback for payment methods without details
+    if (form.payment_method === "credit_card") {
+      return "Credit Card";
+    } else if (form.payment_method === "bank_transfer") {
+      return "Bank Transfer";
+    } else if (form.payment_method === "blockchain_transfer") {
+      return "Blockchain Transfer";
+    }
+    
+    return form.payment_method;
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <div className="flex justify-between mb-8">
@@ -87,7 +121,7 @@ export function InvoicePreview({
       {form.payment_method && (
         <div className="mt-6 pt-4 border-t text-sm">
           <h4 className="font-medium text-gray-500 mb-2">PAYMENT METHOD</h4>
-          <p>{form.payment_method}</p>
+          <p className="whitespace-pre-line">{formatPaymentMethodDetails()}</p>
           {form.payment_instructions && <p className="mt-2">{form.payment_instructions}</p>}
         </div>
       )}
