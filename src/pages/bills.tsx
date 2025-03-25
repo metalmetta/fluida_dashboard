@@ -1,9 +1,10 @@
 
+import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, AlertCircle, ArrowRightLeft, RefreshCcw } from "lucide-react";
+import { Plus, Calendar, AlertCircle, ArrowRightLeft } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -12,13 +13,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useState } from "react";
 import { useBills } from "@/hooks/useBills";
 import { formatCurrency } from "@/lib/utils";
+import { AddBillDialog } from "@/components/AddBillDialog";
+import { BillFormData } from "@/types/bill";
 
 export default function Bills() {
-  const { bills, isLoading, addSampleBills } = useBills();
+  const { bills, isLoading, addBill } = useBills();
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [addBillDialogOpen, setAddBillDialogOpen] = useState(false);
 
   const filteredBills = selectedStatus
     ? bills.filter(bill => bill.status === selectedStatus)
@@ -32,21 +35,21 @@ export default function Bills() {
     Paid: bills.filter(bill => bill.status === "Paid").length,
   };
 
+  const handleAddBill = async (billData: BillFormData) => {
+    await addBill(billData);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-semibold">Bills</h1>
           <div className="flex gap-3">
-            <Button variant="outline" onClick={addSampleBills} disabled={isLoading}>
-              <RefreshCcw className="h-4 w-4 mr-2" />
-              Add Sample Bills
-            </Button>
             <Button variant="outline">
               <ArrowRightLeft className="h-4 w-4 mr-2" />
               Transfer funds
             </Button>
-            <Button>
+            <Button onClick={() => setAddBillDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Add bill
             </Button>
@@ -113,8 +116,9 @@ export default function Bills() {
                   ? `No bills with status "${selectedStatus}"`
                   : "You don't have any bills yet"}
               </p>
-              <Button onClick={addSampleBills} variant="outline" className="mt-4">
-                Add sample bills
+              <Button onClick={() => setAddBillDialogOpen(true)} variant="outline" className="mt-4">
+                <Plus className="h-4 w-4 mr-2" />
+                Add your first bill
               </Button>
             </div>
           ) : (
@@ -151,6 +155,12 @@ export default function Bills() {
           )}
         </Card>
       </div>
+
+      <AddBillDialog 
+        open={addBillDialogOpen} 
+        onOpenChange={setAddBillDialogOpen} 
+        onSubmit={handleAddBill} 
+      />
     </DashboardLayout>
   );
 }
