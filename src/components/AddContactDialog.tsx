@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Upload } from "lucide-react";
+import { Plus } from "lucide-react";
 import { ContactFormData } from "@/types/contact";
 import { useContacts } from "@/hooks/useContacts";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogClose,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Sheet,
@@ -67,10 +68,10 @@ export function AddContactDialog() {
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.type !== "image/jpeg" && file.type !== "image/jpg") {
+      if (file.type !== "image/jpeg" && file.type !== "image/png" && file.type !== "image/jpg") {
         toast({
           title: "Invalid file type",
-          description: "Please upload a JPEG image",
+          description: "Please upload a JPEG or PNG image",
           variant: "destructive",
         });
         return;
@@ -145,12 +146,12 @@ export function AddContactDialog() {
             name="logo"
             render={() => (
               <FormItem>
-                <FormLabel>Logo (JPEG)</FormLabel>
+                <FormLabel>Logo (JPEG/PNG)</FormLabel>
                 <div className="flex items-start gap-4">
                   <div className="flex-1">
                     <Input
                       type="file"
-                      accept=".jpg,.jpeg,image/jpeg"
+                      accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                       onChange={handleLogoChange}
                       className="w-full"
                     />
@@ -403,6 +404,7 @@ export function AddContactDialog() {
       <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add contact</DialogTitle>
+          <DialogDescription>Add a new contact to your network</DialogDescription>
         </DialogHeader>
         <ContactForm />
       </DialogContent>
