@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Contact } from "@/types/contact";
+import { Contact, ContactFormData } from "@/types/contact";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -25,7 +24,6 @@ export function useContacts() {
         throw error;
       }
 
-      // Ensure the type is properly cast as our Contact type
       const typedContacts = data?.map(contact => ({
         ...contact,
         type: contact.type as 'Customer' | 'Vendor' | 'Other'
@@ -44,7 +42,7 @@ export function useContacts() {
     }
   };
 
-  const addContact = async (contactData: Omit<Contact, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const addContact = async (contactData: ContactFormData) => {
     if (!user) {
       toast({
         title: "Error",
@@ -55,8 +53,33 @@ export function useContacts() {
     }
 
     try {
+      let logoUrl = null;
+      if (contactData.logo) {
+        const file = contactData.logo;
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('contact-logos')
+          .upload(filePath, file);
+          
+        if (uploadError) {
+          throw uploadError;
+        }
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('contact-logos')
+          .getPublicUrl(filePath);
+          
+        logoUrl = publicUrl;
+      }
+
+      const { logo, ...contactDataWithoutLogo } = contactData;
+      
       const newContact = {
-        ...contactData,
+        ...contactDataWithoutLogo,
+        logo_url: logoUrl,
         user_id: user.id
       };
 
@@ -74,7 +97,6 @@ export function useContacts() {
         description: "Contact added successfully"
       });
 
-      // Refresh the contacts list
       fetchContacts();
       
       return data?.[0];
@@ -154,7 +176,6 @@ export function useContacts() {
         description: "Sample contacts added successfully"
       });
 
-      // Fetch the updated contacts
       fetchContacts();
     } catch (error) {
       console.error("Error adding sample contacts:", error);

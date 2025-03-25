@@ -57,6 +57,7 @@ export function useBills() {
     try {
       const newBill = {
         ...billData,
+        status: "Draft", // Ensure status is always "Draft" for new bills
         user_id: user.id
       };
 

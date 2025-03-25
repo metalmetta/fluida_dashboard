@@ -2,22 +2,14 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, AlertCircle, ArrowRightLeft } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Plus, ArrowRightLeft } from "lucide-react";
 import { useBills } from "@/hooks/useBills";
 import { formatCurrency } from "@/lib/utils";
 import { AddBillDialog } from "@/components/AddBillDialog";
-import { BillFormData, Bill } from "@/types/bill";
+import { Bill } from "@/types/bill";
 import { ViewBillDialog } from "@/components/ViewBillDialog";
+import { DocumentsHeader } from "@/components/documents/DocumentsHeader";
+import { DocumentsTable } from "@/components/documents/DocumentsTable";
 
 export default function Bills() {
   const { bills, isLoading, addBill, updateBillStatus } = useBills();
@@ -38,7 +30,14 @@ export default function Bills() {
     Paid: bills.filter(bill => bill.status === "Paid").length,
   };
 
-  const handleAddBill = async (billData: BillFormData) => {
+  const statusFilters = [
+    { value: "Draft", label: "Draft", count: statusCounts.Draft },
+    { value: "Approve", label: "Approve", count: statusCounts.Approve },
+    { value: "Ready for payment", label: "Ready for payment", count: statusCounts["Ready for payment"] },
+    { value: "Paid", label: "Paid", count: statusCounts.Paid },
+  ];
+
+  const handleAddBill = async (billData: Omit<Bill, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     await addBill(billData);
   };
   
@@ -51,61 +50,44 @@ export default function Bills() {
     await updateBillStatus(billId, newStatus);
   };
 
+  const getStatusVariant = (status: string) => {
+    return status === "Ready for payment" ? "destructive" : "outline";
+  };
+
+  const columns = [
+    { header: "Bill ID", accessorKey: "bill_number" as keyof Bill },
+    { header: "Vendor", accessorKey: "vendor" as keyof Bill },
+    { header: "Category", accessorKey: "category" as keyof Bill, 
+      cell: (item: Bill) => item.category || "N/A" },
+    { header: "Amount", accessorKey: "amount" as keyof Bill,
+      cell: (item: Bill) => formatCurrency(item.amount) },
+    { header: "Due Date", accessorKey: "due_date" as keyof Bill,
+      cell: (item: Bill) => new Date(item.due_date).toLocaleDateString() },
+    { header: "Status", accessorKey: "status" as keyof Bill },
+  ];
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-semibold">Bills</h1>
-          <div className="flex gap-3">
-            <Button variant="outline">
-              <ArrowRightLeft className="h-4 w-4 mr-2" />
-              Transfer funds
-            </Button>
-            <Button onClick={() => setAddBillDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add bill
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex gap-8 border-b pb-1">
-          <button
-            onClick={() => setSelectedStatus("Draft")}
-            className={`flex items-center gap-2 pb-2 ${
-              selectedStatus === "Draft" ? "border-b-2 border-primary" : ""
-            }`}
-          >
-            Draft
-            <Badge variant="secondary" className="rounded-full">{statusCounts.Draft}</Badge>
-          </button>
-          <button
-            onClick={() => setSelectedStatus("Approve")}
-            className={`flex items-center gap-2 pb-2 ${
-              selectedStatus === "Approve" ? "border-b-2 border-primary" : ""
-            }`}
-          >
-            Approve
-            <Badge variant="secondary" className="rounded-full">{statusCounts.Approve}</Badge>
-          </button>
-          <button
-            onClick={() => setSelectedStatus("Ready for payment")}
-            className={`flex items-center gap-2 pb-2 ${
-              selectedStatus === "Ready for payment" ? "border-b-2 border-primary" : ""
-            }`}
-          >
-            Ready for payment
-            <Badge variant="secondary" className="rounded-full">{statusCounts["Ready for payment"]}</Badge>
-          </button>
-          <button
-            onClick={() => setSelectedStatus("Paid")}
-            className={`flex items-center gap-2 pb-2 ${
-              selectedStatus === "Paid" ? "border-b-2 border-primary" : ""
-            }`}
-          >
-            Paid
-            <Badge variant="secondary" className="rounded-full">{statusCounts.Paid}</Badge>
-          </button>
-        </div>
+        <DocumentsHeader
+          title="Bills"
+          statusFilters={statusFilters}
+          selectedStatus={selectedStatus}
+          onStatusChange={setSelectedStatus}
+          actionButtons={[
+            {
+              icon: ArrowRightLeft,
+              label: "Transfer funds",
+              variant: "outline",
+              onClick: () => {}
+            },
+            {
+              icon: Plus,
+              label: "Add bill",
+              onClick: () => setAddBillDialogOpen(true)
+            }
+          ]}
+        />
 
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
@@ -114,61 +96,22 @@ export default function Bills() {
         </div>
 
         <Card>
-          {isLoading ? (
-            <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-4 text-sm text-muted-foreground">Loading bills...</p>
-            </div>
-          ) : filteredBills.length === 0 ? (
-            <div className="p-8 text-center">
-              <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground" />
-              <h3 className="mt-2 text-lg font-medium">No bills found</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {selectedStatus
-                  ? `No bills with status "${selectedStatus}"`
-                  : "You don't have any bills yet"}
-              </p>
-              <Button onClick={() => setAddBillDialogOpen(true)} variant="outline" className="mt-4">
-                <Plus className="h-4 w-4 mr-2" />
-                Add your first bill
-              </Button>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Bill ID</TableHead>
-                  <TableHead>Vendor</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredBills.map((bill) => (
-                  <TableRow 
-                    key={bill.id} 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleViewBill(bill)}
-                  >
-                    <TableCell className="font-medium">{bill.bill_number}</TableCell>
-                    <TableCell>{bill.vendor}</TableCell>
-                    <TableCell>{bill.category || "N/A"}</TableCell>
-                    <TableCell>{formatCurrency(bill.amount)}</TableCell>
-                    <TableCell>{new Date(bill.due_date).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={bill.status === "Ready for payment" ? "destructive" : "outline"}
-                      >
-                        {bill.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          <DocumentsTable
+            documents={filteredBills}
+            isLoading={isLoading}
+            columns={columns}
+            onRowClick={handleViewBill}
+            statusKey="status"
+            getStatusVariant={getStatusVariant}
+            emptyState={{
+              title: "No bills found",
+              description: selectedStatus
+                ? `No bills with status "${selectedStatus}"`
+                : "You don't have any bills yet",
+              buttonText: "Add your first bill",
+              onButtonClick: () => setAddBillDialogOpen(true)
+            }}
+          />
         </Card>
       </div>
 

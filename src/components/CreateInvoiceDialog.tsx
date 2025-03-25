@@ -1,10 +1,9 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { format, addDays } from "date-fns";
-import { CalendarIcon, Plus, MinusCircle } from "lucide-react";
+import { CalendarIcon, Plus, MinusCircle, Check, UserPlus, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +11,15 @@ import { InvoiceFormData } from "@/types/invoice";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { useContacts } from "@/hooks/useContacts";
+import { Contact } from "@/types/contact";
+import { AddContactDialog } from "@/components/AddContactDialog";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface CreateInvoiceDialogProps {
   open: boolean;
@@ -29,6 +37,12 @@ export function CreateInvoiceDialog({
   companyEmail
 }: CreateInvoiceDialogProps) {
   const { toast } = useToast();
+  const { contacts, isLoading: contactsLoading, addContact, fetchContacts } = useContacts();
+  const [customerContacts, setCustomerContacts] = useState<Contact[]>([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [contactSearchTerm, setContactSearchTerm] = useState("");
+  
+  const [addContactDialogOpen, setAddContactDialogOpen] = useState(false);
 
   const getNextInvoiceNumber = () => {
     const date = new Date();
@@ -63,36 +77,46 @@ export function CreateInvoiceDialog({
   const [form, setForm] = useState<InvoiceFormData>(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset form when dialog opens
   useEffect(() => {
     if (open) {
       setForm(initialFormState);
+      setContactSearchTerm("");
     }
   }, [open]);
 
-  const updateItem = (index: number, field: string, value: any) => {
-    const updatedItems = [...form.items];
-    updatedItems[index] = {
-      ...updatedItems[index],
-      [field]: value
-    };
-
-    // Update amount automatically when quantity or price changes
-    if (field === 'quantity' || field === 'price') {
-      updatedItems[index].amount = updatedItems[index].quantity * updatedItems[index].price;
+  useEffect(() => {
+    if (contacts.length > 0) {
+      const filtered = contacts.filter(
+        (contact) => contact.type.toLowerCase() === "customer"
+      );
+      setCustomerContacts(filtered);
     }
+  }, [contacts]);
 
-    setForm({
-      ...form,
-      items: updatedItems
+  const updateItem = useCallback((index: number, field: string, value: any) => {
+    setForm(prevForm => {
+      const updatedItems = [...prevForm.items];
+      updatedItems[index] = {
+        ...updatedItems[index],
+        [field]: value
+      };
+
+      if (field === 'quantity' || field === 'price') {
+        updatedItems[index].amount = updatedItems[index].quantity * updatedItems[index].price;
+      }
+
+      return {
+        ...prevForm,
+        items: updatedItems
+      };
     });
-  };
+  }, []);
 
-  const addItem = () => {
-    setForm({
-      ...form,
+  const addItem = useCallback(() => {
+    setForm(prevForm => ({
+      ...prevForm,
       items: [
-        ...form.items,
+        ...prevForm.items,
         {
           description: "",
           quantity: 1,
@@ -100,23 +124,25 @@ export function CreateInvoiceDialog({
           amount: 0
         }
       ]
-    });
-  };
+    }));
+  }, []);
 
-  const removeItem = (index: number) => {
+  const removeItem = useCallback((index: number) => {
     if (form.items.length > 1) {
-      const updatedItems = [...form.items];
-      updatedItems.splice(index, 1);
-      setForm({
-        ...form,
-        items: updatedItems
+      setForm(prevForm => {
+        const updatedItems = [...prevForm.items];
+        updatedItems.splice(index, 1);
+        return {
+          ...prevForm,
+          items: updatedItems
+        };
       });
     }
-  };
+  }, [form.items.length]);
 
-  const calculateTotal = () => {
+  const calculateTotal = useCallback(() => {
     return form.items.reduce((total, item) => total + item.amount, 0);
-  };
+  }, [form.items]);
 
   const handleSubmit = async () => {
     try {
@@ -170,6 +196,38 @@ export function CreateInvoiceDialog({
     }
   };
 
+  const handleSelectContact = useCallback((contact: Contact) => {
+    setForm(prevForm => ({
+      ...prevForm,
+      client_name: contact.name,
+      client_email: contact.email || "",
+      client_address: contact.address || "",
+      client_city: contact.city || "",
+      client_state: contact.state || "",
+      client_zip: contact.zip || "",
+      client_country: contact.country || "",
+      client_tax_id: contact.tax_id || ""
+    }));
+    setDropdownOpen(false);
+  }, []);
+
+  const handleAddContactSuccess = useCallback((newContact: Contact) => {
+    fetchContacts();
+    handleSelectContact(newContact);
+    setAddContactDialogOpen(false);
+    toast({
+      title: "Success",
+      description: "New contact added successfully"
+    });
+  }, [fetchContacts, handleSelectContact, toast]);
+
+  const filteredContacts = customerContacts.filter(
+    contact => 
+      contact.name.toLowerCase().includes(contactSearchTerm.toLowerCase()) ||
+      (contact.company && contact.company.toLowerCase().includes(contactSearchTerm.toLowerCase())) ||
+      (contact.email && contact.email.toLowerCase().includes(contactSearchTerm.toLowerCase()))
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[1200px] p-0 gap-0 max-h-[90vh] overflow-hidden flex">
@@ -183,13 +241,74 @@ export function CreateInvoiceDialog({
               <h3 className="text-lg font-medium mb-4">Customer</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="client_name">Name</Label>
-                  <Input
-                    id="client_name"
-                    placeholder="Search or add"
-                    value={form.client_name}
-                    onChange={(e) => setForm({ ...form, client_name: e.target.value })}
-                  />
+                  <Label htmlFor="client_name">Contact</Label>
+                  <div className="relative">
+                    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-between bg-white"
+                        >
+                          {form.client_name || "Select a customer..."}
+                          <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent 
+                        className="w-[300px] max-h-[300px] overflow-auto p-0"
+                        align="start"
+                      >
+                        <div className="p-2">
+                          <Input
+                            placeholder="Search customers..."
+                            value={contactSearchTerm}
+                            onChange={(e) => setContactSearchTerm(e.target.value)}
+                            className="mb-2"
+                          />
+                        </div>
+                        
+                        {filteredContacts.length > 0 ? (
+                          filteredContacts.map((contact) => (
+                            <DropdownMenuItem
+                              key={contact.id}
+                              onSelect={() => handleSelectContact(contact)}
+                              className="cursor-pointer p-2"
+                            >
+                              <div className="flex items-center w-full">
+                                <span className="flex-1">
+                                  {contact.name}
+                                  {contact.company && (
+                                    <span className="ml-2 text-muted-foreground text-xs">
+                                      ({contact.company})
+                                    </span>
+                                  )}
+                                </span>
+                                {form.client_name === contact.name && (
+                                  <Check className="h-4 w-4 ml-2" />
+                                )}
+                              </div>
+                            </DropdownMenuItem>
+                          ))
+                        ) : (
+                          <div className="p-2 text-center text-sm text-gray-500">
+                            No customers found.
+                          </div>
+                        )}
+                        
+                        <DropdownMenuItem
+                          className="cursor-pointer border-t p-2 mt-2"
+                          onSelect={() => {
+                            setAddContactDialogOpen(true);
+                            setDropdownOpen(false);
+                          }}
+                        >
+                          <div className="flex items-center text-primary">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add new customer
+                          </div>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                   {!form.client_name && (
                     <p className="text-sm text-red-500">Select a customer</p>
                   )}
@@ -407,111 +526,93 @@ export function CreateInvoiceDialog({
             </div>
           </div>
         </div>
-        
-        {/* Live Preview */}
-        <div className="w-[500px] bg-gray-50 p-8 overflow-y-auto border-l">
-          <div className="bg-white p-8 border rounded-md shadow-sm">
-            <div className="flex justify-between mb-10">
+
+        <div className="md:w-2/5 bg-gray-50 p-6 border-l overflow-y-auto hidden md:block">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex justify-between mb-8">
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">INVOICE</h1>
+                <h3 className="font-bold text-xl">{companyName}</h3>
+                <p className="text-sm text-gray-500">{companyEmail}</p>
               </div>
-              <div>
-                <div className="text-right mb-4">
-                  <div className="text-sm text-gray-500">INVOICE NO</div>
-                  <div className="font-medium">{form.invoice_number}</div>
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-right">
-                  <div>
-                    <div className="text-sm text-gray-500">ISSUED</div>
-                    <div className="font-medium">
-                      {format(new Date(form.issue_date), "MM/dd/yy")}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">DUE DATE</div>
-                    <div className="font-medium">
-                      {format(new Date(form.due_date), "MM/dd/yy")}
-                    </div>
-                  </div>
-                </div>
+              <div className="text-right">
+                <h3 className="font-bold text-lg">INVOICE</h3>
+                <p className="text-sm text-gray-500">#{form.invoice_number}</p>
               </div>
             </div>
             
-            <div className="flex justify-between mb-10">
+            <div className="mb-8">
+              <h4 className="font-medium text-gray-500 text-sm mb-2">BILL TO</h4>
+              {form.client_name ? (
+                <>
+                  <p className="font-medium">{form.client_name}</p>
+                  {form.client_email && <p className="text-sm">{form.client_email}</p>}
+                  {form.client_address && <p className="text-sm">{form.client_address}</p>}
+                  <p className="text-sm">
+                    {form.client_city && `${form.client_city}, `}
+                    {form.client_state && `${form.client_state} `}
+                    {form.client_zip && form.client_zip}
+                  </p>
+                  {form.client_country && <p className="text-sm">{form.client_country}</p>}
+                </>
+              ) : (
+                <p className="text-gray-400 italic">No client selected</p>
+              )}
+            </div>
+            
+            <div className="flex justify-between mb-4 text-sm">
               <div>
-                <div className="text-sm text-gray-500 mb-1">FROM</div>
-                <div className="inline-block bg-gray-200 p-4 rounded-full mb-2">
-                  {companyName.charAt(0).toUpperCase()}
-                </div>
-                <div className="font-medium">{companyName}</div>
-                <div className="text-sm text-gray-500">{companyEmail}</div>
+                <p className="text-gray-500">Issue Date</p>
+                <p>{form.issue_date}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Due Date</p>
+                <p>{form.due_date}</p>
+              </div>
+            </div>
+            
+            <div className="border-t border-b py-4 my-4">
+              <div className="flex justify-between text-sm text-gray-500 mb-2">
+                <span className="w-5/12">Description</span>
+                <span className="w-2/12 text-center">Qty</span>
+                <span className="w-2/12 text-right">Price</span>
+                <span className="w-3/12 text-right">Amount</span>
               </div>
               
-              <div>
-                <div className="text-sm text-gray-500 mb-1">TO</div>
-                <div className="border p-4 rounded-md min-h-[100px] min-w-[200px]">
-                  {form.client_name && (
-                    <>
-                      <div className="font-medium">{form.client_name}</div>
-                      <div className="text-sm text-gray-500">{form.client_email}</div>
-                      {form.client_address && (
-                        <div className="text-sm mt-2">
-                          {form.client_address}<br />
-                          {form.client_city && `${form.client_city}, `}
-                          {form.client_state && `${form.client_state} `}
-                          {form.client_zip && form.client_zip}<br />
-                          {form.client_country && form.client_country}
-                        </div>
-                      )}
-                    </>
-                  )}
+              {form.items.map((item, index) => (
+                <div key={index} className="flex justify-between my-2 text-sm">
+                  <span className="w-5/12 truncate">{item.description || "Item description"}</span>
+                  <span className="w-2/12 text-center">{item.quantity}</span>
+                  <span className="w-2/12 text-right">${item.price.toFixed(2)}</span>
+                  <span className="w-3/12 text-right">${item.amount.toFixed(2)}</span>
                 </div>
-              </div>
+              ))}
             </div>
             
-            <table className="w-full mb-10">
-              <thead>
-                <tr className="text-left text-sm text-gray-500 border-b">
-                  <th className="pb-2">DESCRIPTION</th>
-                  <th className="pb-2 text-center">QTY</th>
-                  <th className="pb-2 text-right">PRICE</th>
-                  <th className="pb-2 text-right">AMOUNT</th>
-                </tr>
-              </thead>
-              <tbody>
-                {form.items.map((item, index) => (
-                  <tr key={index} className="border-b">
-                    <td className="py-4">{item.description || "—"}</td>
-                    <td className="py-4 text-center">{item.quantity}</td>
-                    <td className="py-4 text-right">${item.price.toFixed(2)}</td>
-                    <td className="py-4 text-right">${item.amount.toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            
             <div className="flex justify-end">
-              <div className="w-1/3">
-                <div className="flex justify-between py-2">
-                  <div className="text-gray-500">Subtotal</div>
-                  <div>${calculateTotal().toFixed(2)}</div>
-                </div>
-                <div className="flex justify-between py-2 text-lg font-bold border-t">
-                  <div>Total</div>
-                  <div>${calculateTotal().toFixed(2)}</div>
+              <div className="w-1/2">
+                <div className="flex justify-between mb-2">
+                  <span className="font-medium">Total:</span>
+                  <span className="font-bold">${calculateTotal().toFixed(2)}</span>
                 </div>
               </div>
             </div>
             
             {form.notes && (
-              <div className="mt-8 text-sm text-gray-500">
-                <div className="font-medium mb-1">Notes:</div>
-                <div>{form.notes}</div>
+              <div className="mt-8 pt-4 border-t text-sm">
+                <h4 className="font-medium text-gray-500 mb-2">NOTES</h4>
+                <p>{form.notes}</p>
               </div>
             )}
           </div>
         </div>
       </DialogContent>
+
+      <AddContactDialog 
+        open={addContactDialogOpen}
+        onOpenChange={setAddContactDialogOpen}
+        defaultType="Customer"
+        onSuccess={handleAddContactSuccess}
+      />
     </Dialog>
   );
 }
