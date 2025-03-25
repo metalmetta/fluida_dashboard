@@ -1,25 +1,21 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { format, addDays } from "date-fns";
-import { CalendarIcon, Plus, MinusCircle, Check, UserPlus, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { InvoiceFormData } from "@/types/invoice";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
+import { InvoiceFormData, InvoiceFormStep } from "@/types/invoice";
 import { useContacts } from "@/hooks/useContacts";
 import { Contact } from "@/types/contact";
 import { AddContactDialog } from "@/components/AddContactDialog";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
+// Import step components
+import { CustomerDetailsStep } from "@/components/invoice/CustomerDetailsStep";
+import { LineItemsStep } from "@/components/invoice/LineItemsStep";
+import { PaymentDetailsStep } from "@/components/invoice/PaymentDetailsStep";
+import { TermsStep } from "@/components/invoice/TermsStep";
+import { InvoicePreview } from "@/components/invoice/InvoicePreview";
 
 interface CreateInvoiceDialogProps {
   open: boolean;
@@ -41,7 +37,7 @@ export function CreateInvoiceDialog({
   const [customerContacts, setCustomerContacts] = useState<Contact[]>([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [contactSearchTerm, setContactSearchTerm] = useState("");
-  
+  const [currentStep, setCurrentStep] = useState<InvoiceFormStep>("customer");
   const [addContactDialogOpen, setAddContactDialogOpen] = useState(false);
 
   const getNextInvoiceNumber = () => {
@@ -71,7 +67,10 @@ export function CreateInvoiceDialog({
         amount: 0
       }
     ],
-    notes: ""
+    notes: "",
+    payment_method: "",
+    payment_instructions: "",
+    terms: ""
   };
 
   const [form, setForm] = useState<InvoiceFormData>(initialFormState);
@@ -81,6 +80,7 @@ export function CreateInvoiceDialog({
     if (open) {
       setForm(initialFormState);
       setContactSearchTerm("");
+      setCurrentStep("customer");
     }
   }, [open]);
 
@@ -221,12 +221,129 @@ export function CreateInvoiceDialog({
     });
   }, [fetchContacts, handleSelectContact, toast]);
 
-  const filteredContacts = customerContacts.filter(
-    contact => 
-      contact.name.toLowerCase().includes(contactSearchTerm.toLowerCase()) ||
-      (contact.company && contact.company.toLowerCase().includes(contactSearchTerm.toLowerCase())) ||
-      (contact.email && contact.email.toLowerCase().includes(contactSearchTerm.toLowerCase()))
-  );
+  const nextStep = () => {
+    switch (currentStep) {
+      case "customer":
+        setCurrentStep("items");
+        break;
+      case "items":
+        setCurrentStep("payment");
+        break;
+      case "payment":
+        setCurrentStep("terms");
+        break;
+      default:
+        break;
+    }
+  };
+
+  const previousStep = () => {
+    switch (currentStep) {
+      case "items":
+        setCurrentStep("customer");
+        break;
+      case "payment":
+        setCurrentStep("items");
+        break;
+      case "terms":
+        setCurrentStep("payment");
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Render the appropriate step component based on the current step
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case "customer":
+        return (
+          <CustomerDetailsStep
+            form={form}
+            setForm={setForm}
+            customerContacts={customerContacts}
+            contactSearchTerm={contactSearchTerm}
+            setContactSearchTerm={setContactSearchTerm}
+            dropdownOpen={dropdownOpen}
+            setDropdownOpen={setDropdownOpen}
+            handleSelectContact={handleSelectContact}
+            openAddContactDialog={() => setAddContactDialogOpen(true)}
+            onNext={nextStep}
+          />
+        );
+      case "items":
+        return (
+          <LineItemsStep
+            form={form}
+            setForm={setForm}
+            updateItem={updateItem}
+            addItem={addItem}
+            removeItem={removeItem}
+            onPrevious={previousStep}
+            onNext={nextStep}
+          />
+        );
+      case "payment":
+        return (
+          <PaymentDetailsStep
+            form={form}
+            setForm={setForm}
+            onPrevious={previousStep}
+            onNext={nextStep}
+          />
+        );
+      case "terms":
+        return (
+          <TermsStep
+            form={form}
+            setForm={setForm}
+            isSubmitting={isSubmitting}
+            onPrevious={previousStep}
+            onSubmit={handleSubmit}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Progress indicator for the multi-step form
+  const renderStepIndicator = () => {
+    const steps = [
+      { key: "customer", label: "Customer" },
+      { key: "items", label: "Line Items" },
+      { key: "payment", label: "Payment" },
+      { key: "terms", label: "Terms" }
+    ];
+
+    return (
+      <div className="flex justify-between mb-8 border-b pb-4">
+        {steps.map((step, index) => (
+          <div key={step.key} className="flex flex-col items-center">
+            <div 
+              className={`rounded-full w-8 h-8 flex items-center justify-center mb-1 
+                ${currentStep === step.key 
+                  ? "bg-primary text-white" 
+                  : index < steps.findIndex(s => s.key === currentStep) 
+                    ? "bg-green-100 text-green-800" 
+                    : "bg-gray-100 text-gray-400"}`}
+            >
+              {index + 1}
+            </div>
+            <span 
+              className={`text-xs font-medium ${currentStep === step.key 
+                ? "text-primary" 
+                : index < steps.findIndex(s => s.key === currentStep) 
+                  ? "text-green-800" 
+                  : "text-gray-400"}`}
+            >
+              {step.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -236,374 +353,17 @@ export function CreateInvoiceDialog({
             <DialogTitle className="text-2xl">Create invoice</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium mb-4">Customer</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="client_name">Contact</Label>
-                  <div className="relative">
-                    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-between bg-white"
-                        >
-                          {form.client_name || "Select a customer..."}
-                          <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent 
-                        className="w-[300px] max-h-[300px] overflow-auto p-0"
-                        align="start"
-                      >
-                        <div className="p-2">
-                          <Input
-                            placeholder="Search customers..."
-                            value={contactSearchTerm}
-                            onChange={(e) => setContactSearchTerm(e.target.value)}
-                            className="mb-2"
-                          />
-                        </div>
-                        
-                        {filteredContacts.length > 0 ? (
-                          filteredContacts.map((contact) => (
-                            <DropdownMenuItem
-                              key={contact.id}
-                              onSelect={() => handleSelectContact(contact)}
-                              className="cursor-pointer p-2"
-                            >
-                              <div className="flex items-center w-full">
-                                <span className="flex-1">
-                                  {contact.name}
-                                  {contact.company && (
-                                    <span className="ml-2 text-muted-foreground text-xs">
-                                      ({contact.company})
-                                    </span>
-                                  )}
-                                </span>
-                                {form.client_name === contact.name && (
-                                  <Check className="h-4 w-4 ml-2" />
-                                )}
-                              </div>
-                            </DropdownMenuItem>
-                          ))
-                        ) : (
-                          <div className="p-2 text-center text-sm text-gray-500">
-                            No customers found.
-                          </div>
-                        )}
-                        
-                        <DropdownMenuItem
-                          className="cursor-pointer border-t p-2 mt-2"
-                          onSelect={() => {
-                            setAddContactDialogOpen(true);
-                            setDropdownOpen(false);
-                          }}
-                        >
-                          <div className="flex items-center text-primary">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add new customer
-                          </div>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  {!form.client_name && (
-                    <p className="text-sm text-red-500">Select a customer</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="client_email">Email</Label>
-                  <Input
-                    id="client_email"
-                    placeholder="client@example.com"
-                    value={form.client_email}
-                    onChange={(e) => setForm({ ...form, client_email: e.target.value })}
-                  />
-                  {!form.client_email && (
-                    <p className="text-sm text-red-500">Enter an email</p>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="client_address">Address</Label>
-              <Input
-                id="client_address"
-                placeholder="Enter address..."
-                value={form.client_address || ""}
-                onChange={(e) => setForm({ ...form, client_address: e.target.value })}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="client_city">City</Label>
-                <Input
-                  id="client_city"
-                  placeholder="Enter city..."
-                  value={form.client_city || ""}
-                  onChange={(e) => setForm({ ...form, client_city: e.target.value })}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="client_state">State</Label>
-                <Input
-                  id="client_state"
-                  placeholder="Enter state..."
-                  value={form.client_state || ""}
-                  onChange={(e) => setForm({ ...form, client_state: e.target.value })}
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="client_zip">Zip Code</Label>
-              <Input
-                id="client_zip"
-                placeholder="Enter ZIP..."
-                value={form.client_zip || ""}
-                onChange={(e) => setForm({ ...form, client_zip: e.target.value })}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="client_country">Country</Label>
-              <Input
-                id="client_country"
-                placeholder="Enter country..."
-                value={form.client_country || ""}
-                onChange={(e) => setForm({ ...form, client_country: e.target.value })}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="client_tax_id">Tax ID</Label>
-              <Input
-                id="client_tax_id"
-                placeholder="Enter tax ID..."
-                value={form.client_tax_id || ""}
-                onChange={(e) => setForm({ ...form, client_tax_id: e.target.value })}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="invoice_number">Invoice Number</Label>
-                <Input
-                  id="invoice_number"
-                  value={form.invoice_number}
-                  onChange={(e) => setForm({ ...form, invoice_number: e.target.value })}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="issue_date">Issue Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {form.issue_date}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={new Date(form.issue_date)}
-                      onSelect={(date) => setForm({ ...form, issue_date: format(date || new Date(), "yyyy-MM-dd") })}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="due_date">Due Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {form.due_date}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={new Date(form.due_date)}
-                      onSelect={(date) => setForm({ ...form, due_date: format(date || new Date(), "yyyy-MM-dd") })}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium">Line Items</h3>
-                <Button type="button" onClick={addItem} size="sm" variant="outline">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Item
-                </Button>
-              </div>
-              
-              <div className="space-y-4">
-                {form.items.map((item, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-3 items-center">
-                    <div className="col-span-6">
-                      <Input
-                        placeholder="Description"
-                        value={item.description}
-                        onChange={(e) => updateItem(index, "description", e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      <Input
-                        type="number"
-                        placeholder="Qty"
-                        value={item.quantity}
-                        onChange={(e) => updateItem(index, "quantity", Number(e.target.value))}
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Input
-                        type="number"
-                        placeholder="Price"
-                        value={item.price}
-                        onChange={(e) => updateItem(index, "price", Number(e.target.value))}
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Input
-                        readOnly
-                        value={item.amount.toFixed(2)}
-                      />
-                    </div>
-                    <div className="col-span-1 flex justify-center">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeItem(index)}
-                        disabled={form.items.length <= 1}
-                      >
-                        <MinusCircle className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Input
-                id="notes"
-                placeholder="Add notes to invoice..."
-                value={form.notes || ""}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              />
-            </div>
-          </div>
-          
-          <div className="flex justify-between pt-6">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <div className="space-x-2">
-              <Button variant="outline">Save draft</Button>
-              <Button onClick={handleSubmit} disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Invoice"}
-              </Button>
-            </div>
-          </div>
+          {renderStepIndicator()}
+          {renderStepContent()}
         </div>
 
         <div className="md:w-2/5 bg-gray-50 p-6 border-l overflow-y-auto hidden md:block">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex justify-between mb-8">
-              <div>
-                <h3 className="font-bold text-xl">{companyName}</h3>
-                <p className="text-sm text-gray-500">{companyEmail}</p>
-              </div>
-              <div className="text-right">
-                <h3 className="font-bold text-lg">INVOICE</h3>
-                <p className="text-sm text-gray-500">#{form.invoice_number}</p>
-              </div>
-            </div>
-            
-            <div className="mb-8">
-              <h4 className="font-medium text-gray-500 text-sm mb-2">BILL TO</h4>
-              {form.client_name ? (
-                <>
-                  <p className="font-medium">{form.client_name}</p>
-                  {form.client_email && <p className="text-sm">{form.client_email}</p>}
-                  {form.client_address && <p className="text-sm">{form.client_address}</p>}
-                  <p className="text-sm">
-                    {form.client_city && `${form.client_city}, `}
-                    {form.client_state && `${form.client_state} `}
-                    {form.client_zip && form.client_zip}
-                  </p>
-                  {form.client_country && <p className="text-sm">{form.client_country}</p>}
-                </>
-              ) : (
-                <p className="text-gray-400 italic">No client selected</p>
-              )}
-            </div>
-            
-            <div className="flex justify-between mb-4 text-sm">
-              <div>
-                <p className="text-gray-500">Issue Date</p>
-                <p>{form.issue_date}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Due Date</p>
-                <p>{form.due_date}</p>
-              </div>
-            </div>
-            
-            <div className="border-t border-b py-4 my-4">
-              <div className="flex justify-between text-sm text-gray-500 mb-2">
-                <span className="w-5/12">Description</span>
-                <span className="w-2/12 text-center">Qty</span>
-                <span className="w-2/12 text-right">Price</span>
-                <span className="w-3/12 text-right">Amount</span>
-              </div>
-              
-              {form.items.map((item, index) => (
-                <div key={index} className="flex justify-between my-2 text-sm">
-                  <span className="w-5/12 truncate">{item.description || "Item description"}</span>
-                  <span className="w-2/12 text-center">{item.quantity}</span>
-                  <span className="w-2/12 text-right">${item.price.toFixed(2)}</span>
-                  <span className="w-3/12 text-right">${item.amount.toFixed(2)}</span>
-                </div>
-              ))}
-            </div>
-            
-            <div className="flex justify-end">
-              <div className="w-1/2">
-                <div className="flex justify-between mb-2">
-                  <span className="font-medium">Total:</span>
-                  <span className="font-bold">${calculateTotal().toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-            
-            {form.notes && (
-              <div className="mt-8 pt-4 border-t text-sm">
-                <h4 className="font-medium text-gray-500 mb-2">NOTES</h4>
-                <p>{form.notes}</p>
-              </div>
-            )}
-          </div>
+          <InvoicePreview 
+            form={form}
+            companyName={companyName}
+            companyEmail={companyEmail}
+            calculateTotal={calculateTotal}
+          />
         </div>
       </DialogContent>
 

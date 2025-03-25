@@ -34,4 +34,9 @@ export interface InvoiceFormData {
   }[];
   notes?: string;
   payment_method?: string;
+  payment_instructions?: string;
+  terms?: string;
 }
+
+export type InvoiceFormStep = 'customer' | 'items' | 'payment' | 'terms';
+
