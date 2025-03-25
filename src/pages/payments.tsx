@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ArrowUpDown } from "lucide-react";
+import { Plus, ArrowUpDown, ArrowRight, ChevronDown } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -11,6 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const recentPayments = [
   {
@@ -48,10 +54,38 @@ export default function Payments() {
             <h1 className="text-3xl font-semibold">Payments</h1>
             <p className="text-muted-foreground">Manage your payment transactions</p>
           </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Payment
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="default">
+                Actions
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[280px]">
+              <DropdownMenuItem className="py-3 cursor-pointer">
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between w-full">
+                    <span className="font-medium">Transfer funds</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    Send funds between your bank and crypto wallets or swap across chains
+                  </span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="py-3 cursor-pointer">
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between w-full">
+                    <span className="font-medium">Add flexible payment option</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    Receive payments your way and let clients pay with any method
+                  </span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
