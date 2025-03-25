@@ -40,3 +40,12 @@ export interface InvoiceFormData {
 
 export type InvoiceFormStep = 'customer' | 'items' | 'payment' | 'terms';
 
+export interface PaymentMethod {
+  id: string;
+  type: 'usd' | 'eur' | 'gbp' | 'usdc';
+  label: string;
+  details: {
+    [key: string]: string;
+  };
+  isDefault: boolean;
+}

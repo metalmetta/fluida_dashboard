@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,9 +21,10 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { User, Building2, CheckSquare, Users, CreditCard, Upload } from "lucide-react";
+import { User, Building2, CheckSquare, Users, CreditCard, Upload, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import PaymentMethods from "@/components/settings/PaymentMethods";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -50,7 +50,6 @@ export default function Settings() {
       try {
         setLoading(true);
         if (user) {
-          // Fetch user profile data from profiles table
           const { data, error } = await supabase
             .from('profiles')
             .select('*')
@@ -103,7 +102,6 @@ export default function Settings() {
 
       setUploading(true);
 
-      // Upload the file to Supabase storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file);
@@ -112,12 +110,10 @@ export default function Settings() {
         throw uploadError;
       }
 
-      // Get the public URL
       const { data } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // Update the avatar URL in the profiles table
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: data.publicUrl })
@@ -127,7 +123,6 @@ export default function Settings() {
         throw updateError;
       }
 
-      // Update local state
       setProfileData({
         ...profileData,
         avatarUrl: data.publicUrl
@@ -234,6 +229,10 @@ export default function Settings() {
             <TabsTrigger value="company" className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
               Company
+            </TabsTrigger>
+            <TabsTrigger value="payment-methods" className="flex items-center gap-2">
+              <Wallet className="h-4 w-4" />
+              Payment Methods
             </TabsTrigger>
             <TabsTrigger value="approvals" className="flex items-center gap-2">
               <CheckSquare className="h-4 w-4" />
@@ -387,6 +386,12 @@ export default function Settings() {
                 </div>
                 <Button onClick={handleSaveCompany}>Save Company Details</Button>
               </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="payment-methods">
+            <Card className="p-6">
+              <PaymentMethods />
             </Card>
           </TabsContent>
 
