@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar } from "@/components/ui/avatar";
+import { useNavigate } from "react-router-dom";
 
 const menuItems = [
   { icon: FileText, label: "Invoices", href: "/invoices" },
@@ -32,11 +33,17 @@ const userMenuItems = [
 ];
 
 export function DashboardSidebar() {
+  const navigate = useNavigate();
+
+  const handleNavigation = (href: string) => {
+    navigate(href);
+  };
+
   return (
     <Sidebar className="flex flex-col justify-between">
       <div>
         <SidebarHeader className="p-4">
-          <h2 className="text-lg font-semibold">Fluida</h2>
+          <h2 className="text-lg font-semibold">VendorPay</h2>
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
@@ -45,11 +52,12 @@ export function DashboardSidebar() {
               <SidebarMenu>
                 {menuItems.map((item) => (
                   <SidebarMenuItem key={item.label}>
-                    <SidebarMenuButton asChild>
-                      <a href={item.href} className="flex items-center gap-3">
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                      </a>
+                    <SidebarMenuButton
+                      onClick={() => handleNavigation(item.href)}
+                      className="flex items-center gap-3 w-full"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
@@ -70,11 +78,13 @@ export function DashboardSidebar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             {userMenuItems.map((item) => (
-              <DropdownMenuItem key={item.label} asChild>
-                <a href={item.href} className="flex items-center gap-2">
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </a>
+              <DropdownMenuItem 
+                key={item.label} 
+                onClick={() => handleNavigation(item.href)}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <item.icon className="h-4 w-4" />
+                <span>{item.label}</span>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
