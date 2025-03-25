@@ -89,7 +89,6 @@ export function CreateInvoiceDialog({
   const [form, setForm] = useState<InvoiceFormData>(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset form when dialog opens
   useEffect(() => {
     if (open) {
       setForm(initialFormState);
@@ -98,7 +97,6 @@ export function CreateInvoiceDialog({
     }
   }, [open]);
 
-  // Filter contacts to only show customers
   useEffect(() => {
     if (contacts.length > 0) {
       const filtered = contacts.filter(
@@ -115,7 +113,6 @@ export function CreateInvoiceDialog({
       [field]: value
     };
 
-    // Update amount automatically when quantity or price changes
     if (field === 'quantity' || field === 'price') {
       updatedItems[index].amount = updatedItems[index].quantity * updatedItems[index].price;
     }
@@ -293,7 +290,7 @@ export function CreateInvoiceDialog({
                               {form.client_name || "Select a customer..."}
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="p-0" align="start" side="bottom" className="w-[300px]">
+                          <PopoverContent className="p-0" align="start" side="bottom" width="300px">
                             <Command>
                               <CommandInput 
                                 placeholder="Search customers..." 
@@ -639,112 +636,4 @@ export function CreateInvoiceDialog({
           </div>
         </div>
         
-        {/* Live Preview */}
-        {!isAddingNewContact && (
-          <div className="w-[500px] bg-gray-50 p-8 overflow-y-auto border-l hidden md:block">
-            <div className="bg-white p-8 border rounded-md shadow-sm">
-              <div className="flex justify-between mb-10">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-800">INVOICE</h1>
-                </div>
-                <div>
-                  <div className="text-right mb-4">
-                    <div className="text-sm text-gray-500">INVOICE NO</div>
-                    <div className="font-medium">{form.invoice_number}</div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 text-right">
-                    <div>
-                      <div className="text-sm text-gray-500">ISSUED</div>
-                      <div className="font-medium">
-                        {format(new Date(form.issue_date), "MM/dd/yy")}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">DUE DATE</div>
-                      <div className="font-medium">
-                        {format(new Date(form.due_date), "MM/dd/yy")}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex justify-between mb-10">
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">FROM</div>
-                  <div className="inline-block bg-gray-200 p-4 rounded-full mb-2">
-                    {companyName.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="font-medium">{companyName}</div>
-                  <div className="text-sm text-gray-500">{companyEmail}</div>
-                </div>
-                
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">TO</div>
-                  <div className="border p-4 rounded-md min-h-[100px] min-w-[200px]">
-                    {form.client_name && (
-                      <>
-                        <div className="font-medium">{form.client_name}</div>
-                        <div className="text-sm text-gray-500">{form.client_email}</div>
-                        {form.client_address && (
-                          <div className="text-sm mt-2">
-                            {form.client_address}<br />
-                            {form.client_city && `${form.client_city}, `}
-                            {form.client_state && `${form.client_state} `}
-                            {form.client_zip && form.client_zip}<br />
-                            {form.client_country && form.client_country}
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              <table className="w-full mb-10">
-                <thead>
-                  <tr className="text-left text-sm text-gray-500 border-b">
-                    <th className="pb-2">DESCRIPTION</th>
-                    <th className="pb-2 text-center">QTY</th>
-                    <th className="pb-2 text-right">PRICE</th>
-                    <th className="pb-2 text-right">AMOUNT</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {form.items.map((item, index) => (
-                    <tr key={index} className="border-b">
-                      <td className="py-4">{item.description || "—"}</td>
-                      <td className="py-4 text-center">{item.quantity}</td>
-                      <td className="py-4 text-right">${item.price.toFixed(2)}</td>
-                      <td className="py-4 text-right">${item.amount.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              
-              <div className="flex justify-end">
-                <div className="w-1/3">
-                  <div className="flex justify-between py-2">
-                    <div className="text-gray-500">Subtotal</div>
-                    <div>${calculateTotal().toFixed(2)}</div>
-                  </div>
-                  <div className="flex justify-between py-2 text-lg font-bold border-t">
-                    <div>Total</div>
-                    <div>${calculateTotal().toFixed(2)}</div>
-                  </div>
-                </div>
-              </div>
-              
-              {form.notes && (
-                <div className="mt-8 text-sm text-gray-500">
-                  <div className="font-medium mb-1">Notes:</div>
-                  <div>{form.notes}</div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
+        {!
