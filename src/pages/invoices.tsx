@@ -12,12 +12,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Download, FileText } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
 import { useInvoices } from "@/hooks/useInvoices";
 import { format } from "date-fns";
 import { CreateInvoiceDialog } from "@/components/CreateInvoiceDialog";
+import { ViewInvoiceDialog } from "@/components/ViewInvoiceDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
+import { Invoice } from "@/types/invoice";
+import { useToast } from "@/hooks/use-toast";
 
 type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
 
@@ -25,6 +28,9 @@ export default function Invoices() {
   const [selectedStatus, setSelectedStatus] = useState<InvoiceStatus | null>(null);
   const { invoices, isLoading, addSampleInvoices, fetchInvoices } = useInvoices();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const { toast } = useToast();
   const [companyInfo, setCompanyInfo] = useState({
     name: "Your Company",
     email: "company@example.com"
@@ -87,6 +93,33 @@ export default function Invoices() {
         return "outline";
       default:
         return "outline";
+    }
+  };
+
+  const handleViewInvoice = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setViewDialogOpen(true);
+  };
+
+  const updateInvoiceStatus = async (invoiceId: string, newStatus: Invoice['status']) => {
+    try {
+      const { error } = await supabase
+        .from("invoices")
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq("id", invoiceId);
+
+      if (error) throw error;
+      
+      // Refresh invoices list
+      await fetchInvoices();
+    } catch (error) {
+      console.error("Error updating invoice status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update invoice status",
+        variant: "destructive"
+      });
+      throw error;
     }
   };
 
@@ -161,7 +194,11 @@ export default function Invoices() {
               </TableHeader>
               <TableBody>
                 {filteredInvoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
+                  <TableRow 
+                    key={invoice.id} 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleViewInvoice(invoice)}
+                  >
                     <TableCell>{invoice.client_name}</TableCell>
                     <TableCell>${invoice.amount.toFixed(2)}</TableCell>
                     <TableCell>{invoice.payment_method || "—"}</TableCell>
@@ -186,6 +223,13 @@ export default function Invoices() {
         onInvoiceCreated={fetchInvoices}
         companyName={companyInfo.name}
         companyEmail={companyInfo.email}
+      />
+
+      <ViewInvoiceDialog 
+        open={viewDialogOpen}
+        onOpenChange={setViewDialogOpen}
+        invoice={selectedInvoice}
+        onStatusChange={updateInvoiceStatus}
       />
     </DashboardLayout>
   );
