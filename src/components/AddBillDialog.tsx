@@ -62,9 +62,14 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
     try {
       // Convert Date objects to ISO strings for API compatibility
       const formattedData: BillFormData = {
-        ...values,
+        vendor: values.vendor,          // Explicitly add required fields
+        amount: values.amount,          // to ensure they are not optional
+        bill_number: values.bill_number,
+        status: values.status,
         issue_date: values.issue_date.toISOString().split('T')[0], // Format as YYYY-MM-DD
-        due_date: values.due_date.toISOString().split('T')[0], // Format as YYYY-MM-DD
+        due_date: values.due_date.toISOString().split('T')[0],     // Format as YYYY-MM-DD
+        category: values.category,      // Optional fields
+        description: values.description // Optional fields
       };
       
       await onSubmit(formattedData);
