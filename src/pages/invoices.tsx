@@ -1,26 +1,17 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Plus, FileText } from "lucide-react";
 import { useInvoices } from "@/hooks/useInvoices";
 import { format } from "date-fns";
 import { CreateInvoiceDialog } from "@/components/CreateInvoiceDialog";
 import { ViewInvoiceDialog } from "@/components/ViewInvoiceDialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
 import { Invoice } from "@/types/invoice";
 import { useToast } from "@/hooks/use-toast";
+import { DocumentsHeader } from "@/components/documents/DocumentsHeader";
+import { DocumentsTable } from "@/components/documents/DocumentsTable";
 
 type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
 
@@ -43,6 +34,14 @@ export default function Invoices() {
     overdue: invoices.filter((inv) => inv.status === "overdue").length,
     cancelled: invoices.filter((inv) => inv.status === "cancelled").length,
   };
+
+  const statusFilters = [
+    { value: "draft", label: "Draft", count: statusCounts.draft },
+    { value: "sent", label: "Sent", count: statusCounts.sent },
+    { value: "paid", label: "Paid", count: statusCounts.paid },
+    { value: "overdue", label: "Overdue", count: statusCounts.overdue },
+    { value: "cancelled", label: "Cancelled", count: statusCounts.cancelled },
+  ];
 
   const filteredInvoices = selectedStatus
     ? invoices.filter((inv) => inv.status === selectedStatus)
@@ -79,7 +78,7 @@ export default function Invoices() {
     }
   };
 
-  const getStatusBadgeVariant = (status: InvoiceStatus) => {
+  const getStatusVariant = (status: string) => {
     switch (status) {
       case "paid":
         return "success";
@@ -123,97 +122,57 @@ export default function Invoices() {
     }
   };
 
+  const columns = [
+    { header: "Customer", accessorKey: "client_name" as keyof Invoice },
+    { header: "Amount", accessorKey: "amount" as keyof Invoice,
+      cell: (item: Invoice) => `$${item.amount.toFixed(2)}` },
+    { header: "Method", accessorKey: "payment_method" as keyof Invoice,
+      cell: (item: Invoice) => item.payment_method || "—" },
+    { header: "Due date", accessorKey: "due_date" as keyof Invoice,
+      cell: (item: Invoice) => formatDate(item.due_date) },
+    { header: "Invoice #", accessorKey: "invoice_number" as keyof Invoice },
+    { header: "Status", accessorKey: "status" as keyof Invoice },
+  ];
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold">Invoices</h1>
-            <p className="text-muted-foreground">Manage your invoices</p>
-          </div>
-          <div>
-            {invoices.length === 0 && (
-              <Button onClick={addSampleInvoices} variant="outline">
-                <FileText className="h-4 w-4 mr-2" />
-                Add Sample Data
-              </Button>
-            )}
-            <Button onClick={() => setCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create invoice
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex space-x-6 border-b">
-          {(["draft", "sent", "paid", "overdue", "cancelled"] as const).map((status) => (
-            <button
-              key={status}
-              onClick={() => setSelectedStatus(selectedStatus === status ? null : status)}
-              className={`flex items-center space-x-2 pb-4 ${
-                selectedStatus === status
-                  ? "border-b-2 border-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <span className="capitalize">{status}</span>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-sm">
-                {statusCounts[status]}
-              </span>
-            </button>
-          ))}
-        </div>
+        <DocumentsHeader
+          title="Invoices"
+          description="Manage your invoices"
+          statusFilters={statusFilters}
+          selectedStatus={selectedStatus}
+          onStatusChange={setSelectedStatus}
+          actionButtons={[
+            ...(invoices.length === 0 ? [{
+              icon: FileText,
+              label: "Add Sample Data",
+              variant: "outline",
+              onClick: addSampleInvoices
+            }] : []),
+            {
+              icon: Plus,
+              label: "Create invoice",
+              onClick: () => setCreateDialogOpen(true)
+            }
+          ]}
+        />
 
         <Card>
-          {isLoading ? (
-            <div className="flex justify-center items-center p-8">
-              <FileText className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : invoices.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-8 text-center">
-              <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium">No invoices found</h3>
-              <p className="text-muted-foreground mt-2">
-                You don't have any invoices yet. Add sample data or create a new invoice.
-              </p>
-              <Button onClick={addSampleInvoices} className="mt-4">
-                Add Sample Invoices
-              </Button>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Method</TableHead>
-                  <TableHead>Due date</TableHead>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredInvoices.map((invoice) => (
-                  <TableRow 
-                    key={invoice.id} 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleViewInvoice(invoice)}
-                  >
-                    <TableCell>{invoice.client_name}</TableCell>
-                    <TableCell>${invoice.amount.toFixed(2)}</TableCell>
-                    <TableCell>{invoice.payment_method || "—"}</TableCell>
-                    <TableCell>{formatDate(invoice.due_date)}</TableCell>
-                    <TableCell>{invoice.invoice_number}</TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusBadgeVariant(invoice.status)}>
-                        {invoice.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          <DocumentsTable
+            documents={filteredInvoices}
+            isLoading={isLoading}
+            columns={columns}
+            onRowClick={handleViewInvoice}
+            statusKey="status"
+            getStatusVariant={getStatusVariant}
+            emptyState={{
+              title: "No invoices found",
+              description: "You don't have any invoices yet. Add sample data or create a new invoice.",
+              buttonText: "Add Sample Invoices",
+              onButtonClick: addSampleInvoices
+            }}
+          />
         </Card>
       </div>
 
