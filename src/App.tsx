@@ -27,7 +27,7 @@ export default function App() {
           <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
-          <Route path="/logout" element={<Navigate to="/" />} />
+          <Route path="/logout" element={<Navigate to="/auth/login" />} />
           <Route path="/auth" element={<AuthIndex />} />
           <Route path="/auth/login" element={<LoginPage />} />
           <Route path="/auth/signup" element={<SignupPage />} />

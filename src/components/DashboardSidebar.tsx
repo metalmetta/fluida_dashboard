@@ -1,4 +1,3 @@
-
 import {
   Sidebar,
   SidebarContent,
@@ -28,20 +27,33 @@ const menuItems = [
   { icon: Users, label: "Contacts", href: "/contacts" },
 ];
 
-const userMenuItems = [
-  { icon: Settings, label: "Settings", href: "/settings" },
-  { icon: HelpCircle, label: "Support", href: "/support" },
-  { icon: LogOut, label: "Logout", href: "/logout" },
-];
-
 export function DashboardSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
 
   const handleNavigation = (path: string) => {
-    navigate(path);
+    if (path === "/logout") {
+      handleLogout();
+    } else {
+      navigate(path);
+    }
   };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      // The redirect is handled inside signOut method in AuthContext
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  const userMenuItems = [
+    { icon: Settings, label: "Settings", href: "/settings" },
+    { icon: HelpCircle, label: "Support", href: "/support" },
+    { icon: LogOut, label: "Logout", href: "/logout" },
+  ];
 
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-white">
