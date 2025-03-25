@@ -13,3 +13,25 @@ export interface Invoice {
   created_at: string;
   updated_at: string;
 }
+
+export interface InvoiceFormData {
+  client_name: string;
+  client_email: string;
+  client_address?: string;
+  client_city?: string;
+  client_state?: string;
+  client_zip?: string;
+  client_country?: string;
+  client_tax_id?: string;
+  invoice_number: string;
+  issue_date: string;
+  due_date: string;
+  items: {
+    description: string;
+    quantity: number;
+    price: number;
+    amount: number;
+  }[];
+  notes?: string;
+  payment_method?: string;
+}

@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,15 +13,22 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Download, RefreshCw, FileText } from "lucide-react";
-import { useState } from "react";
 import { useInvoices } from "@/hooks/useInvoices";
 import { format } from "date-fns";
+import { CreateInvoiceDialog } from "@/components/CreateInvoiceDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
 
 export default function Invoices() {
   const [selectedStatus, setSelectedStatus] = useState<InvoiceStatus | null>(null);
   const { invoices, isLoading, addSampleInvoices, fetchInvoices } = useInvoices();
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [companyInfo, setCompanyInfo] = useState({
+    name: "Your Company",
+    email: "company@example.com"
+  });
 
   const statusCounts = {
     draft: invoices.filter((inv) => inv.status === "draft").length,
@@ -33,6 +41,29 @@ export default function Invoices() {
   const filteredInvoices = selectedStatus
     ? invoices.filter((inv) => inv.status === selectedStatus)
     : invoices;
+
+  useEffect(() => {
+    const fetchCompanyInfo = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      
+      if (userData?.user) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("company_name, email, full_name")
+          .eq("id", userData.user.id)
+          .single();
+        
+        if (data) {
+          setCompanyInfo({
+            name: data.company_name || data.full_name || "Your Company",
+            email: data.email || "company@example.com"
+          });
+        }
+      }
+    };
+    
+    fetchCompanyInfo();
+  }, []);
 
   const formatDate = (dateString: string) => {
     try {
@@ -78,7 +109,7 @@ export default function Invoices() {
               <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
               Refresh
             </Button>
-            <Button>
+            <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Create invoice
             </Button>
@@ -152,6 +183,14 @@ export default function Invoices() {
           )}
         </Card>
       </div>
+
+      <CreateInvoiceDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onInvoiceCreated={fetchInvoices}
+        companyName={companyInfo.name}
+        companyEmail={companyInfo.email}
+      />
     </DashboardLayout>
   );
 }
