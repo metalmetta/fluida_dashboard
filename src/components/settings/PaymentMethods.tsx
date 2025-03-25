@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,7 +46,7 @@ export default function PaymentMethods() {
       
       if (data) {
         // Map the data to match our PaymentMethod interface
-        const methods = data.map(item => ({
+        const methods = data.map((item: any) => ({
           id: item.id,
           type: item.type,
           label: item.label,
@@ -254,7 +253,7 @@ export default function PaymentMethods() {
       console.error('Error updating default payment method:', error);
       toast({
         title: "Error",
-        description: "Could not update default payment method",
+        description: "Failed to update default payment method",
         variant: "destructive"
       });
     }

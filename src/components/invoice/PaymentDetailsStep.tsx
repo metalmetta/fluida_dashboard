@@ -42,7 +42,7 @@ export function PaymentDetailsStep({
         .eq('user_id', user.id)
         .then(({ data, error }) => {
           if (!error && data) {
-            setPaymentMethods(data.map(method => ({
+            setPaymentMethods(data.map((method: any) => ({
               id: method.id,
               label: method.label
             })));
