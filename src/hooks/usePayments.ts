@@ -41,8 +41,14 @@ export function usePayments() {
 
       if (paymentsError) throw paymentsError;
 
+      // Properly type the payments data by ensuring status is one of the expected values
+      const typedPayments: Payment[] = paymentsData?.map(payment => ({
+        ...payment,
+        status: (payment.status as 'Completed' | 'Processing' | 'Failed') || 'Completed'
+      })) || [];
+      
       // Calculate total sent amount
-      const totalAmount = paymentsData?.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0;
+      const totalAmount = typedPayments.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0;
       setTotalSent(totalAmount);
       
       // Fetch bills due by end of month
@@ -61,7 +67,7 @@ export function usePayments() {
       const dueAmount = billsData?.reduce((sum, bill) => sum + Number(bill.amount), 0) || 0;
       setDueByEndOfMonth(dueAmount);
       
-      setPayments(paymentsData || []);
+      setPayments(typedPayments);
     } catch (error) {
       console.error("Error fetching payments:", error);
       toast({

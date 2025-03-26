@@ -28,7 +28,7 @@ export function useBills() {
       // Ensure the type is properly cast as our Bill type
       const typedBills = data?.map(bill => ({
         ...bill,
-        status: bill.status as 'Draft' | 'Ready for payment' | 'Paid' | 'Approve',
+        status: bill.status as Bill['status'], // Explicitly cast to the union type
         currency: bill.currency || 'USD' // Default to USD if missing
       })) || [];
       
