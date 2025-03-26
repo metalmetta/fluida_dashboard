@@ -11,8 +11,7 @@ import {
   ArrowUp, 
   ArrowDown, 
   Loader2, 
-  CreditCard,
-  ChevronRight
+  CreditCard
 } from "lucide-react";
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,7 +23,6 @@ import { TopUpBalanceDialog } from "@/components/TopUpBalanceDialog";
 import { formatCurrency } from "@/lib/utils";
 import { ChartContainer, ChartTooltipContent, ChartTooltip } from "@/components/ui/chart";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Link } from "react-router-dom";
 
 const actions = [
   {
@@ -353,14 +351,8 @@ const Index = () => {
         </div>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader>
             <CardTitle>Recent Transactions</CardTitle>
-            <Link to="/transactions">
-              <Button variant="ghost" size="sm" className="gap-1">
-                View all 
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </Link>
           </CardHeader>
           <CardContent>
             {transactionsLoading ? (
