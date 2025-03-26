@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTransactions } from "./useTransactions";
 
 export interface Payment {
   id: string;
@@ -27,6 +28,7 @@ export function usePayments() {
   const [dueByEndOfMonth, setDueByEndOfMonth] = useState(0);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { createTransaction } = useTransactions();
 
   const fetchPayments = async () => {
     if (!user) return;
@@ -101,6 +103,23 @@ export function usePayments() {
         .select();
 
       if (error) throw error;
+      
+      // Create a corresponding transaction record
+      try {
+        await createTransaction({
+          type: 'Payment',
+          amount: bill.amount,
+          currency: bill.currency,
+          status: 'Completed',
+          recipient: bill.vendor,
+          description: `Payment for bill ${bill.bill_number}`,
+          reference_id: bill.id,
+          reference_type: 'bill'
+        });
+      } catch (transactionError) {
+        console.error("Error creating transaction record:", transactionError);
+        // Continue even if transaction record creation fails
+      }
       
       // Refresh payments
       fetchPayments();

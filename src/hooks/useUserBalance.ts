@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTransactions } from "./useTransactions";
 
 export interface UserBalance {
   id: string;
@@ -18,6 +19,7 @@ export function useUserBalance() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { createTransaction } = useTransactions();
 
   const fetchBalance = async () => {
     if (!user) return;
@@ -63,7 +65,7 @@ export function useUserBalance() {
     }
   };
 
-  const updateBalance = async (amount: number) => {
+  const updateBalance = async (amount: number, transactionType: 'Deposit' | 'Withdraw' = 'Deposit', description?: string) => {
     if (!user || !balance) return;
 
     try {
@@ -81,6 +83,20 @@ export function useUserBalance() {
 
       if (error) {
         throw error;
+      }
+
+      // Create transaction record
+      try {
+        await createTransaction({
+          type: transactionType,
+          amount: Math.abs(amount),
+          currency: balance.currency,
+          status: 'Completed',
+          description: description || `${transactionType} transaction`
+        });
+      } catch (transactionError) {
+        console.error("Error creating transaction record:", transactionError);
+        // Continue even if transaction record creation fails
       }
 
       setBalance(data as UserBalance);

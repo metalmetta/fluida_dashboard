@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -11,11 +11,13 @@ import {
   Wallet, 
   ArrowUp, 
   ArrowDown, 
-  Loader2 
+  Loader2, 
+  CreditCard
 } from "lucide-react";
 import { Line, LineChart, ResponsiveContainer, XAxis } from "recharts";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserBalance } from "@/hooks/useUserBalance";
+import { useTransactions } from "@/hooks/useTransactions";
 import { DepositDialog } from "@/components/DepositDialog";
 import { WithdrawDialog } from "@/components/WithdrawDialog";
 import { TopUpBalanceDialog } from "@/components/TopUpBalanceDialog";
@@ -53,11 +55,29 @@ const actions = [
 const Index = () => {
   const { user } = useAuth();
   const { balance, isLoading, updateBalance } = useUserBalance();
+  const { transactions, isLoading: transactionsLoading } = useTransactions();
   const [depositDialogOpen, setDepositDialogOpen] = useState(false);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
   const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
   
   const userName = user?.user_metadata?.full_name || "there";
+  
+  // Get recent transactions limited to 3
+  const recentTransactions = transactions.slice(0, 3);
+
+  // Icon mapping for transaction types
+  const getTransactionIcon = (type: string) => {
+    switch(type) {
+      case 'Deposit':
+        return <ArrowDown className="text-green-500" />;
+      case 'Withdraw':
+        return <ArrowUp className="text-red-500" />;
+      case 'Payment':
+        return <CreditCard className="text-blue-500" />;
+      default:
+        return <ArrowUpRight />;
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -157,27 +177,51 @@ const Index = () => {
           </Card>
         </div>
 
-        <Card className="p-6">
-          <h3 className="text-lg font-medium mb-4">Recent Transactions</h3>
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between p-4 rounded-lg hover:bg-secondary/50 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <Avatar />
-                  <div>
-                    <p className="font-medium">Vendor Payment</p>
-                    <p className="text-sm text-muted-foreground">
-                      Transaction ID: 0xb2...97j6
-                    </p>
-                  </div>
-                </div>
-                <p className="font-medium">-$1,200.00</p>
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Transactions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {transactionsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
               </div>
-            ))}
-          </div>
+            ) : recentTransactions.length > 0 ? (
+              <div className="space-y-4">
+                {recentTransactions.map((transaction) => (
+                  <div
+                    key={transaction.id}
+                    className="flex items-center justify-between p-4 rounded-lg hover:bg-secondary/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 rounded-full bg-secondary/70">
+                        {getTransactionIcon(transaction.type)}
+                      </div>
+                      <div>
+                        <p className="font-medium">{transaction.type}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {transaction.description || 'Transaction'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-medium ${transaction.type === 'Deposit' ? 'text-green-600' : transaction.type === 'Withdraw' ? 'text-red-600' : ''}`}>
+                        {transaction.type === 'Withdraw' ? '-' : ''}
+                        {formatCurrency(transaction.amount, transaction.currency)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(transaction.transaction_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No transactions found</p>
+              </div>
+            )}
+          </CardContent>
         </Card>
       </div>
 
@@ -189,7 +233,7 @@ const Index = () => {
       <WithdrawDialog
         open={withdrawDialogOpen}
         onOpenChange={setWithdrawDialogOpen}
-        onWithdraw={updateBalance}
+        onWithdraw={(amount) => updateBalance(-Math.abs(amount), 'Withdraw', 'Withdrawal from account')}
         currentBalance={balance?.available_amount || 0}
         currentCurrency={balance?.currency || "USD"}
       />
@@ -197,7 +241,7 @@ const Index = () => {
       <TopUpBalanceDialog
         open={topUpDialogOpen}
         onOpenChange={setTopUpDialogOpen}
-        onTopUp={updateBalance}
+        onTopUp={(amount) => updateBalance(amount, 'Deposit', 'Deposit to account')}
         currentCurrency={balance?.currency || "USD"}
       />
     </DashboardLayout>
