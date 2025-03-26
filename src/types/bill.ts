@@ -5,7 +5,7 @@ export interface Bill {
   vendor: string;
   amount: number;
   due_date: string;
-  status: 'Draft' | 'Ready for payment' | 'Paid' | 'Approve';
+  status: 'Draft' | 'Ready for payment' | 'Paid';
   category?: string;
   description?: string;
   bill_number: string;

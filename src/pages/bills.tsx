@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -28,14 +27,12 @@ export default function Bills() {
   // Count bills by status
   const statusCounts = {
     Draft: bills.filter(bill => bill.status === "Draft").length,
-    Approve: bills.filter(bill => bill.status === "Approve").length,
     "Ready for payment": bills.filter(bill => bill.status === "Ready for payment").length,
     Paid: bills.filter(bill => bill.status === "Paid").length,
   };
 
   const statusFilters = [
     { value: "Draft", label: "Draft", count: statusCounts.Draft },
-    { value: "Approve", label: "Approve", count: statusCounts.Approve },
     { value: "Ready for payment", label: "Ready for payment", count: statusCounts["Ready for payment"] },
     { value: "Paid", label: "Paid", count: statusCounts.Paid },
   ];
@@ -76,7 +73,6 @@ export default function Bills() {
     return "outline";
   };
 
-  // Function to render currency with symbol
   const renderCurrency = (item: Bill) => {
     const symbol = item.currency === 'EUR' ? '€' : 
                   item.currency === 'GBP' ? '£' : '$';
@@ -95,7 +91,6 @@ export default function Bills() {
     { header: "Status", accessorKey: "status" as keyof Bill },
   ];
 
-  // Function to render row actions based on bill status
   const renderRowActions = (bill: Bill) => {
     if (bill.status === "Ready for payment") {
       return (
