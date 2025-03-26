@@ -163,7 +163,7 @@ export function usePayments() {
       // Create a corresponding transaction record
       try {
         await createTransaction({
-          type: 'Transfer',
+          type: 'Payment', // Changed from 'Transfer' to 'Payment'
           amount: transferData.amount,
           currency: transferData.currency,
           status: 'Completed',
