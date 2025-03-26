@@ -23,6 +23,7 @@ import { WithdrawDialog } from "@/components/WithdrawDialog";
 import { TopUpBalanceDialog } from "@/components/TopUpBalanceDialog";
 import { formatCurrency } from "@/lib/utils";
 import { ChartContainer, ChartTooltipContent, ChartTooltip } from "@/components/ui/chart";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const actions = [
   {
@@ -39,6 +40,8 @@ const actions = [
   },
 ];
 
+type TimeScale = 'week' | 'month' | '3months';
+
 const Index = () => {
   const { user } = useAuth();
   const { balance, isLoading, updateBalance } = useUserBalance();
@@ -46,14 +49,15 @@ const Index = () => {
   const [depositDialogOpen, setDepositDialogOpen] = useState(false);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
   const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
+  const [timeScale, setTimeScale] = useState<TimeScale>('week');
   
   const userName = user?.user_metadata?.full_name || "there";
   
   // Get recent transactions limited to 3
   const recentTransactions = transactions.slice(0, 3);
 
-  // Generate weekly balance chart data from transactions
-  const weeklyBalanceData = useMemo(() => {
+  // Generate balance chart data based on selected time scale
+  const balanceData = useMemo(() => {
     if (transactions.length === 0 || !balance) return [];
 
     // Sort transactions by date (oldest first)
@@ -61,17 +65,30 @@ const Index = () => {
       (a, b) => new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime()
     );
 
-    // Get the earliest date (or use 4 weeks ago if no transactions)
+    // Get the earliest date based on selected time scale
     const now = new Date();
-    const fourWeeksAgo = new Date(now);
-    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+    const startDate = new Date(now);
     
-    // Group transactions by week
-    const weeklyData = [];
+    // Set appropriate time range based on selected scale
+    if (timeScale === 'week') {
+      startDate.setDate(startDate.getDate() - 7);
+    } else if (timeScale === 'month') {
+      startDate.setMonth(startDate.getMonth() - 1);
+    } else if (timeScale === '3months') {
+      startDate.setMonth(startDate.getMonth() - 3);
+    }
+    
+    // Filter transactions within the selected date range
+    const filteredTransactions = sortedTransactions.filter(tx => 
+      new Date(tx.transaction_date) >= startDate
+    );
+    
+    // Create appropriate data points based on time scale
+    const dataPoints = [];
     let runningBalance = balance.available_amount;
     
-    // Start by subtracting all transaction amounts to get the initial balance
-    for (const tx of sortedTransactions) {
+    // Start by subtracting all filtered transaction amounts to get the initial balance
+    for (const tx of filteredTransactions) {
       if (tx.type === 'Deposit') {
         runningBalance -= tx.amount;
       } else if (tx.type === 'Withdraw') {
@@ -79,53 +96,80 @@ const Index = () => {
       }
     }
 
-    // Create weekly data points going back 4 weeks
-    for (let i = 0; i < 4; i++) {
-      const weekEndDate = new Date(now);
-      weekEndDate.setDate(weekEndDate.getDate() - (i * 7));
-      
-      const weekStartDate = new Date(weekEndDate);
-      weekStartDate.setDate(weekEndDate.getDate() - 6);
-      
-      // Calculate week's transactions
-      const weekTransactions = sortedTransactions.filter(tx => {
-        const txDate = new Date(tx.transaction_date);
-        return txDate >= weekStartDate && txDate <= weekEndDate;
-      });
-      
-      // Calculate week's balance change
-      let weekAmount = 0;
-      for (const tx of weekTransactions) {
-        if (tx.type === 'Deposit') {
-          weekAmount += tx.amount;
-        } else if (tx.type === 'Withdraw') {
-          weekAmount -= tx.amount;
-        }
+    // Determine intervals and format based on time scale
+    let intervals: Date[] = [];
+    
+    if (timeScale === 'week') {
+      // Daily intervals for a week
+      for (let i = 0; i <= 7; i++) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        intervals.unshift(date);
       }
-      
-      // Update running balance
-      if (i !== 0) { // Skip current week as it's already in the final balance
-        runningBalance -= weekAmount;
+    } else if (timeScale === 'month') {
+      // Weekly intervals for a month
+      for (let i = 0; i <= 4; i++) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - (i * 7));
+        intervals.unshift(date);
       }
-      
-      // Format date as "MMM DD"
-      const formattedDate = weekStartDate.toLocaleDateString('en-US', { 
-        month: 'short',
-        day: 'numeric'
-      });
-      
-      weeklyData.unshift({
-        week: formattedDate,
-        balance: runningBalance,
-      });
-      
-      if (i !== 0) {
-        runningBalance += weekAmount; // Restore for next iteration
+    } else if (timeScale === '3months') {
+      // Bi-weekly intervals for 3 months
+      for (let i = 0; i <= 6; i++) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - (i * 14));
+        intervals.unshift(date);
       }
     }
     
-    return weeklyData;
-  }, [transactions, balance]);
+    // Create data points for each interval
+    for (let i = 0; i < intervals.length - 1; i++) {
+      const intervalStart = intervals[i];
+      const intervalEnd = intervals[i + 1];
+      
+      // Calculate transactions within this interval
+      const intervalTransactions = filteredTransactions.filter(tx => {
+        const txDate = new Date(tx.transaction_date);
+        return txDate >= intervalStart && txDate < intervalEnd;
+      });
+      
+      // Calculate interval's balance change
+      let intervalAmount = 0;
+      for (const tx of intervalTransactions) {
+        if (tx.type === 'Deposit') {
+          intervalAmount += tx.amount;
+        } else if (tx.type === 'Withdraw') {
+          intervalAmount -= tx.amount;
+        }
+      }
+      
+      // Adjust running balance for next interval
+      if (i !== intervals.length - 2) { // Skip current interval as it's already in final balance
+        runningBalance += intervalAmount;
+      }
+      
+      // Format date based on time scale
+      let dateFormat: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+      
+      const formattedDate = intervalStart.toLocaleDateString('en-US', dateFormat);
+      
+      dataPoints.push({
+        date: formattedDate,
+        balance: runningBalance,
+      });
+      
+      // Reset for next interval
+      runningBalance -= intervalAmount;
+    }
+    
+    // Add the most recent point (today)
+    dataPoints.push({
+      date: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      balance: balance.available_amount,
+    });
+    
+    return dataPoints;
+  }, [transactions, balance, timeScale]);
 
   // Icon mapping for transaction types
   const getTransactionIcon = (type: string) => {
@@ -191,6 +235,21 @@ const Index = () => {
                   </p>
                   <p className="text-sm text-muted-foreground mb-1">Available balance</p>
                 </div>
+                
+                <div className="flex justify-end mb-4">
+                  <ToggleGroup 
+                    type="single" 
+                    value={timeScale}
+                    onValueChange={(value) => {
+                      if (value) setTimeScale(value as TimeScale);
+                    }}
+                  >
+                    <ToggleGroupItem value="week">Week</ToggleGroupItem>
+                    <ToggleGroupItem value="month">Month</ToggleGroupItem>
+                    <ToggleGroupItem value="3months">3 Months</ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+                
                 <div className="h-[200px] w-full">
                   <ChartContainer
                     config={{
@@ -203,10 +262,10 @@ const Index = () => {
                       }
                     }}
                   >
-                    {weeklyBalanceData.length > 0 ? (
-                      <LineChart data={weeklyBalanceData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+                    {balanceData.length > 0 ? (
+                      <LineChart data={balanceData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
                         <XAxis 
-                          dataKey="week"
+                          dataKey="date"
                           tickLine={false}
                           axisLine={false}
                           tick={{ fontSize: 12 }}
@@ -224,10 +283,10 @@ const Index = () => {
                                   <div className="grid grid-cols-2 gap-2">
                                     <div className="flex flex-col">
                                       <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                        Week
+                                        Date
                                       </span>
                                       <span className="font-bold text-xs">
-                                        {payload[0].payload.week}
+                                        {payload[0].payload.date}
                                       </span>
                                     </div>
                                     <div className="flex flex-col">
