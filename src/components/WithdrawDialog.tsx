@@ -81,6 +81,37 @@ export function WithdrawDialog({
     }
   };
 
+  const handleSimulateWithdrawal = async () => {
+    // Generate random amount between 5000 and 10000
+    const randomAmount = Math.floor(Math.random() * 5000) + 5000;
+    
+    // Check if there's enough balance
+    if (randomAmount > currentBalance) {
+      toast({
+        title: "Insufficient funds",
+        description: `You need at least ${formatCurrency(randomAmount, currentCurrency)} for this simulation`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      const success = await onWithdraw(-randomAmount);
+      if (success) {
+        toast({
+          title: "Withdrawal simulated",
+          description: `${formatCurrency(randomAmount, currentCurrency)} has been withdrawn from your account`
+        });
+        onOpenChange(false);
+      }
+    } catch (error) {
+      console.error("Error during simulated withdrawal:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -139,30 +170,42 @@ export function WithdrawDialog({
           </div>
 
           <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="animate-spin mr-2">•</span>
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  Withdraw Funds
-                </>
-              )}
-            </Button>
+            <div className="flex justify-between w-full">
+              <div className="flex gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => onOpenChange(false)}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleSimulateWithdrawal}
+                  disabled={isSubmitting}
+                >
+                  Simulate Withdrawal
+                </Button>
+              </div>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="animate-spin mr-2">•</span>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Withdraw Funds
+                  </>
+                )}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
