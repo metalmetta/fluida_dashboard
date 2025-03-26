@@ -38,7 +38,13 @@ export function useTransactions() {
 
       if (error) throw error;
 
-      setTransactions(data || []);
+      // Type assertion to ensure correct typing of data from Supabase
+      const typedTransactions: Transaction[] = data?.map(transaction => ({
+        ...transaction,
+        type: transaction.type as 'Deposit' | 'Withdraw' | 'Payment'
+      })) || [];
+
+      setTransactions(typedTransactions);
     } catch (error) {
       console.error("Error fetching transactions:", error);
       toast({
