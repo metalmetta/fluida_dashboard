@@ -123,7 +123,7 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
           </DialogHeader>
           
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
               <div className="flex flex-col md:flex-row">
                 {/* Left Column - Drag and Drop */}
                 <div className="md:w-1/3 px-6">
@@ -408,7 +408,7 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                   className="mr-2" 
                   onClick={() => {
                     const values = form.getValues();
-                    form.handleSubmit((data) => handleSubmit(data, "Draft"))();
+                    handleSubmit(values, "Draft");
                   }}
                   disabled={isSubmitting}
                 >
@@ -418,7 +418,7 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                   type="button" 
                   onClick={() => {
                     const values = form.getValues();
-                    form.handleSubmit((data) => handleSubmit(data, "Ready for payment"))();
+                    handleSubmit(values, "Ready for payment");
                   }}
                   disabled={isSubmitting}
                 >
