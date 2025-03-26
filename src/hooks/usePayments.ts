@@ -19,13 +19,14 @@ export interface Payment {
   payment_reference: string | null;
   created_at: string;
   updated_at: string;
+  payment_type: string | null;
 }
 
 export function usePayments() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalSent, setTotalSent] = useState(0);
-  const [dueByEndOfMonth, setDueByEndOfMonth] = useState(0);
+  const [dueAmount, setDueAmount] = useState(0);
   const { toast } = useToast();
   const { user } = useAuth();
   const { createTransaction } = useTransactions();
@@ -49,25 +50,40 @@ export function usePayments() {
         status: (payment.status as 'Completed' | 'Processing' | 'Failed') || 'Completed'
       })) || [];
       
-      // Calculate total sent amount
-      const totalAmount = typedPayments.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0;
-      setTotalSent(totalAmount);
+      // Fetch completed internal transfers
+      const { data: transfersData, error: transfersError } = await supabase
+        .from("internal_transfers")
+        .select("*")
+        .eq("status", "Completed");
+        
+      if (transfersError) throw transfersError;
       
-      // Fetch bills due by end of month
-      const today = new Date();
-      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      // Fetch bills with status "Paid"
+      const { data: paidBillsData, error: paidBillsError } = await supabase
+        .from("bills")
+        .select("*")
+        .eq("status", "Paid");
+        
+      if (paidBillsError) throw paidBillsError;
+
+      // Calculate total sent amount from payments, paid bills, and internal transfers
+      const paymentsAmount = typedPayments.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0;
+      const transfersAmount = transfersData?.reduce((sum, transfer) => sum + Number(transfer.amount), 0) || 0;
+      const paidBillsAmount = paidBillsData?.reduce((sum, bill) => sum + Number(bill.amount), 0) || 0;
       
-      const { data: billsData, error: billsError } = await supabase
+      setTotalSent(paymentsAmount + transfersAmount + paidBillsAmount);
+      
+      // Fetch bills in "Draft" or "Ready for payment" status
+      const { data: dueBillsData, error: dueBillsError } = await supabase
         .from("bills")
         .select("amount")
-        .in("status", ["Draft", "Ready for payment"])
-        .lte("due_date", endOfMonth.toISOString().split('T')[0]);
+        .in("status", ["Draft", "Ready for payment"]);
         
-      if (billsError) throw billsError;
+      if (dueBillsError) throw dueBillsError;
       
-      // Calculate total amount due by end of month
-      const dueAmount = billsData?.reduce((sum, bill) => sum + Number(bill.amount), 0) || 0;
-      setDueByEndOfMonth(dueAmount);
+      // Calculate total amount due regardless of date
+      const dueAmount = dueBillsData?.reduce((sum, bill) => sum + Number(bill.amount), 0) || 0;
+      setDueAmount(dueAmount);
       
       setPayments(typedPayments);
     } catch (error) {
@@ -141,7 +157,7 @@ export function usePayments() {
     payments, 
     isLoading, 
     totalSent,
-    dueByEndOfMonth,
+    dueAmount,
     fetchPayments,
     createPaymentFromBill
   };

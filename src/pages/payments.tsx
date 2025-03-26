@@ -26,7 +26,7 @@ import { formatCurrency } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
 export default function Payments() {
-  const { payments, isLoading, totalSent, dueByEndOfMonth } = usePayments();
+  const { payments, isLoading, totalSent, dueAmount } = usePayments();
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -69,16 +69,16 @@ export default function Payments() {
               {formatCurrency(totalSent, "USD")}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              Total amount of completed payments
+              Total amount of paid bills and completed transfers
             </p>
           </Card>
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-2">
               <Calendar className="h-5 w-5 text-muted-foreground" />
-              <h3 className="text-sm font-medium text-muted-foreground">Due by End of Month</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">Due</h3>
             </div>
             <p className="text-2xl font-bold mt-2">
-              {formatCurrency(dueByEndOfMonth, "USD")}
+              {formatCurrency(dueAmount, "USD")}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
               Total amount in Draft & Ready for Payment bills
