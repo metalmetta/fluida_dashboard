@@ -40,10 +40,16 @@ export function useUserBalance() {
       if (data) {
         setBalance(data as UserBalance);
       } else {
-        // Create a new balance record if one doesn't exist
+        // Create a new balance record if one doesn't exist using upsert to prevent conflicts
         const { data: newBalance, error: insertError } = await supabase
           .from("user_balances")
-          .insert([{ user_id: user.id, available_amount: 0 }])
+          .upsert([{ 
+            user_id: user.id, 
+            available_amount: 0,
+            currency: "USD"
+          }], { 
+            onConflict: 'user_id' 
+          })
           .select()
           .single();
 

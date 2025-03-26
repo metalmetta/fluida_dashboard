@@ -81,27 +81,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const createInitialUserBalance = async (userId: string) => {
     try {
-      // Check if user already has a balance record
-      const { data: existingBalance } = await supabase
+      // Using upsert (insert with on conflict) to prevent duplicate key errors
+      const { error } = await supabase
         .from("user_balances")
-        .select("*")
-        .eq("user_id", userId)
-        .maybeSingle();
+        .upsert([{ 
+          user_id: userId, 
+          available_amount: 0,
+          currency: "USD" 
+        }], { 
+          onConflict: 'user_id' 
+        });
       
-      // Only create a new balance record if one doesn't exist
-      if (!existingBalance) {
-        await supabase
-          .from("user_balances")
-          .insert([{ 
-            user_id: userId, 
-            available_amount: 0,
-            currency: "USD" 
-          }]);
-        
-        console.log("Created initial balance for new user:", userId);
+      if (error) {
+        console.error("Error creating initial user balance:", error);
+      } else {
+        console.log("Created or updated initial balance for user:", userId);
       }
     } catch (error) {
-      console.error("Error creating initial user balance:", error);
+      console.error("Exception creating initial user balance:", error);
     }
   };
 
