@@ -66,10 +66,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const createInitialUserBalance = async (userId: string) => {
+    try {
+      // Check if user already has a balance record
+      const { data: existingBalance } = await supabase
+        .from("user_balances")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+      
+      // Only create a new balance record if one doesn't exist
+      if (!existingBalance) {
+        await supabase
+          .from("user_balances")
+          .insert([{ 
+            user_id: userId, 
+            available_amount: 0,
+            currency: "USD" 
+          }]);
+        
+        console.log("Created initial balance for new user:", userId);
+      }
+    } catch (error) {
+      console.error("Error creating initial user balance:", error);
+    }
+  };
+
   const signUp = async (email: string, password: string, fullName: string, companyName?: string) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -81,6 +107,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) throw error;
+
+      // Create initial balance with 0 amount for the new user
+      if (data?.user) {
+        await createInitialUserBalance(data.user.id);
+      }
+
       toast({
         title: "Account created",
         description: "Please check your email to confirm your account.",
