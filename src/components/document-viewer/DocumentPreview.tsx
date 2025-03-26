@@ -1,5 +1,6 @@
 
 import React from "react";
+import { formatCurrency } from "@/lib/utils";
 
 interface DocumentPreviewProps {
   documentType: "invoice" | "bill";
@@ -11,6 +12,7 @@ interface DocumentPreviewProps {
     issue_date: string;
     due_date: string;
     amount: number;
+    currency?: string;
     description?: string;
     category?: string;
     payment_method?: string;
@@ -32,6 +34,9 @@ export function DocumentPreview({ documentType, documentData }: DocumentPreviewP
     
     return method; // Return original if it's a custom value
   };
+  
+  // Use the currency from the document data or default to USD
+  const currency = documentData.currency || "USD";
   
   return (
     <div className="w-full max-w-md bg-white shadow-lg rounded-md">
@@ -87,8 +92,8 @@ export function DocumentPreview({ documentType, documentData }: DocumentPreviewP
               <span>{isInvoice ? "Professional Services" : `${documentData.vendor_or_client} Services`}</span>
               <div className="flex">
                 <span className="w-16 text-right">1</span>
-                <span className="w-20 text-right">${documentData.amount.toFixed(2)}</span>
-                <span className="w-24 text-right">${documentData.amount.toFixed(2)}</span>
+                <span className="w-20 text-right">{formatCurrency(documentData.amount, currency)}</span>
+                <span className="w-24 text-right">{formatCurrency(documentData.amount, currency)}</span>
               </div>
             </div>
           </div>
@@ -97,7 +102,7 @@ export function DocumentPreview({ documentType, documentData }: DocumentPreviewP
             <div>
               <div className="flex justify-between text-sm mb-1">
                 <span className="font-semibold mr-8">Total:</span>
-                <span className="font-bold">${documentData.amount.toFixed(2)}</span>
+                <span className="font-bold">{formatCurrency(documentData.amount, currency)}</span>
               </div>
             </div>
           </div>

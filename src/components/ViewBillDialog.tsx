@@ -66,7 +66,6 @@ export function ViewBillDialog({
               issue_date: bill.issue_date,
               due_date: bill.due_date,
               amount: bill.amount,
-              // Note: Only add the currency property if the DocumentPreview accepts it
               currency: bill.currency,
               description: bill.description,
               category: bill.category
