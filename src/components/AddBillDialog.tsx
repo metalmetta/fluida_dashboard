@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -63,14 +62,14 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
     },
   });
 
-  const handleSubmit = useCallback(async (values: z.infer<typeof formSchema>) => {
+  const handleSubmit = useCallback(async (values: z.infer<typeof formSchema>, status: "Draft" | "Ready for payment") => {
     setIsSubmitting(true);
     try {
       const formattedData: BillFormData = {
         vendor: values.vendor,
         amount: values.amount,
         bill_number: values.bill_number,
-        status: "Draft",
+        status: status,
         issue_date: values.issue_date.toISOString().split('T')[0],
         due_date: values.due_date.toISOString().split('T')[0],
         category: values.category,
@@ -82,7 +81,7 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
       onOpenChange(false);
       toast({
         title: "Success",
-        description: "Bill has been added successfully",
+        description: `Bill has been ${status === "Draft" ? "saved as draft" : "marked as ready for payment"}`,
       });
     } catch (error) {
       console.error("Error submitting bill:", error);
@@ -373,10 +372,26 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
               </div>
               
               <div className="flex justify-end items-center p-4 border-t">
-                <Button type="button" variant="outline" className="mr-2" onClick={() => onOpenChange(false)}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="mr-2" 
+                  onClick={() => {
+                    const values = form.getValues();
+                    form.handleSubmit((data) => handleSubmit(data, "Draft"))();
+                  }}
+                  disabled={isSubmitting}
+                >
                   Save draft
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button 
+                  type="button" 
+                  onClick={() => {
+                    const values = form.getValues();
+                    form.handleSubmit((data) => handleSubmit(data, "Ready for payment"))();
+                  }}
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? "Saving..." : "Ready for payment"}
                 </Button>
               </div>
@@ -394,4 +409,3 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
     </>
   );
 }
-

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Bill } from "@/types/bill";
@@ -57,7 +56,6 @@ export function useBills() {
     try {
       const newBill = {
         ...billData,
-        status: "Draft", // Ensure status is always "Draft" for new bills
         user_id: user.id
       };
 
