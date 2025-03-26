@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Copy, CreditCard, Building } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useUserBalance } from "@/hooks/useUserBalance";
 
 interface DepositDialogProps {
   open: boolean;
@@ -20,6 +21,7 @@ interface DepositDialogProps {
 
 export function DepositDialog({ open, onOpenChange }: DepositDialogProps) {
   const { toast } = useToast();
+  const { updateBalance } = useUserBalance();
   
   const bankDetails = {
     accountName: "Fluida Finance Inc.",
@@ -36,6 +38,31 @@ export function DepositDialog({ open, onOpenChange }: DepositDialogProps) {
       title: "Copied!",
       description: `${label} copied to clipboard`,
     });
+  };
+
+  const handleSimulateDeposit = () => {
+    // Generate a random amount between 10,000 and 100,000
+    const randomAmount = Math.floor(Math.random() * (100000 - 10000 + 1)) + 10000;
+    
+    // Create a deposit transaction
+    updateBalance(randomAmount, 'Deposit', 'Simulated deposit')
+      .then(() => {
+        toast({
+          title: "Deposit Simulated",
+          description: `$${randomAmount.toLocaleString()} has been added to your account`,
+        });
+        
+        // Close the dialog
+        onOpenChange(false);
+      })
+      .catch((error) => {
+        console.error("Error simulating deposit:", error);
+        toast({
+          title: "Error",
+          description: "Failed to simulate deposit",
+          variant: "destructive",
+        });
+      });
   };
 
   return (
@@ -185,7 +212,15 @@ export function DepositDialog({ open, onOpenChange }: DepositDialogProps) {
           <div className="text-sm text-muted-foreground">
             Funds typically appear in 1-3 business days.
           </div>
-          <Button onClick={() => onOpenChange(false)}>Close</Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleSimulateDeposit}
+            >
+              Simulate Deposit
+            </Button>
+            <Button onClick={() => onOpenChange(false)}>Close</Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
