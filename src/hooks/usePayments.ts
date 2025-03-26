@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -50,28 +49,11 @@ export function usePayments() {
         status: (payment.status as 'Completed' | 'Processing' | 'Failed') || 'Completed'
       })) || [];
       
-      // Fetch completed internal transfers
-      const { data: transfersData, error: transfersError } = await supabase
-        .from("internal_transfers")
-        .select("*")
-        .eq("status", "Completed");
-        
-      if (transfersError) throw transfersError;
+      // Calculate total sent amount from completed payments only
+      const completedPayments = typedPayments.filter(payment => payment.status === 'Completed');
+      const totalPaymentsAmount = completedPayments.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0;
       
-      // Fetch bills with status "Paid"
-      const { data: paidBillsData, error: paidBillsError } = await supabase
-        .from("bills")
-        .select("*")
-        .eq("status", "Paid");
-        
-      if (paidBillsError) throw paidBillsError;
-
-      // Calculate total sent amount from payments, paid bills, and internal transfers
-      const paymentsAmount = typedPayments.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0;
-      const transfersAmount = transfersData?.reduce((sum, transfer) => sum + Number(transfer.amount), 0) || 0;
-      const paidBillsAmount = paidBillsData?.reduce((sum, bill) => sum + Number(bill.amount), 0) || 0;
-      
-      setTotalSent(paymentsAmount + transfersAmount + paidBillsAmount);
+      setTotalSent(totalPaymentsAmount);
       
       // Fetch bills in "Draft" or "Ready for payment" status
       const { data: dueBillsData, error: dueBillsError } = await supabase
