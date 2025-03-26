@@ -117,6 +117,51 @@ export type Database = {
         }
         Relationships: []
       }
+      internal_transfers: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          from_account: string
+          id: string
+          reference: string | null
+          status: string
+          to_account: string
+          transfer_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          from_account: string
+          id?: string
+          reference?: string | null
+          status?: string
+          to_account: string
+          transfer_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          from_account?: string
+          id?: string
+          reference?: string | null
+          status?: string
+          to_account?: string
+          transfer_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           amount: number
@@ -208,6 +253,7 @@ export type Database = {
           payment_date: string
           payment_method: string | null
           payment_reference: string | null
+          payment_type: string | null
           recipient: string
           recipient_email: string | null
           status: string
@@ -223,6 +269,7 @@ export type Database = {
           payment_date?: string
           payment_method?: string | null
           payment_reference?: string | null
+          payment_type?: string | null
           recipient: string
           recipient_email?: string | null
           status?: string
@@ -238,6 +285,7 @@ export type Database = {
           payment_date?: string
           payment_method?: string | null
           payment_reference?: string | null
+          payment_type?: string | null
           recipient?: string
           recipient_email?: string | null
           status?: string

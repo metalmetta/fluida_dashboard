@@ -12,6 +12,7 @@ import Settings from "@/pages/settings";
 import Support from "@/pages/support";
 import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import InternalTransfer from "@/pages/internal-transfer";
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
           <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
           <Route path="/bills" element={<ProtectedRoute><Bills /></ProtectedRoute>} />
+          <Route path="/internal-transfer" element={<ProtectedRoute><InternalTransfer /></ProtectedRoute>} />
           <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />

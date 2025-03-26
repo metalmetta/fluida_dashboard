@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
-import { Plus, ArrowRightLeft, DollarSign } from "lucide-react";
+import { Plus, DollarSign } from "lucide-react";
 import { useBills } from "@/hooks/useBills";
 import { formatCurrency } from "@/lib/utils";
 import { AddBillDialog } from "@/components/AddBillDialog";
@@ -155,12 +155,6 @@ export default function Bills() {
           selectedStatus={selectedStatus}
           onStatusChange={setSelectedStatus}
           actionButtons={[
-            {
-              icon: ArrowRightLeft,
-              label: "Transfer funds",
-              variant: "outline",
-              onClick: openTopUpDialog
-            },
             {
               icon: Plus,
               label: "Add bill",

@@ -10,7 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { FileText, CreditCard, Receipt, Users, Settings, HelpCircle, LogOut, ChevronDown } from "lucide-react";
+import { FileText, CreditCard, Receipt, Users, Settings, HelpCircle, LogOut, ChevronDown, ArrowRightLeft } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +28,7 @@ const menuItems = [
   { icon: FileText, label: "Invoices", href: "/invoices" },
   { icon: CreditCard, label: "Payments", href: "/payments" },
   { icon: Receipt, label: "Bills", href: "/bills" },
+  { icon: ArrowRightLeft, label: "Internal Transfer", href: "/internal-transfer" },
   { icon: Users, label: "Contacts", href: "/contacts" },
 ];
 
