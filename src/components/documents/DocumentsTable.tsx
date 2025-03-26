@@ -29,6 +29,7 @@ interface DocumentsTableProps<T> {
   onRowClick: (document: T) => void;
   statusKey: keyof T;
   getStatusVariant: (status: string) => "outline" | "destructive" | "secondary" | "success";
+  renderRowActions?: (item: T) => React.ReactNode;
 }
 
 export function DocumentsTable<T>({
@@ -38,7 +39,8 @@ export function DocumentsTable<T>({
   emptyState,
   onRowClick,
   statusKey,
-  getStatusVariant
+  getStatusVariant,
+  renderRowActions
 }: DocumentsTableProps<T>) {
   if (isLoading) {
     return (
@@ -72,6 +74,7 @@ export function DocumentsTable<T>({
           {columns.map((column) => (
             <TableHead key={String(column.accessorKey)}>{column.header}</TableHead>
           ))}
+          {renderRowActions && <TableHead className="w-[100px]">Actions</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -79,10 +82,12 @@ export function DocumentsTable<T>({
           <TableRow
             key={String((document as any).id)}
             className="cursor-pointer hover:bg-muted/50"
-            onClick={() => onRowClick(document)}
           >
             {columns.map((column) => (
-              <TableCell key={String(column.accessorKey)}>
+              <TableCell 
+                key={String(column.accessorKey)} 
+                onClick={() => onRowClick(document)}
+              >
                 {column.cell ? (
                   column.cell(document)
                 ) : column.accessorKey === statusKey ? (
@@ -96,6 +101,11 @@ export function DocumentsTable<T>({
                 )}
               </TableCell>
             ))}
+            {renderRowActions && (
+              <TableCell className="p-2 text-right" onClick={(e) => e.stopPropagation()}>
+                {renderRowActions(document)}
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>

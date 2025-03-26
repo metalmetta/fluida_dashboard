@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
-import { Plus, ArrowRightLeft, DollarSign, Euro, PoundSterling } from "lucide-react";
+import { Plus, ArrowRightLeft, DollarSign } from "lucide-react";
 import { useBills } from "@/hooks/useBills";
 import { formatCurrency } from "@/lib/utils";
 import { AddBillDialog } from "@/components/AddBillDialog";
@@ -10,6 +10,8 @@ import { Bill } from "@/types/bill";
 import { ViewBillDialog } from "@/components/ViewBillDialog";
 import { DocumentsHeader } from "@/components/documents/DocumentsHeader";
 import { DocumentsTable } from "@/components/documents/DocumentsTable";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Bills() {
   const { bills, isLoading, addBill, updateBillStatus } = useBills();
@@ -17,6 +19,7 @@ export default function Bills() {
   const [addBillDialogOpen, setAddBillDialogOpen] = useState(false);
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [viewBillDialogOpen, setViewBillDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   const filteredBills = selectedStatus
     ? bills.filter(bill => bill.status === selectedStatus)
@@ -50,8 +53,27 @@ export default function Bills() {
     await updateBillStatus(billId, newStatus);
   };
 
+  const handlePayBill = async (bill: Bill) => {
+    try {
+      await updateBillStatus(bill.id, "Paid");
+      toast({
+        title: "Payment successful",
+        description: `Bill ${bill.bill_number} has been marked as paid.`
+      });
+    } catch (error) {
+      console.error("Error paying bill:", error);
+      toast({
+        title: "Payment failed",
+        description: "There was an error processing the payment.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const getStatusVariant = (status: string) => {
-    return status === "Ready for payment" ? "destructive" : "outline";
+    if (status === "Ready for payment") return "destructive";
+    if (status === "Paid") return "success";
+    return "outline";
   };
 
   // Function to render currency with symbol
@@ -72,6 +94,23 @@ export default function Bills() {
       cell: (item: Bill) => new Date(item.due_date).toLocaleDateString() },
     { header: "Status", accessorKey: "status" as keyof Bill },
   ];
+
+  // Function to render row actions based on bill status
+  const renderRowActions = (bill: Bill) => {
+    if (bill.status === "Ready for payment") {
+      return (
+        <Button 
+          size="sm" 
+          variant="default" 
+          onClick={() => handlePayBill(bill)}
+        >
+          <DollarSign className="h-4 w-4 mr-1" />
+          Pay
+        </Button>
+      );
+    }
+    return null;
+  };
 
   return (
     <DashboardLayout>
@@ -110,6 +149,7 @@ export default function Bills() {
             onRowClick={handleViewBill}
             statusKey="status"
             getStatusVariant={getStatusVariant}
+            renderRowActions={renderRowActions}
             emptyState={{
               title: "No bills found",
               description: selectedStatus
