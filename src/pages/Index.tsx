@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
   Loader2, 
   CreditCard
 } from "lucide-react";
-import { Line, LineChart, ResponsiveContainer, XAxis } from "recharts";
+import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserBalance } from "@/hooks/useUserBalance";
 import { useTransactions } from "@/hooks/useTransactions";
@@ -22,20 +22,7 @@ import { DepositDialog } from "@/components/DepositDialog";
 import { WithdrawDialog } from "@/components/WithdrawDialog";
 import { TopUpBalanceDialog } from "@/components/TopUpBalanceDialog";
 import { formatCurrency } from "@/lib/utils";
-
-const data = [
-  { day: "Jan 13", value: 245000 },
-  { day: "Jan 14", value: 873000 },
-  { day: "Jan 15", value: 567000 },
-  { day: "Jan 16", value: 912000 },
-  { day: "Jan 17", value: 156000 },
-  { day: "Jan 18", value: 789000 },
-  { day: "Jan 19", value: 345000 },
-  { day: "Jan 20", value: 678000 },
-  { day: "Jan 21", value: 923000 },
-  { day: "Jan 22", value: 432000 },
-  { day: "Jan 23", value: 867000 },
-];
+import { ChartContainer, ChartTooltipContent, ChartTooltip } from "@/components/ui/chart";
 
 const actions = [
   {
@@ -64,6 +51,81 @@ const Index = () => {
   
   // Get recent transactions limited to 3
   const recentTransactions = transactions.slice(0, 3);
+
+  // Generate weekly balance chart data from transactions
+  const weeklyBalanceData = useMemo(() => {
+    if (transactions.length === 0 || !balance) return [];
+
+    // Sort transactions by date (oldest first)
+    const sortedTransactions = [...transactions].sort(
+      (a, b) => new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime()
+    );
+
+    // Get the earliest date (or use 4 weeks ago if no transactions)
+    const now = new Date();
+    const fourWeeksAgo = new Date(now);
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+    
+    // Group transactions by week
+    const weeklyData = [];
+    let runningBalance = balance.available_amount;
+    
+    // Start by subtracting all transaction amounts to get the initial balance
+    for (const tx of sortedTransactions) {
+      if (tx.type === 'Deposit') {
+        runningBalance -= tx.amount;
+      } else if (tx.type === 'Withdraw') {
+        runningBalance += tx.amount;
+      }
+    }
+
+    // Create weekly data points going back 4 weeks
+    for (let i = 0; i < 4; i++) {
+      const weekEndDate = new Date(now);
+      weekEndDate.setDate(weekEndDate.getDate() - (i * 7));
+      
+      const weekStartDate = new Date(weekEndDate);
+      weekStartDate.setDate(weekEndDate.getDate() - 6);
+      
+      // Calculate week's transactions
+      const weekTransactions = sortedTransactions.filter(tx => {
+        const txDate = new Date(tx.transaction_date);
+        return txDate >= weekStartDate && txDate <= weekEndDate;
+      });
+      
+      // Calculate week's balance change
+      let weekAmount = 0;
+      for (const tx of weekTransactions) {
+        if (tx.type === 'Deposit') {
+          weekAmount += tx.amount;
+        } else if (tx.type === 'Withdraw') {
+          weekAmount -= tx.amount;
+        }
+      }
+      
+      // Update running balance
+      if (i !== 0) { // Skip current week as it's already in the final balance
+        runningBalance -= weekAmount;
+      }
+      
+      // Format date as "MMM DD"
+      const formattedDate = weekStartDate.toLocaleDateString('en-US', { 
+        month: 'short',
+        day: 'numeric'
+      });
+      
+      weeklyData.unshift({
+        week: formattedDate,
+        balance: runningBalance,
+      });
+      
+      if (i !== 0) {
+        runningBalance += weekAmount; // Restore for next iteration
+      }
+    }
+    
+    return weeklyData;
+  }, [transactions, balance]);
 
   // Icon mapping for transaction types
   const getTransactionIcon = (type: string) => {
@@ -130,18 +192,85 @@ const Index = () => {
                   <p className="text-sm text-muted-foreground mb-1">Available balance</p>
                 </div>
                 <div className="h-[200px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={data}>
-                      <XAxis dataKey="day" hide />
-                      <Line
-                        type="monotone"
-                        dataKey="value"
-                        stroke="hsl(var(--primary))"
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  <ChartContainer
+                    config={{
+                      balance: {
+                        label: "Balance",
+                        theme: {
+                          light: "hsl(var(--primary))",
+                          dark: "hsl(var(--primary))"
+                        }
+                      }
+                    }}
+                  >
+                    {weeklyBalanceData.length > 0 ? (
+                      <LineChart data={weeklyBalanceData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+                        <XAxis 
+                          dataKey="week"
+                          tickLine={false}
+                          axisLine={false}
+                          tick={{ fontSize: 12 }}
+                          tickMargin={8}
+                        />
+                        <YAxis 
+                          hide={true}
+                          domain={['dataMin - 1000', 'dataMax + 1000']}
+                        />
+                        <Tooltip
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              return (
+                                <div className="rounded-lg border bg-background p-2 shadow-sm">
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div className="flex flex-col">
+                                      <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                        Week
+                                      </span>
+                                      <span className="font-bold text-xs">
+                                        {payload[0].payload.week}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                        Balance
+                                      </span>
+                                      <span className="font-bold text-xs">
+                                        {formatCurrency(
+                                          payload[0].value as number,
+                                          balance?.currency || "USD"
+                                        )}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="balance"
+                          name="balance"
+                          stroke="var(--color-balance)"
+                          strokeWidth={2}
+                          dot={{
+                            r: 4,
+                            strokeWidth: 2,
+                            fill: "var(--background)"
+                          }}
+                          activeDot={{
+                            r: 6,
+                            strokeWidth: 3
+                          }}
+                        />
+                      </LineChart>
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <p className="text-sm text-muted-foreground">No balance history data available</p>
+                      </div>
+                    )}
+                  </ChartContainer>
                 </div>
               </>
             )}
