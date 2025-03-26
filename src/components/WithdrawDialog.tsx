@@ -114,7 +114,7 @@ export function WithdrawDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] w-full">
         <DialogHeader>
           <DialogTitle>Withdraw Funds</DialogTitle>
           <DialogDescription>
@@ -169,43 +169,44 @@ export function WithdrawDialog({
             </div>
           </div>
 
-          <DialogFooter>
-            <div className="flex justify-between w-full">
-              <div className="flex gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => onOpenChange(false)}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={handleSimulateWithdrawal}
-                  disabled={isSubmitting}
-                >
-                  Simulate Withdrawal
-                </Button>
-              </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button 
-                type="submit" 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
+                className="w-full sm:w-auto"
               >
-                {isSubmitting ? (
-                  <>
-                    <span className="animate-spin mr-2">•</span>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <DollarSign className="h-4 w-4 mr-2" />
-                    Withdraw Funds
-                  </>
-                )}
+                Cancel
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleSimulateWithdrawal}
+                disabled={isSubmitting}
+                className="w-full sm:w-auto"
+              >
+                Simulate Withdrawal
               </Button>
             </div>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="animate-spin mr-2">•</span>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Withdraw Funds
+                </>
+              )}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
