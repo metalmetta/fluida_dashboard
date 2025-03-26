@@ -85,18 +85,20 @@ export function useUserBalance() {
         throw error;
       }
 
-      // Create transaction record
-      try {
-        await createTransaction({
-          type: transactionType,
-          amount: Math.abs(amount),
-          currency: balance.currency,
-          status: 'Completed',
-          description: description || `${transactionType} transaction`
-        });
-      } catch (transactionError) {
-        console.error("Error creating transaction record:", transactionError);
-        // Continue even if transaction record creation fails
+      // Only create transaction records for actual deposits and withdrawals, not bill payments
+      // Bill payments should create their transactions through usePayments.createPaymentFromBill
+      if (description?.toLowerCase().indexOf('bill') === -1) {
+        try {
+          await createTransaction({
+            type: transactionType,
+            amount: Math.abs(amount),
+            currency: balance.currency,
+            status: 'Completed',
+            description: description || `${transactionType} transaction`
+          });
+        } catch (transactionError) {
+          console.error("Error creating transaction record:", transactionError);
+        }
       }
 
       setBalance(data as UserBalance);

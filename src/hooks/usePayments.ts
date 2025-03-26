@@ -103,10 +103,10 @@ export function usePayments() {
 
       if (error) throw error;
       
-      // Create a corresponding transaction record
+      // Create a corresponding transaction record of type 'Payment'
       try {
         await createTransaction({
-          type: 'Payment', // Ensure this is 'Payment' and not 'Deposit'
+          type: 'Payment',
           amount: bill.amount,
           currency: bill.currency,
           status: 'Completed',
@@ -163,7 +163,7 @@ export function usePayments() {
       // Create a corresponding transaction record
       try {
         await createTransaction({
-          type: 'Payment', // Changed from 'Transfer' to 'Payment'
+          type: 'Payment',
           amount: transferData.amount,
           currency: transferData.currency,
           status: 'Completed',

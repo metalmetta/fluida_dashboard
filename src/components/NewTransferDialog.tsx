@@ -31,10 +31,10 @@ import { TopUpBalanceDialog } from "@/components/TopUpBalanceDialog";
 interface NewTransferDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onTransferComplete: () => void;
+  onTransferComplete?: () => void;
 }
 
-export function NewTransferDialog({
+export default function NewTransferDialog({
   open,
   onOpenChange,
   onTransferComplete
@@ -195,13 +195,15 @@ export function NewTransferDialog({
     }
   };
 
-  const handleTopUpSuccess = async () => {
+  const handleTopUpSuccess = async (amount: number) => {
     await fetchBalance();
     setTopUpDialogOpen(false);
     
-    if (balance && parseFloat(amount) <= balance.available_amount) {
+    if (balance && parseFloat(amount.toString()) <= balance.available_amount) {
       setInsufficientFunds(false);
     }
+    
+    return true;
   };
 
   return (
