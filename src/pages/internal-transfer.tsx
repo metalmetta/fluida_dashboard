@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Bank, ArrowRightLeft } from "lucide-react";
+import { Wallet, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 
@@ -90,7 +90,7 @@ export default function InternalTransfer() {
           <div className="grid gap-6 md:grid-cols-2">
             <Card className="p-6">
               <div className="flex items-center gap-3 mb-2">
-                <Bank className="h-5 w-5 text-muted-foreground" />
+                <Wallet className="h-5 w-5 text-muted-foreground" />
                 <h3 className="text-sm font-medium text-muted-foreground">Available Balance</h3>
               </div>
               <p className="text-2xl font-bold mt-2">
