@@ -5,13 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { usePaymentMethods } from "@/components/settings/payment-methods/usePaymentMethods";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatCurrency } from "@/lib/utils";
-import { ArrowRight } from "lucide-react";
+import { ArrowDown, Wallet, AlertCircle } from "lucide-react";
 import { usePayments } from "@/hooks/usePayments";
+import { useUserBalance } from "@/hooks/useUserBalance";
+import { TopUpBalanceDialog } from "@/components/TopUpBalanceDialog";
 
 interface NewTransferDialogProps {
   open: boolean;
@@ -27,37 +30,29 @@ export function NewTransferDialog({
   const { user } = useAuth();
   const { toast } = useToast();
   const { paymentMethods, loading: paymentMethodsLoading } = usePaymentMethods();
-  const { createPaymentFromBill } = usePayments();
+  const { createInternalTransferPayment } = usePayments();
+  const { balance, updateBalance, fetchBalance } = useUserBalance();
   
-  const [fromAccount, setFromAccount] = useState<string>("");
   const [toAccount, setToAccount] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
   const [currency, setCurrency] = useState<string>("USD");
   const [reference, setReference] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [insufficientFunds, setInsufficientFunds] = useState(false);
+  const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
 
   // Reset form when dialog opens
   useEffect(() => {
     if (open) {
-      setFromAccount("");
       setToAccount("");
       setAmount("");
       setCurrency("USD");
       setReference("");
       setDescription("");
+      setInsufficientFunds(false);
     }
   }, [open]);
-
-  // Update currency based on selected from account
-  useEffect(() => {
-    if (fromAccount) {
-      const selectedMethod = paymentMethods.find(method => method.id === fromAccount);
-      if (selectedMethod) {
-        setCurrency(selectedMethod.type.toUpperCase());
-      }
-    }
-  }, [fromAccount, paymentMethods]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,19 +66,10 @@ export function NewTransferDialog({
       return;
     }
     
-    if (!fromAccount || !toAccount) {
+    if (!toAccount) {
       toast({
         title: "Error",
-        description: "Please select both source and destination accounts",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (fromAccount === toAccount) {
-      toast({
-        title: "Error",
-        description: "Source and destination accounts cannot be the same",
+        description: "Please select a destination account",
         variant: "destructive",
       });
       return;
@@ -99,15 +85,20 @@ export function NewTransferDialog({
       return;
     }
     
+    // Check if user has sufficient balance
+    if (balance && amountValue > balance.available_amount) {
+      setInsufficientFunds(true);
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
-      // Get payment method details for from and to accounts
-      const sourceAccount = paymentMethods.find(method => method.id === fromAccount);
+      // Get destination account details
       const destinationAccount = paymentMethods.find(method => method.id === toAccount);
       
-      if (!sourceAccount || !destinationAccount) {
-        throw new Error("Account information not found");
+      if (!destinationAccount) {
+        throw new Error("Destination account information not found");
       }
       
       // Create internal transfer record
@@ -117,7 +108,7 @@ export function NewTransferDialog({
           user_id: user.id,
           amount: amountValue,
           currency: currency,
-          from_account: sourceAccount.label,
+          from_account: "Fluida Balance",
           to_account: destinationAccount.label,
           status: "Completed",
           reference: reference || null,
@@ -128,25 +119,19 @@ export function NewTransferDialog({
         
       if (transferError) throw transferError;
       
-      // Create payment record for the transfer
-      const { data: paymentData, error: paymentError } = await supabase
-        .from("payments")
-        .insert({
-          user_id: user.id,
-          amount: amountValue,
-          currency: currency,
-          payment_date: new Date().toISOString(),
-          status: "Completed",
-          recipient: destinationAccount.label,
-          recipient_email: destinationAccount.details.email || null,
-          payment_reference: reference || null,
-          payment_type: "internal_transfer",
-          payment_method: sourceAccount.type,
-        })
-        .select()
-        .single();
-        
-      if (paymentError) throw paymentError;
+      // Create payment record using the hook
+      await createInternalTransferPayment({
+        amount: amountValue,
+        currency: currency,
+        fromAccount: "Fluida Balance",
+        toAccount: destinationAccount.label,
+        reference: reference || null
+      });
+      
+      // Update user balance
+      await updateBalance(-amountValue, 'Withdraw', 
+        `Transfer to ${destinationAccount.label}${reference ? ` (Ref: ${reference})` : ''}`
+      );
       
       toast({
         title: "Success!",
@@ -167,130 +152,151 @@ export function NewTransferDialog({
     }
   };
 
+  const handleTopUpComplete = async () => {
+    setTopUpDialogOpen(false);
+    await fetchBalance();
+    setInsufficientFunds(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>New Internal Transfer</DialogTitle>
-          <DialogDescription>
-            Transfer funds between your payment methods.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-6 py-4">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="fromAccount">From Account</Label>
-              <Select 
-                value={fromAccount} 
-                onValueChange={setFromAccount}
-                disabled={paymentMethodsLoading || isSubmitting}
-              >
-                <SelectTrigger id="fromAccount" className="w-full">
-                  <SelectValue placeholder="Select source account" />
-                </SelectTrigger>
-                <SelectContent>
-                  {paymentMethods.map((method) => (
-                    <SelectItem key={`from-${method.id}`} value={method.id}>
-                      {method.label} ({method.type.toUpperCase()})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="flex justify-center">
-              <ArrowRight className="my-2 text-muted-foreground" />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="toAccount">To Account</Label>
-              <Select 
-                value={toAccount} 
-                onValueChange={setToAccount}
-                disabled={paymentMethodsLoading || isSubmitting}
-              >
-                <SelectTrigger id="toAccount" className="w-full">
-                  <SelectValue placeholder="Select destination account" />
-                </SelectTrigger>
-                <SelectContent>
-                  {paymentMethods.map((method) => (
-                    <SelectItem key={`to-${method.id}`} value={method.id}>
-                      {method.label} ({method.type.toUpperCase()})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>New Transfer</DialogTitle>
+            <DialogDescription>
+              Transfer funds from your Fluida balance to your payment methods.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-6 py-4">
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="amount">Amount</Label>
+                <Label htmlFor="fromAccount">From Account</Label>
+                <div className="flex items-center p-3 border rounded-md bg-muted/50">
+                  <Wallet className="mr-2 h-4 w-4 text-muted-foreground" />
+                  <span>Fluida Balance</span>
+                  <span className="ml-auto font-medium">
+                    {balance ? formatCurrency(balance.available_amount, balance.currency) : "Loading..."}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex justify-center">
+                <ArrowDown className="my-2 text-muted-foreground" />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="toAccount">To Account</Label>
+                <Select 
+                  value={toAccount} 
+                  onValueChange={setToAccount}
+                  disabled={paymentMethodsLoading || isSubmitting}
+                >
+                  <SelectTrigger id="toAccount" className="w-full">
+                    <SelectValue placeholder="Select destination account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {paymentMethods.map((method) => (
+                      <SelectItem key={`to-${method.id}`} value={method.id}>
+                        {method.label} ({method.type.toUpperCase()})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Amount</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="0.00"
+                    disabled={isSubmitting}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="currency">Currency</Label>
+                  <Input
+                    id="currency"
+                    value={currency}
+                    disabled={true}
+                    className="bg-muted"
+                  />
+                </div>
+              </div>
+              
+              {insufficientFunds && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Insufficient funds in your Fluida Balance. 
+                    <Button 
+                      variant="link" 
+                      className="p-0 h-auto font-semibold ml-1" 
+                      onClick={() => setTopUpDialogOpen(true)}
+                    >
+                      Top up your balance
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              <div className="space-y-2">
+                <Label htmlFor="reference">Reference (Optional)</Label>
                 <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="0.00"
+                  id="reference"
+                  value={reference}
+                  onChange={(e) => setReference(e.target.value)}
+                  placeholder="Reference number or ID"
                   disabled={isSubmitting}
-                  required
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="currency">Currency</Label>
+                <Label htmlFor="description">Description (Optional)</Label>
                 <Input
-                  id="currency"
-                  value={currency}
-                  disabled={true}
-                  className="bg-muted"
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Transfer description"
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="reference">Reference (Optional)</Label>
-              <Input
-                id="reference"
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
-                placeholder="Reference number or ID"
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="description">Description (Optional)</Label>
-              <Input
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Transfer description"
-                disabled={isSubmitting}
-              />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={paymentMethodsLoading || isSubmitting || !fromAccount || !toAccount || !amount}
-            >
-              {isSubmitting ? "Processing..." : "Complete Transfer"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={paymentMethodsLoading || isSubmitting || !toAccount || !amount || insufficientFunds}
+              >
+                {isSubmitting ? "Processing..." : "Complete Transfer"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      
+      <TopUpBalanceDialog 
+        open={topUpDialogOpen} 
+        onOpenChange={setTopUpDialogOpen}
+        onSuccess={handleTopUpComplete}
+      />
+    </>
   );
 }

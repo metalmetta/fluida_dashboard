@@ -38,7 +38,7 @@ export default function InternalTransfer() {
   const [transfers, setTransfers] = useState<InternalTransfer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
-  const { balance } = useUserBalance();
+  const { balance, fetchBalance } = useUserBalance();
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -67,6 +67,11 @@ export default function InternalTransfer() {
     }
   };
 
+  const handleTransferComplete = () => {
+    fetchTransfers();
+    fetchBalance();
+  };
+
   useEffect(() => {
     if (user) {
       fetchTransfers();
@@ -79,7 +84,7 @@ export default function InternalTransfer() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-semibold">Internal Transfer</h1>
-            <p className="text-muted-foreground">Send funds between your bank accounts</p>
+            <p className="text-muted-foreground">Send funds from your Fluida balance to your bank accounts</p>
           </div>
           <Button variant="default" onClick={() => setTransferDialogOpen(true)}>
             <ArrowRightLeft className="h-4 w-4 mr-2" />
@@ -169,7 +174,7 @@ export default function InternalTransfer() {
       <NewTransferDialog 
         open={transferDialogOpen} 
         onOpenChange={setTransferDialogOpen} 
-        onTransferComplete={fetchTransfers}
+        onTransferComplete={handleTransferComplete}
       />
     </DashboardLayout>
   );
