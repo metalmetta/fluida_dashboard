@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -11,7 +11,8 @@ import {
   ArrowUp, 
   ArrowDown, 
   Loader2, 
-  CreditCard
+  CreditCard,
+  ChevronRight
 } from "lucide-react";
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +24,7 @@ import { TopUpBalanceDialog } from "@/components/TopUpBalanceDialog";
 import { formatCurrency } from "@/lib/utils";
 import { ChartContainer, ChartTooltipContent, ChartTooltip } from "@/components/ui/chart";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Link } from "react-router-dom";
 
 const actions = [
   {
@@ -49,10 +51,13 @@ const Index = () => {
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
   const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
   const [timeScale, setTimeScale] = useState<TimeScale>('week');
+  const [showAllTransactions, setShowAllTransactions] = useState(false);
   
   const userName = user?.user_metadata?.full_name || "there";
   
-  const recentTransactions = transactions.slice(0, 3);
+  const recentTransactions = showAllTransactions 
+    ? transactions 
+    : transactions.slice(0, 3);
 
   const balanceData = useMemo(() => {
     if (transactions.length === 0 || !balance) return [];
@@ -348,8 +353,14 @@ const Index = () => {
         </div>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Recent Transactions</CardTitle>
+            <Link to="/transactions">
+              <Button variant="ghost" size="sm" className="gap-1">
+                View all 
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </Link>
           </CardHeader>
           <CardContent>
             {transactionsLoading ? (
@@ -392,6 +403,26 @@ const Index = () => {
               </div>
             )}
           </CardContent>
+          {transactions.length > 3 && !showAllTransactions && (
+            <CardFooter className="flex justify-center pt-2 pb-6">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAllTransactions(true)}
+              >
+                Show all transactions
+              </Button>
+            </CardFooter>
+          )}
+          {showAllTransactions && transactions.length > 3 && (
+            <CardFooter className="flex justify-center pt-2 pb-6">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAllTransactions(false)}
+              >
+                Show less
+              </Button>
+            </CardFooter>
+          )}
         </Card>
       </div>
 
