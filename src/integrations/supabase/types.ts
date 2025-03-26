@@ -198,6 +198,62 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          bill_id: string | null
+          created_at: string
+          currency: string
+          id: string
+          payment_date: string
+          payment_method: string | null
+          payment_reference: string | null
+          recipient: string
+          recipient_email: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          bill_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          payment_date?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          recipient: string
+          recipient_email?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          bill_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          payment_date?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          recipient?: string
+          recipient_email?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
