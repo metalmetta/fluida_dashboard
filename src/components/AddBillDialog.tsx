@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -102,56 +103,214 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md p-0 overflow-hidden">
+        <DialogContent className="max-w-4xl p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-2">
             <DialogTitle>New bill</DialogTitle>
           </DialogHeader>
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-              <div className="px-6 space-y-5 overflow-y-auto max-h-[70vh]">
-                <h2 className="text-lg font-medium">Summary</h2>
+              <div className="flex flex-col md:flex-row">
+                {/* Left Column - Drag and Drop */}
+                <div className="md:w-1/3 px-6">
+                  <div className="bg-gray-50 h-full py-16 px-6 rounded-lg flex flex-col items-center justify-center">
+                    <div className="flex flex-col items-center gap-2 text-center">
+                      <UploadIcon className="h-6 w-6 text-gray-400" />
+                      <p className="text-sm text-gray-500">
+                        Drop invoice or <span className="text-blue-500 hover:underline">browse files</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+                {/* Right Column - Form Fields */}
+                <div className="md:w-2/3 px-6 space-y-5 overflow-y-auto max-h-[70vh]">
+                  <h2 className="text-lg font-medium">Summary</h2>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <FormField
+                        control={form.control}
+                        name="vendor"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm text-muted-foreground">Contact</FormLabel>
+                            <div className="flex gap-2">
+                              <FormControl>
+                                <Select 
+                                  value={field.value} 
+                                  onValueChange={field.onChange}
+                                >
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select a vendor" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {isLoadingContacts ? (
+                                      <div className="p-2 text-center text-sm">Loading vendors...</div>
+                                    ) : vendorContacts.length === 0 ? (
+                                      <div className="p-2 text-center text-sm">No vendors found</div>
+                                    ) : (
+                                      vendorContacts.map((contact) => (
+                                        <SelectItem key={contact.id} value={contact.name}>
+                                          {contact.name} {contact.company ? `(${contact.company})` : ''}
+                                        </SelectItem>
+                                      ))
+                                    )}
+                                    <div className="border-t mx-2 my-1" />
+                                    <div
+                                      className="relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-2 pr-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                                      onClick={() => setAddContactDialogOpen(true)}
+                                    >
+                                      <PlusCircle className="mr-2 h-4 w-4" />
+                                      <span>Add new vendor</span>
+                                    </div>
+                                  </SelectContent>
+                                </Select>
+                              </FormControl>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div>
+                      <FormField
+                        control={form.control}
+                        name="bill_number"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm text-muted-foreground">Invoice #</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Add number..." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <FormField
+                        control={form.control}
+                        name="issue_date"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel className="text-sm text-muted-foreground">Invoice date</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "w-full pl-3 text-left font-normal flex justify-start",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {field.value ? (
+                                      format(field.value, "MMM dd, yyyy")
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  initialFocus
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div>
+                      <FormField
+                        control={form.control}
+                        name="due_date"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel className="text-sm text-muted-foreground">Due date</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "w-full pl-3 text-left font-normal flex justify-start",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {field.value ? (
+                                      format(field.value, "MMM dd, yyyy")
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  initialFocus
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
                     <FormField
                       control={form.control}
-                      name="vendor"
+                      name="amount"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm text-muted-foreground">Contact</FormLabel>
-                          <div className="flex gap-2">
+                          <FormLabel className="text-sm text-muted-foreground">Amount</FormLabel>
+                          <div className="flex">
                             <FormControl>
-                              <Select 
-                                value={field.value} 
-                                onValueChange={field.onChange}
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="Select a vendor" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {isLoadingContacts ? (
-                                    <div className="p-2 text-center text-sm">Loading vendors...</div>
-                                  ) : vendorContacts.length === 0 ? (
-                                    <div className="p-2 text-center text-sm">No vendors found</div>
-                                  ) : (
-                                    vendorContacts.map((contact) => (
-                                      <SelectItem key={contact.id} value={contact.name}>
-                                        {contact.name} {contact.company ? `(${contact.company})` : ''}
-                                      </SelectItem>
-                                    ))
-                                  )}
-                                  <div className="border-t mx-2 my-1" />
-                                  <div
-                                    className="relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-2 pr-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                                    onClick={() => setAddContactDialogOpen(true)}
-                                  >
-                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                    <span>Add new vendor</span>
-                                  </div>
-                                </SelectContent>
-                              </Select>
+                              <div className="relative flex-1">
+                                <span className="absolute left-3 top-2.5">$</span>
+                                <Input 
+                                  type="number" 
+                                  step="0.01" 
+                                  placeholder="0.00" 
+                                  className="pl-7"
+                                  {...field}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    field.onChange(val);
+                                  }}
+                                />
+                              </div>
                             </FormControl>
+                            <Select defaultValue="USD">
+                              <SelectTrigger className="w-28 ml-2">
+                                <SelectValue placeholder="USD" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="USD">USD</SelectItem>
+                                <SelectItem value="EUR">EUR</SelectItem>
+                                <SelectItem value="GBP">GBP</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                           <FormMessage />
                         </FormItem>
@@ -159,208 +318,56 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                     />
                   </div>
                   
+                  <h2 className="text-lg font-medium pt-2">Invoice details</h2>
+                  
                   <div>
                     <FormField
                       control={form.control}
-                      name="bill_number"
+                      name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm text-muted-foreground">Invoice #</FormLabel>
+                          <FormLabel className="text-sm text-muted-foreground">Memo</FormLabel>
                           <FormControl>
-                            <Input placeholder="Add number..." {...field} />
+                            <Textarea 
+                              placeholder="Add memo..." 
+                              className="resize-none h-20"
+                              {...field}
+                            />
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <FormField
-                      control={form.control}
-                      name="issue_date"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel className="text-sm text-muted-foreground">Invoice date</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "w-full pl-3 text-left font-normal flex justify-start",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {field.value ? (
-                                    format(field.value, "MMM dd, yyyy")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                initialFocus
-                                className="pointer-events-auto"
-                              />
-                            </PopoverContent>
-                          </Popover>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
                   
+                  <h2 className="text-lg font-medium pt-2">Payment details</h2>
+                  
                   <div>
                     <FormField
                       control={form.control}
-                      name="due_date"
+                      name="category"
                       render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel className="text-sm text-muted-foreground">Due date</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "w-full pl-3 text-left font-normal flex justify-start",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {field.value ? (
-                                    format(field.value, "MMM dd, yyyy")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                initialFocus
-                                className="pointer-events-auto"
-                              />
-                            </PopoverContent>
-                          </Popover>
+                        <FormItem>
+                          <FormLabel className="text-sm text-muted-foreground">Asset</FormLabel>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            value={field.value || ""}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select an asset" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Checking">Checking Account</SelectItem>
+                              <SelectItem value="Savings">Savings Account</SelectItem>
+                              <SelectItem value="CreditCard">Credit Card</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="amount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm text-muted-foreground">Amount</FormLabel>
-                        <div className="flex">
-                          <FormControl>
-                            <div className="relative flex-1">
-                              <span className="absolute left-3 top-2.5">$</span>
-                              <Input 
-                                type="number" 
-                                step="0.01" 
-                                placeholder="0.00" 
-                                className="pl-7"
-                                {...field}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  field.onChange(val);
-                                }}
-                              />
-                            </div>
-                          </FormControl>
-                          <Select defaultValue="USD">
-                            <SelectTrigger className="w-28 ml-2">
-                              <SelectValue placeholder="USD" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="USD">USD</SelectItem>
-                              <SelectItem value="EUR">EUR</SelectItem>
-                              <SelectItem value="GBP">GBP</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <h2 className="text-lg font-medium pt-2">Invoice details</h2>
-                
-                <div>
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm text-muted-foreground">Memo</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Add memo..." 
-                            className="resize-none h-20"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <h2 className="text-lg font-medium pt-2">Payment details</h2>
-                
-                <div>
-                  <FormField
-                    control={form.control}
-                    name="category"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm text-muted-foreground">Asset</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          value={field.value || ""}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select an asset" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Checking">Checking Account</SelectItem>
-                            <SelectItem value="Savings">Savings Account</SelectItem>
-                            <SelectItem value="CreditCard">Credit Card</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div className="bg-gray-50 mx-auto py-16 px-6 rounded-lg flex flex-col items-center justify-center">
-                  <div className="flex flex-col items-center gap-2 text-center">
-                    <UploadIcon className="h-6 w-6 text-gray-400" />
-                    <p className="text-sm text-gray-500">
-                      Drop invoice or <span className="text-blue-500 hover:underline">browse files</span>
-                    </p>
                   </div>
                 </div>
               </div>
@@ -387,3 +394,4 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
     </>
   );
 }
+
