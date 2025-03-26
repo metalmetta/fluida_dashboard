@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -129,6 +130,61 @@ export function usePayments() {
     }
   };
 
+  const createInternalTransferPayment = async (transferData: {
+    amount: number;
+    currency: string;
+    fromAccount: string;
+    toAccount: string;
+    reference?: string;
+  }) => {
+    if (!user) return null;
+    
+    try {
+      // Create payment record for internal transfer
+      const newPayment = {
+        user_id: user.id,
+        amount: transferData.amount,
+        currency: transferData.currency,
+        payment_date: new Date().toISOString(),
+        payment_method: transferData.fromAccount,
+        status: "Completed" as const,
+        recipient: transferData.toAccount,
+        payment_reference: transferData.reference || null,
+        payment_type: "internal_transfer"
+      };
+
+      const { data, error } = await supabase
+        .from("payments")
+        .insert([newPayment])
+        .select();
+
+      if (error) throw error;
+      
+      // Create a corresponding transaction record
+      try {
+        await createTransaction({
+          type: 'Transfer',
+          amount: transferData.amount,
+          currency: transferData.currency,
+          status: 'Completed',
+          recipient: transferData.toAccount,
+          description: `Internal transfer to ${transferData.toAccount}`,
+          reference_type: 'internal_transfer'
+        });
+      } catch (transactionError) {
+        console.error("Error creating transaction record:", transactionError);
+      }
+      
+      // Refresh payments
+      fetchPayments();
+      
+      return data?.[0] || null;
+    } catch (error) {
+      console.error("Error creating internal transfer payment:", error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchPayments();
@@ -141,6 +197,7 @@ export function usePayments() {
     totalSent,
     dueAmount,
     fetchPayments,
-    createPaymentFromBill
+    createPaymentFromBill,
+    createInternalTransferPayment
   };
 }

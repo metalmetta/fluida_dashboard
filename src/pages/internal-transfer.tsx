@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import {
@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Wallet, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
+import { NewTransferDialog } from "@/components/NewTransferDialog";
 
 interface InternalTransfer {
   id: string;
@@ -37,6 +37,7 @@ interface InternalTransfer {
 export default function InternalTransfer() {
   const [transfers, setTransfers] = useState<InternalTransfer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const { balance } = useUserBalance();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -80,7 +81,7 @@ export default function InternalTransfer() {
             <h1 className="text-3xl font-semibold">Internal Transfer</h1>
             <p className="text-muted-foreground">Send funds between your bank accounts</p>
           </div>
-          <Button variant="default">
+          <Button variant="default" onClick={() => setTransferDialogOpen(true)}>
             <ArrowRightLeft className="h-4 w-4 mr-2" />
             New Transfer
           </Button>
@@ -164,6 +165,12 @@ export default function InternalTransfer() {
           )}
         </Card>
       </div>
+
+      <NewTransferDialog 
+        open={transferDialogOpen} 
+        onOpenChange={setTransferDialogOpen} 
+        onTransferComplete={fetchTransfers}
+      />
     </DashboardLayout>
   );
 }
