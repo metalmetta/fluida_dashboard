@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -53,23 +52,18 @@ const Index = () => {
   
   const userName = user?.user_metadata?.full_name || "there";
   
-  // Get recent transactions limited to 3
   const recentTransactions = transactions.slice(0, 3);
 
-  // Generate balance chart data based on selected time scale
   const balanceData = useMemo(() => {
     if (transactions.length === 0 || !balance) return [];
 
-    // Sort transactions by date (oldest first)
     const sortedTransactions = [...transactions].sort(
       (a, b) => new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime()
     );
 
-    // Get the earliest date based on selected time scale
     const now = new Date();
     const startDate = new Date(now);
     
-    // Set appropriate time range based on selected scale
     if (timeScale === 'week') {
       startDate.setDate(startDate.getDate() - 7);
     } else if (timeScale === 'month') {
@@ -78,16 +72,13 @@ const Index = () => {
       startDate.setMonth(startDate.getMonth() - 3);
     }
     
-    // Filter transactions within the selected date range
     const filteredTransactions = sortedTransactions.filter(tx => 
       new Date(tx.transaction_date) >= startDate
     );
     
-    // Create appropriate data points based on time scale
     const dataPoints = [];
     let runningBalance = balance.available_amount;
     
-    // Start by subtracting all filtered transaction amounts to get the initial balance
     for (const tx of filteredTransactions) {
       if (tx.type === 'Deposit') {
         runningBalance -= tx.amount;
@@ -96,25 +87,21 @@ const Index = () => {
       }
     }
 
-    // Determine intervals and format based on time scale
     let intervals: Date[] = [];
     
     if (timeScale === 'week') {
-      // Daily intervals for a week
       for (let i = 0; i <= 7; i++) {
         const date = new Date(now);
         date.setDate(date.getDate() - i);
         intervals.unshift(date);
       }
     } else if (timeScale === 'month') {
-      // Weekly intervals for a month
       for (let i = 0; i <= 4; i++) {
         const date = new Date(now);
         date.setDate(date.getDate() - (i * 7));
         intervals.unshift(date);
       }
     } else if (timeScale === '3months') {
-      // Bi-weekly intervals for 3 months
       for (let i = 0; i <= 6; i++) {
         const date = new Date(now);
         date.setDate(date.getDate() - (i * 14));
@@ -122,18 +109,15 @@ const Index = () => {
       }
     }
     
-    // Create data points for each interval
     for (let i = 0; i < intervals.length - 1; i++) {
       const intervalStart = intervals[i];
       const intervalEnd = intervals[i + 1];
       
-      // Calculate transactions within this interval
       const intervalTransactions = filteredTransactions.filter(tx => {
         const txDate = new Date(tx.transaction_date);
         return txDate >= intervalStart && txDate < intervalEnd;
       });
       
-      // Calculate interval's balance change
       let intervalAmount = 0;
       for (const tx of intervalTransactions) {
         if (tx.type === 'Deposit') {
@@ -143,13 +127,11 @@ const Index = () => {
         }
       }
       
-      // Adjust running balance for next interval
-      if (i !== intervals.length - 2) { // Skip current interval as it's already in final balance
+      if (i !== intervals.length - 2) {
         runningBalance += intervalAmount;
       }
       
-      // Format date based on time scale
-      let dateFormat: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+      const dateFormat: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
       
       const formattedDate = intervalStart.toLocaleDateString('en-US', dateFormat);
       
@@ -158,11 +140,9 @@ const Index = () => {
         balance: runningBalance,
       });
       
-      // Reset for next interval
       runningBalance -= intervalAmount;
     }
     
-    // Add the most recent point (today)
     dataPoints.push({
       date: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       balance: balance.available_amount,
@@ -171,7 +151,6 @@ const Index = () => {
     return dataPoints;
   }, [transactions, balance, timeScale]);
 
-  // Icon mapping for transaction types
   const getTransactionIcon = (type: string) => {
     switch(type) {
       case 'Deposit':
@@ -196,143 +175,146 @@ const Index = () => {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <Card className="p-6">
-            <div className="flex justify-between mb-4">
-              <h3 className="text-lg font-medium">Balance</h3>
-              <div className="flex gap-2">
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => setDepositDialogOpen(true)}
-                >
-                  <ArrowDown className="mr-1 h-4 w-4" />
-                  Deposit
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => setWithdrawDialogOpen(true)}
-                  disabled={!balance || balance.available_amount <= 0}
-                >
-                  <ArrowUp className="mr-1 h-4 w-4" />
-                  Withdraw
-                </Button>
-              </div>
-            </div>
-            
-            {isLoading ? (
-              <div className="flex items-center justify-center h-40">
-                <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
-              </div>
-            ) : (
-              <>
-                <div className="flex items-end gap-2 mb-6">
-                  <p className="text-3xl font-semibold">
-                    {balance 
-                      ? formatCurrency(balance.available_amount, balance.currency)
-                      : "$0.00"
-                    }
-                  </p>
-                  <p className="text-sm text-muted-foreground mb-1">Available balance</p>
-                </div>
-                
-                <div className="flex justify-end mb-4">
-                  <ToggleGroup 
-                    type="single" 
-                    value={timeScale}
-                    onValueChange={(value) => {
-                      if (value) setTimeScale(value as TimeScale);
-                    }}
+          <Card>
+            <div className="p-6">
+              <div className="flex justify-between mb-4">
+                <h3 className="text-lg font-medium">Balance</h3>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => setDepositDialogOpen(true)}
                   >
-                    <ToggleGroupItem value="week">Week</ToggleGroupItem>
-                    <ToggleGroupItem value="month">Month</ToggleGroupItem>
-                    <ToggleGroupItem value="3months">3 Months</ToggleGroupItem>
-                  </ToggleGroup>
+                    <ArrowDown className="mr-1 h-4 w-4" />
+                    Deposit
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => setWithdrawDialogOpen(true)}
+                    disabled={!balance || balance.available_amount <= 0}
+                  >
+                    <ArrowUp className="mr-1 h-4 w-4" />
+                    Withdraw
+                  </Button>
                 </div>
-                
-                <div className="h-[200px] w-full">
-                  <ChartContainer
-                    config={{
-                      balance: {
-                        label: "Balance",
-                        theme: {
-                          light: "hsl(var(--primary))",
-                          dark: "hsl(var(--primary))"
-                        }
+              </div>
+              
+              {isLoading ? (
+                <div className="flex items-center justify-center h-40">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-end gap-2 mb-6">
+                    <p className="text-3xl font-semibold">
+                      {balance 
+                        ? formatCurrency(balance.available_amount, balance.currency)
+                        : "$0.00"
                       }
-                    }}
-                  >
-                    {balanceData.length > 0 ? (
-                      <LineChart data={balanceData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
-                        <XAxis 
-                          dataKey="date"
-                          tickLine={false}
-                          axisLine={false}
-                          tick={{ fontSize: 12 }}
-                          tickMargin={8}
-                        />
-                        <YAxis 
-                          hide={true}
-                          domain={['dataMin - 1000', 'dataMax + 1000']}
-                        />
-                        <Tooltip
-                          content={({ active, payload }) => {
-                            if (active && payload && payload.length) {
-                              return (
-                                <div className="rounded-lg border bg-background p-2 shadow-sm">
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <div className="flex flex-col">
-                                      <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                        Date
-                                      </span>
-                                      <span className="font-bold text-xs">
-                                        {payload[0].payload.date}
-                                      </span>
-                                    </div>
-                                    <div className="flex flex-col">
-                                      <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                        Balance
-                                      </span>
-                                      <span className="font-bold text-xs">
-                                        {formatCurrency(
-                                          payload[0].value as number,
-                                          balance?.currency || "USD"
-                                        )}
-                                      </span>
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-1">Available balance</p>
+                  </div>
+                  
+                  <div className="flex justify-end mb-4">
+                    <ToggleGroup 
+                      type="single" 
+                      value={timeScale}
+                      onValueChange={(value) => {
+                        if (value) setTimeScale(value as TimeScale);
+                      }}
+                      className="border rounded-md bg-background p-1"
+                    >
+                      <ToggleGroupItem value="week" className="text-xs px-3 py-1 rounded-sm">Week</ToggleGroupItem>
+                      <ToggleGroupItem value="month" className="text-xs px-3 py-1 rounded-sm">Month</ToggleGroupItem>
+                      <ToggleGroupItem value="3months" className="text-xs px-3 py-1 rounded-sm">3 Months</ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+                  
+                  <div className="h-[200px] w-full">
+                    <ChartContainer
+                      config={{
+                        balance: {
+                          label: "Balance",
+                          theme: {
+                            light: "hsl(var(--primary))",
+                            dark: "hsl(var(--primary))"
+                          }
+                        }
+                      }}
+                    >
+                      {balanceData.length > 0 ? (
+                        <LineChart data={balanceData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                          <XAxis 
+                            dataKey="date"
+                            tickLine={false}
+                            axisLine={false}
+                            tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
+                            tickMargin={8}
+                          />
+                          <YAxis 
+                            hide={true}
+                            domain={['dataMin - 1000', 'dataMax + 1000']}
+                          />
+                          <Tooltip
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                return (
+                                  <div className="rounded-lg border border-border bg-card p-2 shadow-md">
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div className="flex flex-col">
+                                        <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                          Date
+                                        </span>
+                                        <span className="font-bold text-xs">
+                                          {payload[0].payload.date}
+                                        </span>
+                                      </div>
+                                      <div className="flex flex-col">
+                                        <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                          Balance
+                                        </span>
+                                        <span className="font-bold text-xs">
+                                          {formatCurrency(
+                                            payload[0].value as number,
+                                            balance?.currency || "USD"
+                                          )}
+                                        </span>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="balance"
-                          name="balance"
-                          stroke="var(--color-balance)"
-                          strokeWidth={2}
-                          dot={{
-                            r: 4,
-                            strokeWidth: 2,
-                            fill: "var(--background)"
-                          }}
-                          activeDot={{
-                            r: 6,
-                            strokeWidth: 3
-                          }}
-                        />
-                      </LineChart>
-                    ) : (
-                      <div className="flex h-full items-center justify-center">
-                        <p className="text-sm text-muted-foreground">No balance history data available</p>
-                      </div>
-                    )}
-                  </ChartContainer>
-                </div>
-              </>
-            )}
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="balance"
+                            name="balance"
+                            stroke="var(--color-balance)"
+                            strokeWidth={2.5}
+                            activeDot={{
+                              r: 6,
+                              strokeWidth: 0,
+                              fill: "var(--color-balance)"
+                            }}
+                            dot={{
+                              r: 0,
+                              strokeWidth: 0
+                            }}
+                          />
+                        </LineChart>
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <p className="text-sm text-muted-foreground">No balance history data available</p>
+                        </div>
+                      )}
+                    </ChartContainer>
+                  </div>
+                </>
+              )}
+            </div>
           </Card>
 
           <Card className="p-6">
