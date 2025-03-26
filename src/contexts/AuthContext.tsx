@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import ReactConfetti from "react-confetti";
 
 type AuthContextType = {
   user: User | null;
@@ -19,6 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showConfetti, setShowConfetti] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -40,6 +42,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Hide confetti after 5 seconds
+  useEffect(() => {
+    if (showConfetti) {
+      const timer = setTimeout(() => {
+        setShowConfetti(false);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showConfetti]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -113,6 +126,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await createInitialUserBalance(data.user.id);
       }
 
+      // Show confetti animation
+      setShowConfetti(true);
+      
       // Removed the email verification toast message
       toast({
         title: "Account created",
@@ -151,6 +167,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, session, isLoading, signIn, signUp, signOut }}>
+      {showConfetti && (
+        <ReactConfetti
+          width={window.innerWidth}
+          height={window.innerHeight}
+          recycle={false}
+          numberOfPieces={500}
+          gravity={0.15}
+        />
+      )}
       {children}
     </AuthContext.Provider>
   );
