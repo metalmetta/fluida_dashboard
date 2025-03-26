@@ -1,11 +1,25 @@
+
+import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
-import { ArrowUpRight, Building2 } from "lucide-react";
+import { 
+  ArrowUpRight, 
+  Building2, 
+  Wallet, 
+  ArrowUp, 
+  ArrowDown, 
+  Loader2 
+} from "lucide-react";
 import { Line, LineChart, ResponsiveContainer, XAxis } from "recharts";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserBalance } from "@/hooks/useUserBalance";
+import { DepositDialog } from "@/components/DepositDialog";
+import { WithdrawDialog } from "@/components/WithdrawDialog";
+import { TopUpBalanceDialog } from "@/components/TopUpBalanceDialog";
+import { formatCurrency } from "@/lib/utils";
 
 const data = [
   { day: "Jan 13", value: 245000 },
@@ -38,6 +52,11 @@ const actions = [
 
 const Index = () => {
   const { user } = useAuth();
+  const { balance, isLoading, updateBalance } = useUserBalance();
+  const [depositDialogOpen, setDepositDialogOpen] = useState(false);
+  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
+  
   const userName = user?.user_metadata?.full_name || "there";
 
   return (
@@ -52,22 +71,60 @@ const Index = () => {
 
         <div className="grid gap-6 md:grid-cols-2">
           <Card className="p-6">
-            <h3 className="text-lg font-medium mb-4">Balance</h3>
-            <p className="text-3xl font-semibold mb-6">$867,000</p>
-            <div className="h-[200px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data}>
-                  <XAxis dataKey="day" hide />
-                  <Line
-                    type="monotone"
-                    dataKey="value"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="flex justify-between mb-4">
+              <h3 className="text-lg font-medium">Balance</h3>
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => setDepositDialogOpen(true)}
+                >
+                  <ArrowDown className="mr-1 h-4 w-4" />
+                  Deposit
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => setWithdrawDialogOpen(true)}
+                  disabled={!balance || balance.available_amount <= 0}
+                >
+                  <ArrowUp className="mr-1 h-4 w-4" />
+                  Withdraw
+                </Button>
+              </div>
             </div>
+            
+            {isLoading ? (
+              <div className="flex items-center justify-center h-40">
+                <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
+              </div>
+            ) : (
+              <>
+                <div className="flex items-end gap-2 mb-6">
+                  <p className="text-3xl font-semibold">
+                    {balance 
+                      ? formatCurrency(balance.available_amount, balance.currency)
+                      : "$0.00"
+                    }
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-1">Available balance</p>
+                </div>
+                <div className="h-[200px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={data}>
+                      <XAxis dataKey="day" hide />
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </>
+            )}
           </Card>
 
           <Card className="p-6">
@@ -123,6 +180,26 @@ const Index = () => {
           </div>
         </Card>
       </div>
+
+      <DepositDialog
+        open={depositDialogOpen}
+        onOpenChange={setDepositDialogOpen}
+      />
+
+      <WithdrawDialog
+        open={withdrawDialogOpen}
+        onOpenChange={setWithdrawDialogOpen}
+        onWithdraw={updateBalance}
+        currentBalance={balance?.available_amount || 0}
+        currentCurrency={balance?.currency || "USD"}
+      />
+
+      <TopUpBalanceDialog
+        open={topUpDialogOpen}
+        onOpenChange={setTopUpDialogOpen}
+        onTopUp={updateBalance}
+        currentCurrency={balance?.currency || "USD"}
+      />
     </DashboardLayout>
   );
 };
