@@ -11,8 +11,7 @@ import {
   ArrowUp, 
   ArrowDown, 
   Loader2, 
-  CreditCard,
-  ChevronRight
+  CreditCard
 } from "lucide-react";
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { useAuth } from "@/contexts/AuthContext";
@@ -349,14 +348,8 @@ const Index = () => {
         </div>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader>
             <CardTitle>Recent Transactions</CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <a href="/transactions" className="flex items-center gap-1">
-                View All
-                <ChevronRight className="h-4 w-4" />
-              </a>
-            </Button>
           </CardHeader>
           <CardContent>
             {transactionsLoading ? (
