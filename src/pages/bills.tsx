@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -11,13 +12,19 @@ import { DocumentsHeader } from "@/components/documents/DocumentsHeader";
 import { DocumentsTable } from "@/components/documents/DocumentsTable";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { PayBillDialog } from "@/components/PayBillDialog";
+import { TopUpBalanceDialog } from "@/components/TopUpBalanceDialog";
+import { useUserBalance } from "@/hooks/useUserBalance";
 
 export default function Bills() {
   const { bills, isLoading, addBill, updateBillStatus } = useBills();
+  const { balance, isLoading: isBalanceLoading, updateBalance } = useUserBalance();
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [addBillDialogOpen, setAddBillDialogOpen] = useState(false);
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [viewBillDialogOpen, setViewBillDialogOpen] = useState(false);
+  const [payBillDialogOpen, setPayBillDialogOpen] = useState(false);
+  const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const filteredBills = selectedStatus
@@ -52,11 +59,27 @@ export default function Bills() {
 
   const handlePayBill = async (bill: Bill) => {
     try {
+      if (!balance) {
+        throw new Error("Balance information not available");
+      }
+
+      // Deduct bill amount from balance
+      const success = await updateBalance(-bill.amount);
+      if (!success) {
+        throw new Error("Failed to update balance");
+      }
+
+      // Mark bill as paid
       await updateBillStatus(bill.id, "Paid");
+
       toast({
         title: "Payment successful",
-        description: `Bill ${bill.bill_number} has been marked as paid.`
+        description: `Bill ${bill.bill_number} has been paid.`
       });
+
+      // Close the payment dialog
+      setPayBillDialogOpen(false);
+
     } catch (error) {
       console.error("Error paying bill:", error);
       toast({
@@ -65,6 +88,19 @@ export default function Bills() {
         variant: "destructive"
       });
     }
+  };
+
+  const handlePayButtonClick = (bill: Bill) => {
+    setSelectedBill(bill);
+    setPayBillDialogOpen(true);
+  };
+
+  const handleTopUpBalance = async (amount: number) => {
+    return await updateBalance(amount);
+  };
+
+  const openTopUpDialog = () => {
+    setTopUpDialogOpen(true);
   };
 
   const getStatusVariant = (status: string) => {
@@ -97,7 +133,10 @@ export default function Bills() {
         <Button 
           size="sm" 
           variant="default" 
-          onClick={() => handlePayBill(bill)}
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePayButtonClick(bill);
+          }}
         >
           <DollarSign className="h-4 w-4 mr-1" />
           Pay
@@ -120,7 +159,7 @@ export default function Bills() {
               icon: ArrowRightLeft,
               label: "Transfer funds",
               variant: "outline",
-              onClick: () => {}
+              onClick: openTopUpDialog
             },
             {
               icon: Plus,
@@ -134,6 +173,22 @@ export default function Bills() {
           <div className="text-sm text-muted-foreground">
             Forward invoices to <span className="font-medium">bills@getfluida.com</span>
           </div>
+          {!isBalanceLoading && balance && (
+            <div className="flex items-center space-x-2">
+              <div className="text-sm text-muted-foreground">Available Balance:</div>
+              <div className="font-medium">
+                {formatCurrency(balance.available_amount, balance.currency)}
+              </div>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={openTopUpDialog}
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Top Up
+              </Button>
+            </div>
+          )}
         </div>
 
         <Card>
@@ -168,6 +223,25 @@ export default function Bills() {
         onOpenChange={setViewBillDialogOpen}
         bill={selectedBill}
         onStatusChange={handleStatusChange}
+      />
+
+      <PayBillDialog
+        open={payBillDialogOpen}
+        onOpenChange={setPayBillDialogOpen}
+        bill={selectedBill}
+        balance={balance}
+        onPayBill={handlePayBill}
+        onTopUpRequest={() => {
+          setPayBillDialogOpen(false);
+          setTopUpDialogOpen(true);
+        }}
+      />
+
+      <TopUpBalanceDialog
+        open={topUpDialogOpen}
+        onOpenChange={setTopUpDialogOpen}
+        onTopUp={handleTopUpBalance}
+        currentCurrency={balance?.currency || "USD"}
       />
     </DashboardLayout>
   );
