@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
-import { Plus, ArrowRightLeft } from "lucide-react";
+import { Plus, ArrowRightLeft, DollarSign, Euro, PoundSterling } from "lucide-react";
 import { useBills } from "@/hooks/useBills";
 import { formatCurrency } from "@/lib/utils";
 import { AddBillDialog } from "@/components/AddBillDialog";
@@ -54,13 +54,20 @@ export default function Bills() {
     return status === "Ready for payment" ? "destructive" : "outline";
   };
 
+  // Function to render currency with symbol
+  const renderCurrency = (item: Bill) => {
+    const symbol = item.currency === 'EUR' ? '€' : 
+                  item.currency === 'GBP' ? '£' : '$';
+    return `${symbol}${item.amount.toFixed(2)}`;
+  };
+
   const columns = [
     { header: "Bill ID", accessorKey: "bill_number" as keyof Bill },
     { header: "Vendor", accessorKey: "vendor" as keyof Bill },
     { header: "Category", accessorKey: "category" as keyof Bill, 
       cell: (item: Bill) => item.category || "N/A" },
     { header: "Amount", accessorKey: "amount" as keyof Bill,
-      cell: (item: Bill) => formatCurrency(item.amount) },
+      cell: (item: Bill) => renderCurrency(item) },
     { header: "Due Date", accessorKey: "due_date" as keyof Bill,
       cell: (item: Bill) => new Date(item.due_date).toLocaleDateString() },
     { header: "Status", accessorKey: "status" as keyof Bill },

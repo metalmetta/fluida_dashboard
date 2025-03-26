@@ -15,6 +15,7 @@ export type Database = {
           bill_number: string
           category: string | null
           created_at: string
+          currency: string
           description: string | null
           due_date: string
           id: string
@@ -29,6 +30,7 @@ export type Database = {
           bill_number: string
           category?: string | null
           created_at?: string
+          currency?: string
           description?: string | null
           due_date: string
           id?: string
@@ -43,6 +45,7 @@ export type Database = {
           bill_number?: string
           category?: string | null
           created_at?: string
+          currency?: string
           description?: string | null
           due_date?: string
           id?: string
@@ -119,6 +122,7 @@ export type Database = {
           amount: number
           client_name: string
           created_at: string
+          currency: string
           description: string | null
           due_date: string
           id: string
@@ -133,6 +137,7 @@ export type Database = {
           amount: number
           client_name: string
           created_at?: string
+          currency?: string
           description?: string | null
           due_date: string
           id?: string
@@ -147,6 +152,7 @@ export type Database = {
           amount?: number
           client_name?: string
           created_at?: string
+          currency?: string
           description?: string | null
           due_date?: string
           id?: string

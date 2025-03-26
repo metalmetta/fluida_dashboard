@@ -1,8 +1,9 @@
+
 import React, { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CalendarIcon, UploadIcon, X, DollarSign, PlusCircle } from "lucide-react";
+import { CalendarIcon, UploadIcon, X, DollarSign, PlusCircle, Euro, PoundSterling } from "lucide-react";
 import { format } from "date-fns";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -26,6 +27,7 @@ const formSchema = z.object({
   category: z.string().optional(),
   description: z.string().optional(),
   status: z.enum(["Draft", "Ready for payment", "Paid", "Approve"]).default("Draft"),
+  currency: z.enum(["USD", "EUR", "GBP"]).default("USD"),
   issue_date: z.date({
     required_error: "Issue date is required",
   }),
@@ -57,6 +59,7 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
       category: "",
       description: "",
       status: "Draft",
+      currency: "USD",
       issue_date: new Date(),
       due_date: new Date(new Date().setDate(new Date().getDate() + 30)),
     },
@@ -70,6 +73,7 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
         amount: values.amount,
         bill_number: values.bill_number,
         status: status,
+        currency: values.currency,
         issue_date: values.issue_date.toISOString().split('T')[0],
         due_date: values.due_date.toISOString().split('T')[0],
         category: values.category,
@@ -98,6 +102,17 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
   const handleContactAdded = useCallback(() => {
     setAddContactDialogOpen(false);
   }, []);
+
+  // Get the currency symbol based on the selected currency
+  const getCurrencySymbol = (currency: string) => {
+    switch (currency) {
+      case "EUR": return <Euro className="h-4 w-4" />;
+      case "GBP": return <PoundSterling className="h-4 w-4" />;
+      default: return <DollarSign className="h-4 w-4" />;
+    }
+  };
+
+  const selectedCurrency = form.watch("currency");
 
   return (
     <>
@@ -286,7 +301,9 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                           <div className="flex">
                             <FormControl>
                               <div className="relative flex-1">
-                                <span className="absolute left-3 top-2.5">$</span>
+                                <span className="absolute left-3 top-2.5">
+                                  {getCurrencySymbol(selectedCurrency)}
+                                </span>
                                 <Input 
                                   type="number" 
                                   step="0.01" 
@@ -300,16 +317,29 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                                 />
                               </div>
                             </FormControl>
-                            <Select defaultValue="USD">
-                              <SelectTrigger className="w-28 ml-2">
-                                <SelectValue placeholder="USD" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="USD">USD</SelectItem>
-                                <SelectItem value="EUR">EUR</SelectItem>
-                                <SelectItem value="GBP">GBP</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <FormField
+                              control={form.control}
+                              name="currency"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Select 
+                                      value={field.value} 
+                                      onValueChange={field.onChange}
+                                    >
+                                      <SelectTrigger className="w-28 ml-2">
+                                        <SelectValue placeholder="USD" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="USD">USD</SelectItem>
+                                        <SelectItem value="EUR">EUR</SelectItem>
+                                        <SelectItem value="GBP">GBP</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
                           </div>
                           <FormMessage />
                         </FormItem>

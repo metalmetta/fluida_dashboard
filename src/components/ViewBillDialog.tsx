@@ -66,6 +66,7 @@ export function ViewBillDialog({
               issue_date: bill.issue_date,
               due_date: bill.due_date,
               amount: bill.amount,
+              currency: bill.currency,
               description: bill.description,
               category: bill.category
             }}

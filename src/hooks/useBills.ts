@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Bill } from "@/types/bill";
@@ -27,7 +28,8 @@ export function useBills() {
       // Ensure the type is properly cast as our Bill type
       const typedBills = data?.map(bill => ({
         ...bill,
-        status: bill.status as 'Draft' | 'Ready for payment' | 'Paid' | 'Approve'
+        status: bill.status as 'Draft' | 'Ready for payment' | 'Paid' | 'Approve',
+        currency: bill.currency || 'USD' // Default to USD if missing
       })) || [];
       
       setBills(typedBills);
@@ -143,7 +145,8 @@ export function useBills() {
           status: "Draft" as const,
           category: "Supplies",
           bill_number: "BILL-001",
-          description: "Monthly office supplies"
+          description: "Monthly office supplies",
+          currency: "USD"
         },
         {
           user_id: user.id,
@@ -153,7 +156,8 @@ export function useBills() {
           status: "Ready for payment" as const,
           category: "Utilities",
           bill_number: "BILL-002",
-          description: "Monthly internet subscription"
+          description: "Monthly internet subscription",
+          currency: "EUR"
         },
         {
           user_id: user.id,
@@ -163,7 +167,8 @@ export function useBills() {
           status: "Paid" as const,
           category: "Marketing",
           bill_number: "BILL-003",
-          description: "Q1 marketing campaign"
+          description: "Q1 marketing campaign",
+          currency: "GBP"
         }
       ];
 

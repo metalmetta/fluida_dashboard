@@ -12,6 +12,7 @@ export interface Bill {
   issue_date: string;
   created_at: string;
   updated_at: string;
+  currency: string;
 }
 
 export type BillFormData = Omit<Bill, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
