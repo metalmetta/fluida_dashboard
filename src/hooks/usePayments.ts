@@ -106,7 +106,7 @@ export function usePayments() {
       // Create a corresponding transaction record
       try {
         await createTransaction({
-          type: 'Payment',
+          type: 'Payment', // Ensure this is 'Payment' and not 'Deposit'
           amount: bill.amount,
           currency: bill.currency,
           status: 'Completed',

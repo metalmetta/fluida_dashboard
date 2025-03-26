@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Dialog, 
@@ -55,7 +54,6 @@ export function NewTransferDialog({
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Fetch payment methods from the database
   useEffect(() => {
     const fetchPaymentMethods = async () => {
       if (!user) return;
@@ -93,7 +91,6 @@ export function NewTransferDialog({
 
     if (open) {
       fetchPaymentMethods();
-      // Reset form on open
       setToAccount("");
       setAmount("");
       setReference("");
@@ -103,12 +100,10 @@ export function NewTransferDialog({
   }, [open, user, toast]);
 
   const handleAmountChange = (value: string) => {
-    // Only allow numeric input with up to 2 decimal places
     const regex = /^\d*\.?\d{0,2}$/;
     if (regex.test(value) || value === '') {
       setAmount(value);
       
-      // Check if we have sufficient funds
       if (balance) {
         const numAmount = parseFloat(value) || 0;
         setInsufficientFunds(numAmount > balance.available_amount);
@@ -119,7 +114,6 @@ export function NewTransferDialog({
   const handleTransfer = async () => {
     if (!user || !balance) return;
     
-    // Validate inputs
     if (!toAccount) {
       toast({
         title: "Missing information",
@@ -139,7 +133,6 @@ export function NewTransferDialog({
       return;
     }
 
-    // Check if we have sufficient funds
     if (numAmount > balance.available_amount) {
       setInsufficientFunds(true);
       setTopUpDialogOpen(true);
@@ -148,7 +141,6 @@ export function NewTransferDialog({
 
     setIsLoading(true);
     try {
-      // 1. Create payment record
       await createInternalTransferPayment({
         amount: numAmount,
         currency: balance.currency,
@@ -157,7 +149,6 @@ export function NewTransferDialog({
         reference: reference || undefined
       });
 
-      // 2. Create internal transfer record
       const { error: transferError } = await supabase
         .from("internal_transfers")
         .insert([{
@@ -174,7 +165,6 @@ export function NewTransferDialog({
 
       if (transferError) throw transferError;
 
-      // 3. Update user balance
       const { error: balanceError } = await supabase
         .from("user_balances")
         .update({ 
@@ -185,13 +175,11 @@ export function NewTransferDialog({
 
       if (balanceError) throw balanceError;
 
-      // Show success message
       toast({
         title: "Transfer successful",
         description: `Successfully transferred ${formatCurrency(numAmount, balance.currency)} to ${toAccount}`,
       });
 
-      // Close dialog and notify parent
       onOpenChange(false);
       fetchBalance();
       onTransferComplete();
@@ -208,11 +196,9 @@ export function NewTransferDialog({
   };
 
   const handleTopUpSuccess = async () => {
-    // Refresh the balance and close the top-up dialog
     await fetchBalance();
     setTopUpDialogOpen(false);
     
-    // Check if we now have sufficient funds
     if (balance && parseFloat(amount) <= balance.available_amount) {
       setInsufficientFunds(false);
     }
@@ -359,7 +345,8 @@ export function NewTransferDialog({
       <TopUpBalanceDialog
         open={topUpDialogOpen}
         onOpenChange={setTopUpDialogOpen}
-        onSuccess={handleTopUpSuccess}
+        onTopUp={handleTopUpSuccess}
+        currentCurrency={balance?.currency || "USD"}
       />
     </>
   );
