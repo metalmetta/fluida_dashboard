@@ -1,9 +1,9 @@
+
 import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar } from "@/components/ui/avatar";
 import { 
   ArrowUpRight, 
   Building2, 
@@ -11,33 +11,21 @@ import {
   ArrowUp, 
   ArrowDown, 
   Loader2, 
-  CreditCard
+  CreditCard,
+  Plus
 } from "lucide-react";
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserBalance } from "@/hooks/useUserBalance";
 import { useTransactions } from "@/hooks/useTransactions";
+import { useUserActions } from "@/hooks/useUserActions";
 import { DepositDialog } from "@/components/DepositDialog";
 import { WithdrawDialog } from "@/components/WithdrawDialog";
 import { TopUpBalanceDialog } from "@/components/TopUpBalanceDialog";
+import { AddActionDialog } from "@/components/AddActionDialog";
 import { formatCurrency } from "@/lib/utils";
 import { ChartContainer, ChartTooltipContent, ChartTooltip } from "@/components/ui/chart";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-
-const actions = [
-  {
-    type: "Contractor Payout",
-    amount: "244.00 USDC",
-    status: "2/2 approved",
-    icon: ArrowUpRight,
-  },
-  {
-    type: "Withdraw to Bank",
-    amount: "1,500.00 USDC",
-    status: "0/2 approved",
-    icon: Building2,
-  },
-];
 
 type TimeScale = 'week' | 'month' | '3months';
 
@@ -45,9 +33,11 @@ const Index = () => {
   const { user } = useAuth();
   const { balance, isLoading, updateBalance } = useUserBalance();
   const { transactions, isLoading: transactionsLoading } = useTransactions();
+  const { actions, isLoading: actionsLoading, fetchActions } = useUserActions();
   const [depositDialogOpen, setDepositDialogOpen] = useState(false);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
   const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
+  const [addActionDialogOpen, setAddActionDialogOpen] = useState(false);
   const [timeScale, setTimeScale] = useState<TimeScale>('week');
   const [showAllTransactions, setShowAllTransactions] = useState(false);
   
@@ -321,31 +311,51 @@ const Index = () => {
           </Card>
 
           <Card className="p-6">
-            <h3 className="text-lg font-medium mb-4">Pending Actions</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium">Pending Actions</h3>
+              <Button 
+                size="sm" 
+                onClick={() => setAddActionDialogOpen(true)}
+                variant="outline"
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                New Action
+              </Button>
+            </div>
             <div className="space-y-4">
-              {actions.map((action, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 rounded-full bg-primary/10">
-                      <action.icon className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{action.type}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {action.amount}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge
-                    variant={action.status.includes("2/2") ? "success" : "outline"}
-                  >
-                    {action.status}
-                  </Badge>
+              {actionsLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary/70" />
                 </div>
-              ))}
+              ) : actions.length > 0 ? (
+                actions.map((action) => (
+                  <div
+                    key={action.id}
+                    className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 rounded-full bg-primary/10">
+                        <ArrowUpRight className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{action.action_type}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {action.description || (action.amount ? formatCurrency(action.amount, action.currency) : '')}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge
+                      variant={action.status.includes(`${action.required_approvals}/${action.required_approvals}`) ? "success" : "outline"}
+                    >
+                      {action.status}
+                    </Badge>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-6 text-muted-foreground">
+                  <p>No pending actions found</p>
+                </div>
+              )}
             </div>
           </Card>
         </div>
@@ -436,6 +446,12 @@ const Index = () => {
         onOpenChange={setTopUpDialogOpen}
         onTopUp={(amount) => updateBalance(amount, 'Deposit', 'Deposit to account')}
         currentCurrency={balance?.currency || "USD"}
+      />
+
+      <AddActionDialog
+        open={addActionDialogOpen}
+        onOpenChange={setAddActionDialogOpen}
+        onActionComplete={fetchActions}
       />
     </DashboardLayout>
   );
