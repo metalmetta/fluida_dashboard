@@ -113,9 +113,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await createInitialUserBalance(data.user.id);
       }
 
+      // Removed the email verification toast message
       toast({
         title: "Account created",
-        description: "Please check your email to confirm your account.",
+        description: "You have been signed up successfully.",
       });
     } catch (error: any) {
       toast({
