@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Bill } from "@/types/bill";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { generateBillId } from "@/lib/billUtils";
 
 export function useBills() {
   const [bills, setBills] = useState<Bill[]>([]);
@@ -56,9 +57,10 @@ export function useBills() {
     }
 
     try {
+      // Ensure the bill_number is in the correct format if not already
       const newBill = {
         ...billData,
-        user_id: user.id
+        user_id: user.id,
       };
 
       const { data, error } = await supabase
@@ -136,6 +138,8 @@ export function useBills() {
     }
 
     try {
+      const currentDate = new Date();
+      
       const sampleBills = [
         {
           user_id: user.id,
@@ -144,7 +148,8 @@ export function useBills() {
           due_date: new Date('2024-02-01').toISOString().split('T')[0],
           status: "Draft" as const,
           category: "Supplies",
-          bill_number: "BILL-001",
+          bill_number: generateBillId(currentDate, "Office Supplies Co", "001"),
+          issue_date: currentDate.toISOString().split('T')[0],
           description: "Monthly office supplies",
           currency: "USD"
         },
@@ -155,7 +160,8 @@ export function useBills() {
           due_date: new Date('2024-01-28').toISOString().split('T')[0],
           status: "Ready for payment" as const,
           category: "Utilities",
-          bill_number: "BILL-002",
+          bill_number: generateBillId(currentDate, "Internet Services", "002"),
+          issue_date: currentDate.toISOString().split('T')[0],
           description: "Monthly internet subscription",
           currency: "EUR"
         },
@@ -166,7 +172,8 @@ export function useBills() {
           due_date: new Date('2024-02-15').toISOString().split('T')[0],
           status: "Paid" as const,
           category: "Marketing",
-          bill_number: "BILL-003",
+          bill_number: generateBillId(currentDate, "Marketing Agency", "003"),
+          issue_date: currentDate.toISOString().split('T')[0],
           description: "Q1 marketing campaign",
           currency: "GBP"
         }

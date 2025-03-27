@@ -16,3 +16,10 @@ export interface Bill {
 }
 
 export type BillFormData = Omit<Bill, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
+
+// Add a type for bill number generation
+export interface BillNumberParams {
+  issueDate: Date;
+  vendor: string;
+  invoiceNumber: string;
+}

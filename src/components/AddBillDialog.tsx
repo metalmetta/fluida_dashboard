@@ -1,9 +1,9 @@
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CalendarIcon, UploadIcon, X, DollarSign, PlusCircle, Euro, PoundSterling } from "lucide-react";
+import { CalendarIcon, UploadIcon, PlusCircle, Euro, PoundSterling, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -19,11 +19,12 @@ import { BillFormData } from "@/types/bill";
 import { useToast } from "@/hooks/use-toast";
 import { useContacts } from "@/hooks/useContacts";
 import { AddContactDialog } from "@/components/AddContactDialog";
+import { generateBillId } from "@/lib/billUtils";
 
 const formSchema = z.object({
   vendor: z.string().min(1, "Vendor is required"),
   amount: z.string().min(1, "Amount is required").transform(val => parseFloat(val)),
-  bill_number: z.string().min(1, "Bill number is required"),
+  invoice_number: z.string().min(1, "Invoice number is required"),
   category: z.string().optional(),
   description: z.string().optional(),
   status: z.enum(["Draft", "Ready for payment", "Paid", "Approve"]).default("Draft"),
@@ -47,6 +48,7 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { contacts, isLoading: isLoadingContacts } = useContacts();
   const [addContactDialogOpen, setAddContactDialogOpen] = useState(false);
+  const [billNumber, setBillNumber] = useState("");
   
   const vendorContacts = contacts.filter(contact => contact.type === 'Vendor');
   
@@ -55,7 +57,7 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
     defaultValues: {
       vendor: "",
       amount: undefined,
-      bill_number: "",
+      invoice_number: "",
       category: "",
       description: "",
       status: "Draft",
@@ -65,13 +67,26 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
     },
   });
 
+  // Watch for changes to generate bill number
+  const vendor = form.watch("vendor");
+  const issueDate = form.watch("issue_date");
+  const invoiceNumber = form.watch("invoice_number");
+
+  // Generate bill number when relevant fields change
+  useEffect(() => {
+    if (vendor && issueDate && invoiceNumber) {
+      const generatedBillNumber = generateBillId(issueDate, vendor, invoiceNumber);
+      setBillNumber(generatedBillNumber);
+    }
+  }, [vendor, issueDate, invoiceNumber]);
+
   const handleSubmit = useCallback(async (values: z.infer<typeof formSchema>, status: "Draft" | "Ready for payment") => {
     setIsSubmitting(true);
     try {
       const formattedData: BillFormData = {
         vendor: values.vendor,
         amount: values.amount,
-        bill_number: values.bill_number,
+        bill_number: billNumber || generateBillId(values.issue_date, values.vendor, values.invoice_number),
         status: status,
         currency: values.currency,
         issue_date: values.issue_date.toISOString().split('T')[0],
@@ -97,7 +112,7 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
     } finally {
       setIsSubmitting(false);
     }
-  }, [form, onSubmit, onOpenChange, toast]);
+  }, [form, onSubmit, onOpenChange, toast, billNumber]);
 
   const handleContactAdded = useCallback(() => {
     setAddContactDialogOpen(false);
@@ -191,7 +206,7 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                     <div>
                       <FormField
                         control={form.control}
-                        name="bill_number"
+                        name="invoice_number"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-sm text-muted-foreground">Invoice #</FormLabel>
@@ -204,6 +219,14 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                       />
                     </div>
                   </div>
+
+                  {/* Generated Bill ID Display */}
+                  {billNumber && (
+                    <div className="bg-muted p-3 rounded-md">
+                      <p className="text-sm font-medium">Generated Bill ID:</p>
+                      <p className="text-sm font-mono">{billNumber}</p>
+                    </div>
+                  )}
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
