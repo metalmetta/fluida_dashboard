@@ -1,5 +1,6 @@
 
-import { InvoiceNumberParams, BillNumberParams } from "@/types";
+import { InvoiceNumberParams } from "@/types/invoice";
+import { BillNumberParams } from "@/types/bill";
 
 /**
  * Generates a standardized invoice number in the format: FL-YYYYMM-CustomerCode-Sequence
