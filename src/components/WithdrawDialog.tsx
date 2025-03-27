@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { 
   Dialog, 
@@ -13,7 +14,6 @@ import { Label } from "@/components/ui/label";
 import { AlertTriangle, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface WithdrawDialogProps {
   open: boolean;
@@ -33,7 +33,6 @@ export function WithdrawDialog({
   const [amount, setAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Only allow numbers with up to 2 decimal places
@@ -72,11 +71,6 @@ export function WithdrawDialog({
           title: "Withdrawal initiated",
           description: `${formatCurrency(parseFloat(amount), currentCurrency)} will be sent to your bank account`
         });
-        
-        // Refresh related data
-        queryClient.invalidateQueries({ queryKey: ["userBalance"] });
-        queryClient.invalidateQueries({ queryKey: ["userActions"] });
-        
         onOpenChange(false);
         setAmount(""); // Reset form
       }
@@ -109,11 +103,6 @@ export function WithdrawDialog({
           title: "Withdrawal simulated",
           description: `${formatCurrency(randomAmount, currentCurrency)} has been withdrawn from your account`
         });
-        
-        // Refresh related data
-        queryClient.invalidateQueries({ queryKey: ["userBalance"] });
-        queryClient.invalidateQueries({ queryKey: ["userActions"] });
-        
         onOpenChange(false);
       }
     } catch (error) {

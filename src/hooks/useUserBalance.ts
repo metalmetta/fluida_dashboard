@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTransactions } from "./useTransactions";
-import { useQueryClient } from "@tanstack/react-query";
 
 export interface UserBalance {
   id: string;
@@ -20,8 +19,7 @@ export function useUserBalance() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { createTransaction, fetchTransactions } = useTransactions();
-  const queryClient = useQueryClient();
+  const { createTransaction } = useTransactions();
 
   const fetchBalance = async () => {
     if (!user) return;
@@ -104,18 +102,12 @@ export function useUserBalance() {
             status: 'Completed',
             description: description || `${transactionType} transaction`
           });
-          
-          // Refresh transactions after creating a new one
-          fetchTransactions();
         } catch (transactionError) {
           console.error("Error creating transaction record:", transactionError);
         }
       }
 
       setBalance(data as UserBalance);
-      
-      // Invalidate any related queries to trigger refetching
-      queryClient.invalidateQueries({ queryKey: ["userActions"] });
       
       return true;
     } catch (error) {

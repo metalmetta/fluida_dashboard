@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { 
   Dialog, 
@@ -13,8 +14,6 @@ import { Label } from "@/components/ui/label";
 import { CreditCard, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { useUserBalance } from "@/hooks/useUserBalance";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface TopUpBalanceDialogProps {
   open: boolean;
@@ -32,7 +31,6 @@ export function TopUpBalanceDialog({
   const [amount, setAmount] = useState("100");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Only allow numbers with up to 2 decimal places
@@ -62,9 +60,6 @@ export function TopUpBalanceDialog({
           title: "Success",
           description: `Added ${formatCurrency(parseFloat(amount), currentCurrency)} to your balance`
         });
-        queryClient.invalidateQueries({ queryKey: ["userBalance"] });
-        queryClient.invalidateQueries({ queryKey: ["userActions"] });
-        
         onOpenChange(false);
         setAmount("100"); // Reset form
       }
