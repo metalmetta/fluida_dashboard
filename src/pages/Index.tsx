@@ -17,6 +17,7 @@ import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "rec
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserBalance } from "@/hooks/useUserBalance";
 import { useTransactions } from "@/hooks/useTransactions";
+import { useUserActions } from "@/hooks/useUserActions";
 import { DepositDialog } from "@/components/DepositDialog";
 import { WithdrawDialog } from "@/components/WithdrawDialog";
 import { TopUpBalanceDialog } from "@/components/TopUpBalanceDialog";
@@ -24,27 +25,13 @@ import { formatCurrency } from "@/lib/utils";
 import { ChartContainer, ChartTooltipContent, ChartTooltip } from "@/components/ui/chart";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
-const actions = [
-  {
-    type: "Contractor Payout",
-    amount: "244.00 USDC",
-    status: "2/2 approved",
-    icon: ArrowUpRight,
-  },
-  {
-    type: "Withdraw to Bank",
-    amount: "1,500.00 USDC",
-    status: "0/2 approved",
-    icon: Building2,
-  },
-];
-
 type TimeScale = 'week' | 'month' | '3months';
 
 const Index = () => {
   const { user } = useAuth();
   const { balance, isLoading, updateBalance } = useUserBalance();
   const { transactions, isLoading: transactionsLoading } = useTransactions();
+  const { actions, isLoading: actionsLoading } = useUserActions();
   const [depositDialogOpen, setDepositDialogOpen] = useState(false);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
   const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
@@ -56,6 +43,20 @@ const Index = () => {
   const recentTransactions = showAllTransactions 
     ? transactions 
     : transactions.slice(0, 3);
+
+  const getActionIcon = (iconName: string | null) => {
+    const iconMap: Record<string, React.ElementType> = {
+      ArrowUpRight: ArrowUpRight,
+      Building2: Building2,
+      Wallet: Wallet,
+      ArrowUp: ArrowUp,
+      ArrowDown: ArrowDown,
+      CreditCard: CreditCard,
+    };
+    
+    const IconComponent = iconName && iconMap[iconName] ? iconMap[iconName] : ArrowUpRight;
+    return IconComponent;
+  };
 
   const balanceData = useMemo(() => {
     if (transactions.length === 0 || !balance) return [];
@@ -153,19 +154,6 @@ const Index = () => {
     
     return dataPoints;
   }, [transactions, balance, timeScale]);
-
-  const getTransactionIcon = (type: string) => {
-    switch(type) {
-      case 'Deposit':
-        return <ArrowDown className="text-green-500" />;
-      case 'Withdraw':
-        return <ArrowUp className="text-red-500" />;
-      case 'Payment':
-        return <CreditCard className="text-blue-500" />;
-      default:
-        return <ArrowUpRight />;
-    }
-  };
 
   return (
     <DashboardLayout>
@@ -322,31 +310,44 @@ const Index = () => {
 
           <Card className="p-6">
             <h3 className="text-lg font-medium mb-4">Pending Actions</h3>
-            <div className="space-y-4">
-              {actions.map((action, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 rounded-full bg-primary/10">
-                      <action.icon className="w-4 h-4 text-primary" />
+            {actionsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
+              </div>
+            ) : actions.length > 0 ? (
+              <div className="space-y-4">
+                {actions.map((action) => {
+                  const ActionIcon = getActionIcon(action.icon);
+                  return (
+                    <div
+                      key={action.id}
+                      className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 rounded-full bg-primary/10">
+                          <ActionIcon className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{action.type}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatCurrency(action.amount, action.currency)}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge
+                        variant={action.status.includes("2/2") ? "success" : "outline"}
+                      >
+                        {action.status}
+                      </Badge>
                     </div>
-                    <div>
-                      <p className="font-medium">{action.type}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {action.amount}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge
-                    variant={action.status.includes("2/2") ? "success" : "outline"}
-                  >
-                    {action.status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No pending actions</p>
+              </div>
+            )}
           </Card>
         </div>
 

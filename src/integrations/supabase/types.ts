@@ -380,6 +380,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_actions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          icon: string | null
+          id: string
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          icon?: string | null
+          id?: string
+          status: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          icon?: string | null
+          id?: string
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_balances: {
         Row: {
           available_amount: number
