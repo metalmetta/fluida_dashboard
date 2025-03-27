@@ -2,7 +2,7 @@
 export interface Invoice {
   id: string;
   user_id: string;
-  invoice_number: string; // Format: FL-YYYYMM-CustomerCode-Sequence
+  invoice_number: string;
   client_name: string;
   amount: number;
   status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
@@ -56,12 +56,4 @@ export interface PaymentMethod {
     [key: string]: string;
   };
   isDefault: boolean;
-}
-
-// Interface for generating standardized invoice numbers
-export interface InvoiceNumberParams {
-  issueDate: Date;
-  customerName: string;
-  sequence?: number;
-  prefix?: string;
 }

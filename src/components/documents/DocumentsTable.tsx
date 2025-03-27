@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from "react";
+import React from "react";
 import {
   Table,
   TableBody,
@@ -9,9 +9,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Plus, GripVertical } from "lucide-react";
+import { AlertCircle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { isStandardizedFormat } from "@/lib/documentUtils";
 
 interface DocumentsTableProps<T> {
   documents: T[];
@@ -36,17 +35,13 @@ interface DocumentsTableProps<T> {
 export function DocumentsTable<T>({
   documents,
   isLoading,
-  columns: initialColumns,
+  columns,
   emptyState,
   onRowClick,
   statusKey,
   getStatusVariant,
   renderRowActions
 }: DocumentsTableProps<T>) {
-  const [columns, setColumns] = useState(initialColumns);
-  const [draggedColumnIndex, setDraggedColumnIndex] = useState<number | null>(null);
-  const dragOverColumnIndex = useRef<number | null>(null);
-
   if (isLoading) {
     return (
       <div className="p-8 text-center">
@@ -72,65 +67,12 @@ export function DocumentsTable<T>({
     );
   }
 
-  // Helper function to check if a document has a standardized ID format
-  const hasStandardizedFormat = (document: T) => {
-    const docNumber = 
-      (document as any).invoice_number || 
-      (document as any).bill_number || '';
-    return isStandardizedFormat(docNumber);
-  };
-
-  // Handle start of drag
-  const handleDragStart = (index: number) => {
-    setDraggedColumnIndex(index);
-  };
-
-  // Handle drag over event
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    dragOverColumnIndex.current = index;
-  };
-
-  // Handle drop event to reorder columns
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    
-    if (draggedColumnIndex === null || dragOverColumnIndex.current === null) {
-      return;
-    }
-    
-    const newColumns = [...columns];
-    const draggedColumn = newColumns[draggedColumnIndex];
-    
-    // Remove dragged column
-    newColumns.splice(draggedColumnIndex, 1);
-    
-    // Insert at new position
-    newColumns.splice(dragOverColumnIndex.current, 0, draggedColumn);
-    
-    setColumns(newColumns);
-    setDraggedColumnIndex(null);
-    dragOverColumnIndex.current = null;
-  };
-
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          {columns.map((column, index) => (
-            <TableHead 
-              key={String(column.accessorKey)}
-              draggable
-              onDragStart={() => handleDragStart(index)}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDrop={handleDrop}
-              className="relative cursor-move group"
-            >
-              <div className="flex items-center">
-                <GripVertical className="h-4 w-4 mr-1 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                {column.header}
-              </div>
-            </TableHead>
+          {columns.map((column) => (
+            <TableHead key={String(column.accessorKey)}>{column.header}</TableHead>
           ))}
           {renderRowActions && <TableHead className="w-[100px]">Actions</TableHead>}
         </TableRow>
@@ -154,13 +96,6 @@ export function DocumentsTable<T>({
                   >
                     {String(document[statusKey])}
                   </Badge>
-                ) : ['invoice_number', 'bill_number'].includes(String(column.accessorKey)) ? (
-                  <div className="flex items-center">
-                    <span>{String(document[column.accessorKey] || "")}</span>
-                    {!hasStandardizedFormat(document) && (
-                      <Badge className="ml-2 text-xs" variant="outline">Legacy</Badge>
-                    )}
-                  </div>
                 ) : (
                   String(document[column.accessorKey] || "")
                 )}
