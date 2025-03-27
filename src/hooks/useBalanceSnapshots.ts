@@ -13,7 +13,7 @@ export interface BalanceSnapshot {
   created_at: string;
 }
 
-export function useBalanceSnapshots(timeScale: 'week' | 'month' | '3months' = 'week') {
+export function useBalanceSnapshots(timeScale: 'day' | 'week' | 'month' = 'week') {
   const [snapshots, setSnapshots] = useState<BalanceSnapshot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -28,12 +28,15 @@ export function useBalanceSnapshots(timeScale: 'week' | 'month' | '3months' = 'w
       const now = new Date();
       const startDate = new Date(now);
       
-      if (timeScale === 'week') {
+      if (timeScale === 'day') {
+        // Last 24 hours
+        startDate.setHours(startDate.getHours() - 24);
+      } else if (timeScale === 'week') {
+        // Last 7 days
         startDate.setDate(startDate.getDate() - 7);
       } else if (timeScale === 'month') {
-        startDate.setMonth(startDate.getMonth() - 1);
-      } else if (timeScale === '3months') {
-        startDate.setMonth(startDate.getMonth() - 3);
+        // Last 30 days
+        startDate.setDate(startDate.getDate() - 30);
       }
       
       const { data, error } = await supabase
@@ -48,7 +51,7 @@ export function useBalanceSnapshots(timeScale: 'week' | 'month' | '3months' = 'w
       }
 
       if (data && data.length === 0) {
-        // No snapshots found, create default ones for the past week
+        // No snapshots found, create default ones for the time period
         await createDefaultSnapshots(startDate, now);
         
         // Fetch again after creating default snapshots
@@ -83,7 +86,14 @@ export function useBalanceSnapshots(timeScale: 'week' | 'month' | '3months' = 'w
       const snapshots = [];
       const currentDate = new Date(startDate);
       
-      // Generate a snapshot for each day from start date to end date
+      // Determine interval based on time scale
+      let interval = 1; // days
+      if (timeScale === 'day') {
+        // For day view, create hourly snapshots
+        interval = 1/24; // 1 hour as fraction of day
+      }
+      
+      // Generate a snapshot for each interval from start date to end date
       while (currentDate <= endDate) {
         snapshots.push({
           user_id: user.id,
@@ -92,8 +102,12 @@ export function useBalanceSnapshots(timeScale: 'week' | 'month' | '3months' = 'w
           snapshot_date: currentDate.toISOString().split('T')[0]
         });
         
-        // Move to next day
-        currentDate.setDate(currentDate.getDate() + 1);
+        // Move to next interval
+        if (timeScale === 'day') {
+          currentDate.setHours(currentDate.getHours() + 1);
+        } else {
+          currentDate.setDate(currentDate.getDate() + interval);
+        }
       }
       
       if (snapshots.length > 0) {

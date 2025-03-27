@@ -20,7 +20,7 @@ import { BalanceCard } from "@/components/dashboard/BalanceCard";
 import { PendingActionsCard } from "@/components/dashboard/PendingActionsCard";
 import { TransactionsCard } from "@/components/dashboard/TransactionsCard";
 
-type TimeScale = 'week' | 'month' | '3months';
+type TimeScale = 'day' | 'week' | 'month';
 
 const Index = () => {
   const { user } = useAuth();
@@ -59,12 +59,12 @@ const Index = () => {
     const now = new Date();
     const startDate = new Date(now);
     
-    if (timeScale === 'week') {
+    if (timeScale === 'day') {
+      startDate.setHours(startDate.getHours() - 24);
+    } else if (timeScale === 'week') {
       startDate.setDate(startDate.getDate() - 7);
     } else if (timeScale === 'month') {
-      startDate.setMonth(startDate.getMonth() - 1);
-    } else if (timeScale === '3months') {
-      startDate.setMonth(startDate.getMonth() - 3);
+      startDate.setDate(startDate.getDate() - 30);
     }
     
     const filteredTransactions = sortedTransactions.filter(tx => 
@@ -84,7 +84,14 @@ const Index = () => {
 
     let intervals: Date[] = [];
     
-    if (timeScale === 'week') {
+    if (timeScale === 'day') {
+      // For day view, create intervals every 4 hours
+      for (let i = 0; i <= 6; i++) {
+        const date = new Date(now);
+        date.setHours(date.getHours() - (i * 4));
+        intervals.unshift(date);
+      }
+    } else if (timeScale === 'week') {
       for (let i = 0; i <= 7; i++) {
         const date = new Date(now);
         date.setDate(date.getDate() - i);
@@ -94,12 +101,6 @@ const Index = () => {
       for (let i = 0; i <= 4; i++) {
         const date = new Date(now);
         date.setDate(date.getDate() - (i * 7));
-        intervals.unshift(date);
-      }
-    } else if (timeScale === '3months') {
-      for (let i = 0; i <= 6; i++) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - (i * 14));
         intervals.unshift(date);
       }
     }

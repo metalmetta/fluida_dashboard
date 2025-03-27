@@ -3,13 +3,13 @@ import { useState } from "react";
 import { Line, LineChart, XAxis, YAxis, Tooltip } from "recharts";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowUp, Loader2 } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarDays, Clock, Loader2 } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ChartContainer, ChartTooltipContent, ChartTooltip } from "@/components/ui/chart";
 import { formatCurrency } from "@/lib/utils";
 import { useBalanceSnapshots } from "@/hooks/useBalanceSnapshots";
 
-type TimeScale = 'week' | 'month' | '3months';
+type TimeScale = 'day' | 'week' | 'month';
 
 interface BalanceCardProps {
   isLoading: boolean;
@@ -39,14 +39,14 @@ export function BalanceCard({
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     
-    if (timeScale === 'week') {
+    if (timeScale === 'day') {
+      // For day view, show hours
+      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    } else if (timeScale === 'week') {
       // For week, show day and month
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    } else if (timeScale === 'month') {
-      // For month, show day and month
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     } else {
-      // For 3 months, show only month and day
+      // For month, show only day and month
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
   };
@@ -112,9 +112,18 @@ export function BalanceCard({
                 }}
                 className="border rounded-md bg-background p-1"
               >
-                <ToggleGroupItem value="week" className="text-xs px-3 py-1 rounded-sm">Week</ToggleGroupItem>
-                <ToggleGroupItem value="month" className="text-xs px-3 py-1 rounded-sm">Month</ToggleGroupItem>
-                <ToggleGroupItem value="3months" className="text-xs px-3 py-1 rounded-sm">3 Months</ToggleGroupItem>
+                <ToggleGroupItem value="day" className="text-xs px-3 py-1 rounded-sm flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Day
+                </ToggleGroupItem>
+                <ToggleGroupItem value="week" className="text-xs px-3 py-1 rounded-sm flex items-center gap-1">
+                  <CalendarDays className="h-3 w-3" />
+                  Week
+                </ToggleGroupItem>
+                <ToggleGroupItem value="month" className="text-xs px-3 py-1 rounded-sm flex items-center gap-1">
+                  <CalendarDays className="h-3 w-3" />
+                  Month
+                </ToggleGroupItem>
               </ToggleGroup>
             </div>
             
