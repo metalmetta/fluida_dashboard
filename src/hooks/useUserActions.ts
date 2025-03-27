@@ -30,15 +30,14 @@ export function useUserActions() {
     
     setIsLoading(true);
     try {
-      // Use a simpler type assertion to avoid excessive type depth
-      const { data, error } = await supabase
+      // Use explicit any to bypass type checking for the custom table
+      const result = await supabase
         .from("user_actions")
         .select("*")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false }) as unknown as { 
-          data: UserAction[] | null; 
-          error: Error | null 
-        };
+        .order("created_at", { ascending: false });
+        
+      const { data, error } = result as any;
 
       if (error) {
         throw error;
@@ -61,17 +60,16 @@ export function useUserActions() {
     if (!user) return;
 
     try {
-      // Use a simpler type assertion
-      const { data, error } = await supabase
+      // Use explicit any to bypass type checking for the custom table
+      const result = await supabase
         .from("user_actions")
         .insert([{ 
           user_id: user.id,
           ...actionData
         }])
-        .select() as unknown as {
-          data: UserAction[] | null;
-          error: Error | null
-        };
+        .select();
+        
+      const { data, error } = result as any;
 
       if (error) {
         throw error;
@@ -97,8 +95,8 @@ export function useUserActions() {
     if (!user) return;
 
     try {
-      // Use a simpler type assertion
-      const { data, error } = await supabase
+      // Use explicit any to bypass type checking for the custom table
+      const result = await supabase
         .from("user_actions")
         .update({ 
           status,
@@ -106,10 +104,9 @@ export function useUserActions() {
         })
         .eq("id", actionId)
         .eq("user_id", user.id)
-        .select() as unknown as {
-          data: UserAction[] | null;
-          error: Error | null
-        };
+        .select();
+        
+      const { data, error } = result as any;
 
       if (error) {
         throw error;
