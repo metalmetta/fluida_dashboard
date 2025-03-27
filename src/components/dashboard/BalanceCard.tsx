@@ -35,9 +35,25 @@ export function BalanceCard({
 }: BalanceCardProps) {
   const { snapshots, isLoading: snapshotsLoading } = useBalanceSnapshots(timeScale);
   
+  // Format snapshot dates based on time scale
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    
+    if (timeScale === 'week') {
+      // For week, show day and month
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    } else if (timeScale === 'month') {
+      // For month, show day and month
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    } else {
+      // For 3 months, show only month and day
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  };
+  
   // Prepare chart data from snapshots
   const chartData = snapshots.map(snapshot => ({
-    date: new Date(snapshot.snapshot_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    date: formatDate(snapshot.snapshot_date),
     balance: snapshot.amount
   }));
   
