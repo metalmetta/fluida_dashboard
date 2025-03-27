@@ -30,11 +30,15 @@ export function useUserActions() {
     
     setIsLoading(true);
     try {
+      // Use type assertion to tell TypeScript about our custom table
       const { data, error } = await supabase
         .from("user_actions")
         .select("*")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false }) as { 
+          data: UserAction[] | null; 
+          error: Error | null 
+        };
 
       if (error) {
         throw error;
@@ -57,21 +61,27 @@ export function useUserActions() {
     if (!user) return;
 
     try {
+      // Use type assertion for our custom table
       const { data, error } = await supabase
         .from("user_actions")
         .insert([{ 
           user_id: user.id,
           ...actionData
         }])
-        .select()
-        .single();
+        .select() as {
+          data: UserAction[] | null;
+          error: Error | null
+        };
 
       if (error) {
         throw error;
       }
 
-      setActions(prevActions => [data as UserAction, ...prevActions]);
-      return data;
+      if (data && data.length > 0) {
+        setActions(prevActions => [data[0], ...prevActions]);
+        return data[0];
+      }
+      return null;
     } catch (error) {
       console.error("Error adding user action:", error);
       toast({
@@ -87,6 +97,7 @@ export function useUserActions() {
     if (!user) return;
 
     try {
+      // Use type assertion for our custom table
       const { data, error } = await supabase
         .from("user_actions")
         .update({ 
@@ -95,19 +106,24 @@ export function useUserActions() {
         })
         .eq("id", actionId)
         .eq("user_id", user.id)
-        .select()
-        .single();
+        .select() as {
+          data: UserAction[] | null;
+          error: Error | null
+        };
 
       if (error) {
         throw error;
       }
 
-      setActions(prevActions => 
-        prevActions.map(action => 
-          action.id === actionId ? (data as UserAction) : action
-        )
-      );
-      return data;
+      if (data && data.length > 0) {
+        setActions(prevActions => 
+          prevActions.map(action => 
+            action.id === actionId ? data[0] : action
+          )
+        );
+        return data[0];
+      }
+      return null;
     } catch (error) {
       console.error("Error updating action status:", error);
       toast({
