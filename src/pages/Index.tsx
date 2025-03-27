@@ -20,8 +20,6 @@ import { BalanceCard } from "@/components/dashboard/BalanceCard";
 import { PendingActionsCard } from "@/components/dashboard/PendingActionsCard";
 import { TransactionsCard } from "@/components/dashboard/TransactionsCard";
 
-type TimeScale = 'day' | 'week' | 'month';
-
 const Index = () => {
   const { user } = useAuth();
   const { balance, isLoading, updateBalance } = useUserBalance();
@@ -30,7 +28,6 @@ const Index = () => {
   const [depositDialogOpen, setDepositDialogOpen] = useState(false);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
   const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
-  const [timeScale, setTimeScale] = useState<TimeScale>('week');
   
   const userName = user?.user_metadata?.full_name || "there";
   
@@ -48,105 +45,6 @@ const Index = () => {
     return IconComponent;
   };
 
-  // This is a fallback data approach for when we don't have snapshots
-  const balanceData = (() => {
-    if (transactions.length === 0 || !balance) return [];
-
-    const sortedTransactions = [...transactions].sort(
-      (a, b) => new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime()
-    );
-
-    const now = new Date();
-    const startDate = new Date(now);
-    
-    if (timeScale === 'day') {
-      startDate.setHours(startDate.getHours() - 24);
-    } else if (timeScale === 'week') {
-      startDate.setDate(startDate.getDate() - 7);
-    } else if (timeScale === 'month') {
-      startDate.setDate(startDate.getDate() - 30);
-    }
-    
-    const filteredTransactions = sortedTransactions.filter(tx => 
-      new Date(tx.transaction_date) >= startDate
-    );
-    
-    const dataPoints = [];
-    let runningBalance = balance.available_amount;
-    
-    for (const tx of filteredTransactions) {
-      if (tx.type === 'Deposit') {
-        runningBalance -= tx.amount;
-      } else if (tx.type === 'Withdraw') {
-        runningBalance += tx.amount;
-      }
-    }
-
-    let intervals: Date[] = [];
-    
-    if (timeScale === 'day') {
-      // For day view, create intervals every 4 hours
-      for (let i = 0; i <= 6; i++) {
-        const date = new Date(now);
-        date.setHours(date.getHours() - (i * 4));
-        intervals.unshift(date);
-      }
-    } else if (timeScale === 'week') {
-      for (let i = 0; i <= 7; i++) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - i);
-        intervals.unshift(date);
-      }
-    } else if (timeScale === 'month') {
-      for (let i = 0; i <= 4; i++) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - (i * 7));
-        intervals.unshift(date);
-      }
-    }
-    
-    for (let i = 0; i < intervals.length - 1; i++) {
-      const intervalStart = intervals[i];
-      const intervalEnd = intervals[i + 1];
-      
-      const intervalTransactions = filteredTransactions.filter(tx => {
-        const txDate = new Date(tx.transaction_date);
-        return txDate >= intervalStart && txDate < intervalEnd;
-      });
-      
-      let intervalAmount = 0;
-      for (const tx of intervalTransactions) {
-        if (tx.type === 'Deposit') {
-          intervalAmount += tx.amount;
-        } else if (tx.type === 'Withdraw') {
-          intervalAmount -= tx.amount;
-        }
-      }
-      
-      if (i !== intervals.length - 2) {
-        runningBalance += intervalAmount;
-      }
-      
-      const dateFormat: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-      
-      const formattedDate = intervalStart.toLocaleDateString('en-US', dateFormat);
-      
-      dataPoints.push({
-        date: formattedDate,
-        balance: runningBalance,
-      });
-      
-      runningBalance -= intervalAmount;
-    }
-    
-    dataPoints.push({
-      date: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      balance: balance.available_amount,
-    });
-    
-    return dataPoints;
-  })();
-
   return (
     <DashboardLayout>
       <div className="space-y-8 animate-in">
@@ -161,9 +59,6 @@ const Index = () => {
           <BalanceCard 
             isLoading={isLoading}
             balance={balance}
-            balanceData={balanceData}
-            timeScale={timeScale}
-            setTimeScale={setTimeScale}
             onDepositClick={() => setDepositDialogOpen(true)}
             onWithdrawClick={() => setWithdrawDialogOpen(true)}
           />

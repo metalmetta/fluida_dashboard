@@ -59,15 +59,6 @@ export function useUserBalance() {
 
         setBalance(newBalance as UserBalance);
       }
-      
-      // Create snapshot for initial balance
-      try {
-        if (data) {
-          await createBalanceSnapshot(data.available_amount, data.currency);
-        }
-      } catch (snapshotError) {
-        console.error("Error creating balance snapshot:", snapshotError);
-      }
     } catch (error) {
       console.error("Error fetching user balance:", error);
       toast({
@@ -77,32 +68,6 @@ export function useUserBalance() {
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Create a balance snapshot with full timestamp precision
-  const createBalanceSnapshot = async (amount: number, currency: string) => {
-    if (!user) return false;
-    
-    try {
-      const now = new Date();
-      
-      // Store with full timestamp precision
-      const { error } = await supabase
-        .from("balance_snapshots")
-        .insert({
-          user_id: user.id,
-          amount: amount,
-          currency: currency,
-          snapshot_date: now.toISOString() // Store full timestamp for better precision
-        });
-
-      if (error) throw error;
-      
-      return true;
-    } catch (error) {
-      console.error("Error creating balance snapshot:", error);
-      return false;
     }
   };
 
@@ -141,9 +106,6 @@ export function useUserBalance() {
         }
       }
       
-      // Always create a balance snapshot after balance changes
-      await createBalanceSnapshot(newAmount, balance.currency);
-
       setBalance(data as UserBalance);
       
       return true;

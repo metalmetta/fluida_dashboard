@@ -1,15 +1,9 @@
 
 import { useState } from "react";
-import { Line, LineChart, XAxis, YAxis, Tooltip } from "recharts";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowUp, CalendarDays, Clock, Loader2 } from "lucide-react";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ChartContainer, ChartTooltipContent, ChartTooltip } from "@/components/ui/chart";
+import { ArrowDown, ArrowUp, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { useBalanceSnapshots } from "@/hooks/useBalanceSnapshots";
-
-type TimeScale = 'day' | 'week' | 'month';
 
 interface BalanceCardProps {
   isLoading: boolean;
@@ -17,9 +11,6 @@ interface BalanceCardProps {
     available_amount: number;
     currency: string;
   } | null;
-  balanceData: any[];
-  timeScale: TimeScale;
-  setTimeScale: (value: TimeScale) => void;
   onDepositClick: () => void;
   onWithdrawClick: () => void;
 }
@@ -27,41 +18,9 @@ interface BalanceCardProps {
 export function BalanceCard({
   isLoading,
   balance,
-  balanceData,
-  timeScale,
-  setTimeScale,
   onDepositClick,
   onWithdrawClick
 }: BalanceCardProps) {
-  const { snapshots, isLoading: snapshotsLoading } = useBalanceSnapshots(timeScale);
-  
-  // Format the date display based on time scale
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    
-    if (timeScale === 'day') {
-      // For day view, show time in hours
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (timeScale === 'week') {
-      // For week view, show day of week and date
-      return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
-    } else {
-      // For month view, show month and day
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-    }
-  };
-  
-  // Prepare chart data from snapshots
-  const chartData = snapshots.map(snapshot => ({
-    date: formatDate(snapshot.snapshot_date),
-    balance: snapshot.amount,
-    fullDate: snapshot.snapshot_date // Keep original date for tooltip
-  }));
-  
-  // Use snapshots if available, otherwise fall back to balanceData
-  const displayData = chartData.length > 0 ? chartData : balanceData;
-  const isChartLoading = isLoading || snapshotsLoading;
-
   return (
     <Card>
       <div className="p-6">
@@ -93,158 +52,15 @@ export function BalanceCard({
             <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
           </div>
         ) : (
-          <>
-            <div className="flex items-end gap-2 mb-6">
-              <p className="text-3xl font-semibold">
-                {balance 
-                  ? formatCurrency(balance.available_amount, balance.currency)
-                  : "$0.00"
-                }
-              </p>
-              <p className="text-sm text-muted-foreground mb-1">Available balance</p>
-            </div>
-            
-            <div className="flex justify-end mb-4">
-              <ToggleGroup 
-                type="single" 
-                value={timeScale}
-                onValueChange={(value) => {
-                  if (value) setTimeScale(value as TimeScale);
-                }}
-                className="border rounded-md bg-background p-1"
-              >
-                <ToggleGroupItem value="day" className="text-xs px-3 py-1 rounded-sm flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  Day
-                </ToggleGroupItem>
-                <ToggleGroupItem value="week" className="text-xs px-3 py-1 rounded-sm flex items-center gap-1">
-                  <CalendarDays className="h-3 w-3" />
-                  Week
-                </ToggleGroupItem>
-                <ToggleGroupItem value="month" className="text-xs px-3 py-1 rounded-sm flex items-center gap-1">
-                  <CalendarDays className="h-3 w-3" />
-                  Month
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </div>
-            
-            <div className="h-[200px] w-full">
-              <ChartContainer
-                config={{
-                  balance: {
-                    label: "Balance",
-                    theme: {
-                      light: "hsl(var(--primary))",
-                      dark: "hsl(var(--primary))"
-                    }
-                  }
-                }}
-              >
-                {isChartLoading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary/70" />
-                  </div>
-                ) : displayData.length > 0 ? (
-                  <LineChart data={displayData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-                    <XAxis 
-                      dataKey="date"
-                      tickLine={false}
-                      axisLine={false}
-                      tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
-                      tickMargin={8}
-                      // Display fewer ticks for day view
-                      interval={timeScale === 'day' ? 3 : timeScale === 'month' ? 2 : 'preserveEnd'}
-                    />
-                    <YAxis 
-                      hide={true}
-                      domain={['dataMin - 100', 'dataMax + 100']}
-                    />
-                    <Tooltip
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          // Format date based on time scale
-                          let formattedDate: string;
-                          
-                          if (payload[0].payload.fullDate) {
-                            const date = new Date(payload[0].payload.fullDate);
-                            if (timeScale === 'day') {
-                              formattedDate = date.toLocaleTimeString([], { 
-                                hour: '2-digit', 
-                                minute: '2-digit',
-                                hour12: true
-                              });
-                            } else if (timeScale === 'week') {
-                              formattedDate = date.toLocaleDateString([], { 
-                                weekday: 'short',
-                                month: 'short', 
-                                day: 'numeric',
-                                year: 'numeric'
-                              });
-                            } else {
-                              formattedDate = date.toLocaleDateString([], { 
-                                month: 'short', 
-                                day: 'numeric',
-                                year: 'numeric'
-                              });
-                            }
-                          } else {
-                            formattedDate = payload[0].payload.date;
-                          }
-                          
-                          return (
-                            <div className="rounded-lg border border-border bg-card p-2 shadow-md">
-                              <div className="grid grid-cols-2 gap-2">
-                                <div className="flex flex-col">
-                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                    {timeScale === 'day' ? 'Time' : 'Date'}
-                                  </span>
-                                  <span className="font-bold text-xs">
-                                    {formattedDate}
-                                  </span>
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                    Balance
-                                  </span>
-                                  <span className="font-bold text-xs">
-                                    {formatCurrency(
-                                      payload[0].value as number,
-                                      balance?.currency || "USD"
-                                    )}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="balance"
-                      name="balance"
-                      stroke="var(--color-balance)"
-                      strokeWidth={2.5}
-                      activeDot={{
-                        r: 6,
-                        strokeWidth: 0,
-                        fill: "var(--color-balance)"
-                      }}
-                      dot={{
-                        r: 0,
-                        strokeWidth: 0
-                      }}
-                    />
-                  </LineChart>
-                ) : (
-                  <div className="flex h-full items-center justify-center">
-                    <p className="text-sm text-muted-foreground">No balance history data available</p>
-                  </div>
-                )}
-              </ChartContainer>
-            </div>
-          </>
+          <div className="flex items-end gap-2 mb-6">
+            <p className="text-3xl font-semibold">
+              {balance 
+                ? formatCurrency(balance.available_amount, balance.currency)
+                : "$0.00"
+              }
+            </p>
+            <p className="text-sm text-muted-foreground mb-1">Available balance</p>
+          </div>
         )}
       </div>
     </Card>
