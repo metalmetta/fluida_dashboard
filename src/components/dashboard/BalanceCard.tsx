@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Line, LineChart, XAxis, YAxis, Tooltip } from "recharts";
 import { Card } from "@/components/ui/card";
@@ -7,7 +6,6 @@ import { ArrowDown, ArrowUp, Loader2 } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ChartContainer, ChartTooltipContent, ChartTooltip } from "@/components/ui/chart";
 import { formatCurrency } from "@/lib/utils";
-import { useBalanceSnapshots } from "@/hooks/useBalanceSnapshots";
 
 type TimeScale = 'week' | 'month' | '3months';
 
@@ -33,18 +31,6 @@ export function BalanceCard({
   onDepositClick,
   onWithdrawClick
 }: BalanceCardProps) {
-  const { snapshots, isLoading: snapshotsLoading } = useBalanceSnapshots(timeScale);
-  
-  // Prepare chart data from snapshots
-  const chartData = snapshots.map(snapshot => ({
-    date: new Date(snapshot.snapshot_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    balance: snapshot.amount
-  }));
-  
-  // Use balance snapshots if available, otherwise fall back to balanceData
-  const displayData = chartData.length > 0 ? chartData : balanceData;
-  const isChartLoading = isLoading || snapshotsLoading;
-
   return (
     <Card>
       <div className="p-6">
@@ -114,12 +100,8 @@ export function BalanceCard({
                   }
                 }}
               >
-                {isChartLoading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary/70" />
-                  </div>
-                ) : displayData.length > 0 ? (
-                  <LineChart data={displayData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                {balanceData.length > 0 ? (
+                  <LineChart data={balanceData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                     <XAxis 
                       dataKey="date"
                       tickLine={false}

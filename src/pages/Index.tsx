@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { 
   ArrowUpRight, 
@@ -48,8 +47,7 @@ const Index = () => {
     return IconComponent;
   };
 
-  // This is a fallback data approach for when we don't have snapshots
-  const balanceData = (() => {
+  const balanceData = useMemo(() => {
     if (transactions.length === 0 || !balance) return [];
 
     const sortedTransactions = [...transactions].sort(
@@ -144,7 +142,7 @@ const Index = () => {
     });
     
     return dataPoints;
-  })();
+  }, [transactions, balance, timeScale]);
 
   return (
     <DashboardLayout>

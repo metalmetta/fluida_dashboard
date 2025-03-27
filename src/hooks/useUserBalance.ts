@@ -59,35 +59,6 @@ export function useUserBalance() {
 
         setBalance(newBalance as UserBalance);
       }
-      
-      // Create today's balance snapshot if it doesn't exist
-      try {
-        if (data) {
-          const today = new Date().toISOString().split('T')[0];
-          const { error: snapshotCheckError, count } = await supabase
-            .from('balance_snapshots')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .eq('snapshot_date', today);
-            
-          if (snapshotCheckError) throw snapshotCheckError;
-          
-          // If we don't have a snapshot for today, create one
-          if (count === 0) {
-            await supabase
-              .from('balance_snapshots')
-              .insert({
-                user_id: user.id,
-                amount: data.available_amount,
-                currency: data.currency,
-                snapshot_date: today
-              });
-          }
-        }
-      } catch (snapshotError) {
-        console.error("Error creating balance snapshot:", snapshotError);
-        // Don't fail the whole operation if snapshot creation fails
-      }
     } catch (error) {
       console.error("Error fetching user balance:", error);
       toast({
@@ -134,24 +105,6 @@ export function useUserBalance() {
         } catch (transactionError) {
           console.error("Error creating transaction record:", transactionError);
         }
-      }
-      
-      // Update today's balance snapshot after balance change
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        await supabase
-          .from('balance_snapshots')
-          .upsert({
-            user_id: user.id,
-            amount: newAmount,
-            currency: balance.currency,
-            snapshot_date: today
-          }, { 
-            onConflict: 'user_id,snapshot_date'
-          });
-      } catch (snapshotError) {
-        console.error("Error updating balance snapshot:", snapshotError);
-        // Don't fail the whole operation if snapshot update fails
       }
 
       setBalance(data as UserBalance);
