@@ -138,25 +138,28 @@ export function useInvoices() {
     fetchInvoices();
   }, []);
 
-  // Improved helper function to format payment method for display
+  // Updated formatPaymentMethod to only allow the three specified payment methods
   const formatPaymentMethod = (paymentMethod: string | undefined): string => {
     if (!paymentMethod) return "—";
     
-    // Handle the standard payment methods
-    if (paymentMethod === "bank_transfer") return "Bank Transfer";
-    if (paymentMethod === "blockchain_transfer") return "Blockchain Transfer";
-    if (paymentMethod === "credit_card") return "Credit Card";
+    // Standardize the input by removing spaces and making it lowercase
+    const normalizedMethod = paymentMethod.toLowerCase().replace(/\s+/g, '_');
     
-    // For payment methods already in readable format (e.g. "Bank Transfer" from sample data)
-    if (paymentMethod === "Bank Transfer") return "Bank Transfer";
-    if (paymentMethod === "Credit Card") return "Credit Card";
-    if (paymentMethod === "PayPal") return "PayPal";
+    // Map to one of the three allowed payment methods
+    if (normalizedMethod.includes('bank') || normalizedMethod === 'bank_transfer') {
+      return "Bank Transfer";
+    }
     
-    // For any other values, make them title case for better display
-    return paymentMethod
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+    if (normalizedMethod.includes('blockchain') || normalizedMethod === 'blockchain_transfer') {
+      return "Blockchain Transfer";
+    }
+    
+    if (normalizedMethod.includes('credit') || normalizedMethod === 'credit_card') {
+      return "Credit Card";
+    }
+    
+    // Default fallback for any other values
+    return "Bank Transfer";
   };
 
   return { 
