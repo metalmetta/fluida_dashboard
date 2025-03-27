@@ -73,8 +73,7 @@ export function useTransactions() {
 
       if (error) throw error;
       
-      // Refresh transactions
-      fetchTransactions();
+      // No need to refresh transactions here since we have realtime subscription
       
       return data?.[0] || null;
     } catch (error) {
@@ -86,6 +85,29 @@ export function useTransactions() {
   useEffect(() => {
     if (user) {
       fetchTransactions();
+      
+      // Set up real-time listener for transaction changes
+      const channel = supabase
+        .channel('transactions_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'transactions',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('Transaction changes detected:', payload);
+            // Refresh the transactions list when changes are detected
+            fetchTransactions();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 

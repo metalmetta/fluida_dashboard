@@ -123,6 +123,30 @@ export function useUserBalance() {
   useEffect(() => {
     if (user) {
       fetchBalance();
+      
+      // Set up real-time listener for balance changes
+      const channel = supabase
+        .channel('user_balances_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'user_balances',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('Balance updated:', payload);
+            if (payload.new) {
+              setBalance(payload.new as UserBalance);
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     } else {
       setBalance(null);
       setIsLoading(false);
