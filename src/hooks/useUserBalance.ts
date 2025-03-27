@@ -63,28 +63,7 @@ export function useUserBalance() {
       // Create today's balance snapshot if it doesn't exist
       try {
         if (data) {
-          const today = new Date().toISOString().split('T')[0];
-          
-          // Check if we already have a snapshot for today
-          const { error: snapshotCheckError, count } = await supabase
-            .from('balance_snapshots')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .eq('snapshot_date', today);
-            
-          if (snapshotCheckError) throw snapshotCheckError;
-          
-          // If we don't have a snapshot for today, create one
-          if (count === 0) {
-            await supabase
-              .from('balance_snapshots')
-              .insert({
-                user_id: user.id,
-                amount: data.available_amount,
-                currency: data.currency,
-                snapshot_date: today
-              });
-          }
+          await createBalanceSnapshot(data.available_amount, data.currency);
         }
       } catch (snapshotError) {
         console.error("Error creating balance snapshot:", snapshotError);
@@ -99,6 +78,34 @@ export function useUserBalance() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Create a balance snapshot with current timestamp (not just date)
+  const createBalanceSnapshot = async (amount: number, currency: string) => {
+    if (!user) return false;
+    
+    try {
+      const now = new Date();
+      const dateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
+      
+      // Include hours and minutes in the snapshot date
+      // Store in snapshot_date but with full ISO string for more precise time tracking
+      const { error } = await supabase
+        .from("balance_snapshots")
+        .insert({
+          user_id: user.id,
+          amount: amount,
+          currency: currency,
+          snapshot_date: now.toISOString() // Store full timestamp in snapshot_date
+        });
+
+      if (error) throw error;
+      
+      return true;
+    } catch (error) {
+      console.error("Error creating balance snapshot:", error);
+      return false;
     }
   };
 
@@ -138,21 +145,11 @@ export function useUserBalance() {
         }
       }
       
-      // Update today's balance snapshot after balance change
+      // Always create a new balance snapshot after balance change
       try {
-        const today = new Date().toISOString().split('T')[0];
-        await supabase
-          .from('balance_snapshots')
-          .upsert({
-            user_id: user.id,
-            amount: newAmount,
-            currency: balance.currency,
-            snapshot_date: today
-          }, { 
-            onConflict: 'user_id,snapshot_date'
-          });
+        await createBalanceSnapshot(newAmount, balance.currency);
       } catch (snapshotError) {
-        console.error("Error updating balance snapshot:", snapshotError);
+        console.error("Error creating balance snapshot after update:", snapshotError);
         // Don't fail the whole operation if snapshot update fails
       }
 

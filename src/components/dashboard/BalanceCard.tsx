@@ -54,7 +54,8 @@ export function BalanceCard({
   // Prepare chart data from snapshots
   const chartData = snapshots.map(snapshot => ({
     date: formatDate(snapshot.snapshot_date),
-    balance: snapshot.amount
+    balance: snapshot.amount,
+    fullDate: snapshot.snapshot_date // Keep original date for tooltip
   }));
   
   // Use balance snapshots if available, otherwise fall back to balanceData
@@ -151,23 +152,44 @@ export function BalanceCard({
                       axisLine={false}
                       tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
                       tickMargin={8}
+                      // For day view, show fewer ticks
+                      interval={timeScale === 'day' ? 3 : 'preserveEnd'}
                     />
                     <YAxis 
                       hide={true}
-                      domain={['dataMin - 1000', 'dataMax + 1000']}
+                      domain={['dataMin - 100', 'dataMax + 100']}
                     />
                     <Tooltip
                       content={({ active, payload }) => {
                         if (active && payload && payload.length) {
+                          // Format date based on time scale
+                          let formattedDate = payload[0].payload.date;
+                          
+                          if (payload[0].payload.fullDate) {
+                            const date = new Date(payload[0].payload.fullDate);
+                            if (timeScale === 'day') {
+                              formattedDate = date.toLocaleTimeString('en-US', { 
+                                hour: '2-digit', 
+                                minute: '2-digit'
+                              });
+                            } else {
+                              formattedDate = date.toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric',
+                                year: 'numeric'
+                              });
+                            }
+                          }
+                          
                           return (
                             <div className="rounded-lg border border-border bg-card p-2 shadow-md">
                               <div className="grid grid-cols-2 gap-2">
                                 <div className="flex flex-col">
                                   <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                    Date
+                                    {timeScale === 'day' ? 'Time' : 'Date'}
                                   </span>
                                   <span className="font-bold text-xs">
-                                    {payload[0].payload.date}
+                                    {formattedDate}
                                   </span>
                                 </div>
                                 <div className="flex flex-col">
