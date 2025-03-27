@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -17,7 +16,7 @@ type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
 
 export default function Invoices() {
   const [selectedStatus, setSelectedStatus] = useState<InvoiceStatus | null>(null);
-  const { invoices, isLoading, addSampleInvoices, fetchInvoices, formatPaymentMethod } = useInvoices();
+  const { invoices, isLoading, fetchInvoices, formatPaymentMethod } = useInvoices();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
@@ -149,12 +148,6 @@ export default function Invoices() {
           selectedStatus={selectedStatus}
           onStatusChange={handleStatusChange}
           actionButtons={[
-            ...(invoices.length === 0 ? [{
-              icon: FileText,
-              label: "Add Sample Data",
-              variant: "outline" as const,
-              onClick: addSampleInvoices
-            }] : []),
             {
               icon: Plus,
               label: "Create invoice",
@@ -174,9 +167,9 @@ export default function Invoices() {
             getStatusVariant={getStatusVariant}
             emptyState={{
               title: "No invoices found",
-              description: "You don't have any invoices yet. Add sample data or create a new invoice.",
-              buttonText: "Add Sample Invoices",
-              onButtonClick: addSampleInvoices
+              description: "You don't have any invoices yet.",
+              buttonText: "Create invoice",
+              onButtonClick: () => setCreateDialogOpen(true)
             }}
           />
         </Card>
