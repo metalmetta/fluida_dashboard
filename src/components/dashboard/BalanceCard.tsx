@@ -35,19 +35,19 @@ export function BalanceCard({
 }: BalanceCardProps) {
   const { snapshots, isLoading: snapshotsLoading } = useBalanceSnapshots(timeScale);
   
-  // Format snapshot dates based on time scale
+  // Format the date display based on time scale
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     
     if (timeScale === 'day') {
-      // For day view, show hours
-      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      // For day view, show time in hours
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else if (timeScale === 'week') {
-      // For week, show day and month
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      // For week view, show day of week and date
+      return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
     } else {
-      // For month, show only day and month
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      // For month view, show month and day
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
     }
   };
   
@@ -58,7 +58,7 @@ export function BalanceCard({
     fullDate: snapshot.snapshot_date // Keep original date for tooltip
   }));
   
-  // Use balance snapshots if available, otherwise fall back to balanceData
+  // Use snapshots if available, otherwise fall back to balanceData
   const displayData = chartData.length > 0 ? chartData : balanceData;
   const isChartLoading = isLoading || snapshotsLoading;
 
@@ -152,8 +152,8 @@ export function BalanceCard({
                       axisLine={false}
                       tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
                       tickMargin={8}
-                      // For day view, show fewer ticks
-                      interval={timeScale === 'day' ? 3 : 'preserveEnd'}
+                      // Display fewer ticks for day view
+                      interval={timeScale === 'day' ? 3 : timeScale === 'month' ? 2 : 'preserveEnd'}
                     />
                     <YAxis 
                       hide={true}
@@ -163,22 +163,32 @@ export function BalanceCard({
                       content={({ active, payload }) => {
                         if (active && payload && payload.length) {
                           // Format date based on time scale
-                          let formattedDate = payload[0].payload.date;
+                          let formattedDate: string;
                           
                           if (payload[0].payload.fullDate) {
                             const date = new Date(payload[0].payload.fullDate);
                             if (timeScale === 'day') {
-                              formattedDate = date.toLocaleTimeString('en-US', { 
+                              formattedDate = date.toLocaleTimeString([], { 
                                 hour: '2-digit', 
-                                minute: '2-digit'
+                                minute: '2-digit',
+                                hour12: true
+                              });
+                            } else if (timeScale === 'week') {
+                              formattedDate = date.toLocaleDateString([], { 
+                                weekday: 'short',
+                                month: 'short', 
+                                day: 'numeric',
+                                year: 'numeric'
                               });
                             } else {
-                              formattedDate = date.toLocaleDateString('en-US', { 
+                              formattedDate = date.toLocaleDateString([], { 
                                 month: 'short', 
                                 day: 'numeric',
                                 year: 'numeric'
                               });
                             }
+                          } else {
+                            formattedDate = payload[0].payload.date;
                           }
                           
                           return (

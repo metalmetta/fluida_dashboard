@@ -60,14 +60,13 @@ export function useUserBalance() {
         setBalance(newBalance as UserBalance);
       }
       
-      // Create today's balance snapshot if it doesn't exist
+      // Create snapshot for initial balance
       try {
         if (data) {
           await createBalanceSnapshot(data.available_amount, data.currency);
         }
       } catch (snapshotError) {
         console.error("Error creating balance snapshot:", snapshotError);
-        // Don't fail the whole operation if snapshot creation fails
       }
     } catch (error) {
       console.error("Error fetching user balance:", error);
@@ -81,23 +80,21 @@ export function useUserBalance() {
     }
   };
 
-  // Create a balance snapshot with current timestamp (not just date)
+  // Create a balance snapshot with full timestamp precision
   const createBalanceSnapshot = async (amount: number, currency: string) => {
     if (!user) return false;
     
     try {
       const now = new Date();
-      const dateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
       
-      // Include hours and minutes in the snapshot date
-      // Store in snapshot_date but with full ISO string for more precise time tracking
+      // Store with full timestamp precision
       const { error } = await supabase
         .from("balance_snapshots")
         .insert({
           user_id: user.id,
           amount: amount,
           currency: currency,
-          snapshot_date: now.toISOString() // Store full timestamp in snapshot_date
+          snapshot_date: now.toISOString() // Store full timestamp for better precision
         });
 
       if (error) throw error;
@@ -129,8 +126,7 @@ export function useUserBalance() {
         throw error;
       }
 
-      // Only create transaction records for actual deposits and withdrawals, not bill payments
-      // Bill payments should create their transactions through usePayments.createPaymentFromBill
+      // Only create transaction records for appropriate transactions
       if (description?.toLowerCase().indexOf('bill') === -1) {
         try {
           await createTransaction({
@@ -145,13 +141,8 @@ export function useUserBalance() {
         }
       }
       
-      // Always create a new balance snapshot after balance change
-      try {
-        await createBalanceSnapshot(newAmount, balance.currency);
-      } catch (snapshotError) {
-        console.error("Error creating balance snapshot after update:", snapshotError);
-        // Don't fail the whole operation if snapshot update fails
-      }
+      // Always create a balance snapshot after balance changes
+      await createBalanceSnapshot(newAmount, balance.currency);
 
       setBalance(data as UserBalance);
       
