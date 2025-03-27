@@ -30,14 +30,12 @@ export function useUserActions() {
     
     setIsLoading(true);
     try {
-      // Use explicit any to bypass type checking for the custom table
-      const result = await supabase
+      // Cast to any to bypass TypeScript's type checking
+      const { data, error } = await (supabase
         .from("user_actions")
         .select("*")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-        
-      const { data, error } = result as any;
+        .order("created_at", { ascending: false }) as any);
 
       if (error) {
         throw error;
@@ -60,16 +58,14 @@ export function useUserActions() {
     if (!user) return;
 
     try {
-      // Use explicit any to bypass type checking for the custom table
-      const result = await supabase
+      // Cast to any to bypass TypeScript's type checking
+      const { data, error } = await (supabase
         .from("user_actions")
         .insert([{ 
           user_id: user.id,
           ...actionData
         }])
-        .select();
-        
-      const { data, error } = result as any;
+        .select() as any);
 
       if (error) {
         throw error;
@@ -95,8 +91,8 @@ export function useUserActions() {
     if (!user) return;
 
     try {
-      // Use explicit any to bypass type checking for the custom table
-      const result = await supabase
+      // Cast to any to bypass TypeScript's type checking
+      const { data, error } = await (supabase
         .from("user_actions")
         .update({ 
           status,
@@ -104,9 +100,7 @@ export function useUserActions() {
         })
         .eq("id", actionId)
         .eq("user_id", user.id)
-        .select();
-        
-      const { data, error } = result as any;
+        .select() as any);
 
       if (error) {
         throw error;
