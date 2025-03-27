@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -31,7 +30,6 @@ export default function Bills() {
     ? bills.filter(bill => bill.status === selectedStatus)
     : bills;
 
-  // Count bills by status
   const statusCounts = {
     Draft: bills.filter(bill => bill.status === "Draft").length,
     "Ready for payment": bills.filter(bill => bill.status === "Ready for payment").length,
@@ -63,13 +61,11 @@ export default function Bills() {
         throw new Error("Balance information not available");
       }
 
-      // Deduct bill amount from balance
       const success = await updateBalance(-bill.amount);
       if (!success) {
         throw new Error("Failed to update balance");
       }
 
-      // Mark bill as paid
       await updateBillStatus(bill.id, "Paid");
 
       toast({
@@ -77,9 +73,7 @@ export default function Bills() {
         description: `Bill ${bill.bill_number} has been paid.`
       });
 
-      // Close the payment dialog
       setPayBillDialogOpen(false);
-
     } catch (error) {
       console.error("Error paying bill:", error);
       toast({
@@ -173,14 +167,6 @@ export default function Bills() {
               <div className="font-medium">
                 {formatCurrency(balance.available_amount, balance.currency)}
               </div>
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={openTopUpDialog}
-              >
-                <Plus className="h-3 w-3 mr-1" />
-                Top Up
-              </Button>
             </div>
           )}
         </div>
