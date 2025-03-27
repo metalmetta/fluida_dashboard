@@ -3,11 +3,14 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Invoice } from "@/types/invoice";
 import { useToast } from "@/hooks/use-toast";
+import { generateInvoiceId } from "@/lib/billUtils";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function useInvoices() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchInvoices = async () => {
     setIsLoading(true);
@@ -41,9 +44,7 @@ export function useInvoices() {
 
   const addSampleInvoices = async () => {
     try {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !userData.user) {
+      if (!user) {
         toast({
           title: "Error",
           description: "You must be logged in to add sample invoices",
@@ -52,10 +53,12 @@ export function useInvoices() {
         return;
       }
 
+      const currentDate = new Date();
+      
       const sampleInvoices = [
         {
-          user_id: userData.user.id,
-          invoice_number: "INV-2024-001",
+          user_id: user.id,
+          invoice_number: generateInvoiceId(currentDate, "Acme Corporation", "001"),
           client_name: "Acme Corporation",
           amount: 2500.00,
           status: "paid" as Invoice['status'],
@@ -65,8 +68,8 @@ export function useInvoices() {
           description: "Website development services"
         },
         {
-          user_id: userData.user.id,
-          invoice_number: "INV-2024-002",
+          user_id: user.id,
+          invoice_number: generateInvoiceId(currentDate, "TechStart Inc.", "002"),
           client_name: "TechStart Inc.",
           amount: 1800.50,
           status: "sent" as Invoice['status'],
@@ -76,8 +79,8 @@ export function useInvoices() {
           description: "Monthly consulting retainer"
         },
         {
-          user_id: userData.user.id,
-          invoice_number: "INV-2024-003",
+          user_id: user.id,
+          invoice_number: generateInvoiceId(currentDate, "Global Solutions", "003"),
           client_name: "Global Solutions",
           amount: 3450.00,
           status: "draft" as Invoice['status'],
@@ -86,8 +89,8 @@ export function useInvoices() {
           description: "Software implementation phase 1"
         },
         {
-          user_id: userData.user.id,
-          invoice_number: "INV-2024-004",
+          user_id: user.id,
+          invoice_number: generateInvoiceId(currentDate, "Innovate Partners", "004"),
           client_name: "Innovate Partners",
           amount: 950.75,
           status: "overdue" as Invoice['status'],
@@ -97,8 +100,8 @@ export function useInvoices() {
           description: "Marketing services"
         },
         {
-          user_id: userData.user.id,
-          invoice_number: "INV-2024-005",
+          user_id: user.id,
+          invoice_number: generateInvoiceId(currentDate, "First National Bank", "005"),
           client_name: "First National Bank",
           amount: 5000.00,
           status: "paid" as Invoice['status'],

@@ -135,7 +135,7 @@ export default function Invoices() {
       cell: (item: Invoice) => formatPaymentMethod(item.payment_method) },
     { header: "Due date", accessorKey: "due_date" as keyof Invoice,
       cell: (item: Invoice) => formatDate(item.due_date) },
-    { header: "Invoice #", accessorKey: "invoice_number" as keyof Invoice },
+    { header: "Invoice ID", accessorKey: "invoice_number" as keyof Invoice },
     { header: "Status", accessorKey: "status" as keyof Invoice },
   ];
 

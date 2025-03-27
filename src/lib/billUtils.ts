@@ -32,3 +32,33 @@ export function generateBillId(issueDate: Date, vendor: string, invoiceNumber: s
   // Format the bill ID
   return `BL-${dateCode}-${vendorCode}-${cleanInvoiceNumber}`;
 }
+
+/**
+ * Generates a formatted invoice ID based on the specified pattern:
+ * INV-{YYYY}{MM}-{CustomerCode}-{Invoice#}
+ * 
+ * @param issueDate - The issue date of the invoice
+ * @param customerName - The customer name
+ * @param invoiceNumber - The original invoice number
+ * @returns Formatted invoice ID string
+ */
+export function generateInvoiceId(issueDate: Date, customerName: string, invoiceNumber: string): string {
+  // Format year and month (YYYYMM)
+  const year = issueDate.getFullYear();
+  const month = String(issueDate.getMonth() + 1).padStart(2, '0');
+  const dateCode = `${year}${month}`;
+  
+  // Generate customer code (first 3-5 characters, uppercase, no spaces)
+  const customerCode = customerName
+    .replace(/\s+/g, '') // Remove spaces
+    .slice(0, 5) // Take first 5 characters max
+    .toUpperCase();
+  
+  // Clean invoice number (remove spaces and special characters)
+  const cleanInvoiceNumber = invoiceNumber
+    .replace(/\s+/g, '')
+    .replace(/[^a-zA-Z0-9]/g, '');
+  
+  // Format the invoice ID
+  return `INV-${dateCode}-${customerCode}-${cleanInvoiceNumber}`;
+}
