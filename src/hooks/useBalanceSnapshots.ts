@@ -47,7 +47,23 @@ export function useBalanceSnapshots(timeScale: 'week' | 'month' | '3months' = 'w
         throw error;
       }
 
-      setSnapshots(data || []);
+      if (data && data.length === 0) {
+        // No snapshots found, create default ones for the past week
+        await createDefaultSnapshots(startDate, now);
+        
+        // Fetch again after creating default snapshots
+        const { data: newData, error: newError } = await supabase
+          .from("balance_snapshots")
+          .select("*")
+          .eq("user_id", user.id)
+          .gte("snapshot_date", startDate.toISOString().split('T')[0])
+          .order("snapshot_date", { ascending: true });
+          
+        if (newError) throw newError;
+        setSnapshots(newData || []);
+      } else {
+        setSnapshots(data || []);
+      }
     } catch (error) {
       console.error("Error fetching balance snapshots:", error);
       toast({
@@ -57,6 +73,43 @@ export function useBalanceSnapshots(timeScale: 'week' | 'month' | '3months' = 'w
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const createDefaultSnapshots = async (startDate: Date, endDate: Date) => {
+    if (!user) return false;
+    
+    try {
+      const snapshots = [];
+      const currentDate = new Date(startDate);
+      
+      // Generate a snapshot for each day from start date to end date
+      while (currentDate <= endDate) {
+        snapshots.push({
+          user_id: user.id,
+          amount: 0, // Default to 0 for past days
+          currency: "USD",
+          snapshot_date: currentDate.toISOString().split('T')[0]
+        });
+        
+        // Move to next day
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      
+      if (snapshots.length > 0) {
+        const { error } = await supabase
+          .from("balance_snapshots")
+          .upsert(snapshots, { 
+            onConflict: 'user_id,snapshot_date'
+          });
+
+        if (error) throw error;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error creating default balance snapshots:", error);
+      return false;
     }
   };
 
