@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTransactions } from "./useTransactions";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface Payment {
   id: string;
@@ -29,7 +30,8 @@ export function usePayments() {
   const [dueAmount, setDueAmount] = useState(0);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { createTransaction } = useTransactions();
+  const { createTransaction, fetchTransactions } = useTransactions();
+  const queryClient = useQueryClient();
 
   const fetchPayments = async () => {
     if (!user) return;
@@ -115,6 +117,9 @@ export function usePayments() {
           reference_id: bill.id,
           reference_type: 'bill'
         });
+        
+        // Refresh transactions after creating a new one
+        fetchTransactions();
       } catch (transactionError) {
         console.error("Error creating transaction record:", transactionError);
         // Continue even if transaction record creation fails
@@ -122,6 +127,10 @@ export function usePayments() {
       
       // Refresh payments
       fetchPayments();
+      
+      // Invalidate queries to trigger refetching
+      queryClient.invalidateQueries({ queryKey: ["userBalance"] });
+      queryClient.invalidateQueries({ queryKey: ["userActions"] });
       
       return data?.[0] || null;
     } catch (error) {
@@ -171,12 +180,19 @@ export function usePayments() {
           description: `Internal transfer to ${transferData.toAccount}`,
           reference_type: 'internal_transfer'
         });
+        
+        // Refresh transactions after creating a new one
+        fetchTransactions();
       } catch (transactionError) {
         console.error("Error creating transaction record:", transactionError);
       }
       
       // Refresh payments
       fetchPayments();
+      
+      // Invalidate queries to trigger refetching
+      queryClient.invalidateQueries({ queryKey: ["userBalance"] });
+      queryClient.invalidateQueries({ queryKey: ["userActions"] });
       
       return data?.[0] || null;
     } catch (error) {

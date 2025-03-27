@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface Transaction {
   id: string;
@@ -25,6 +26,7 @@ export function useTransactions() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const fetchTransactions = async () => {
     if (!user) return;
@@ -75,6 +77,9 @@ export function useTransactions() {
       
       // Refresh transactions
       fetchTransactions();
+      
+      // Invalidate any related queries
+      queryClient.invalidateQueries({ queryKey: ["userActions"] });
       
       return data?.[0] || null;
     } catch (error) {

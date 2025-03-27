@@ -67,6 +67,8 @@ export const useUserActions = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userActions"] });
+      // Also invalidate related queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["userBalance"] });
       toast({
         title: "Success",
         description: "Action created successfully",
@@ -101,6 +103,8 @@ export const useUserActions = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userActions"] });
+      // Also invalidate related queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["userBalance"] });
       toast({
         title: "Success",
         description: "Action updated successfully",
