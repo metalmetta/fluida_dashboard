@@ -115,7 +115,7 @@ export default function Bills() {
     return `${symbol}${item.amount.toFixed(2)}`;
   };
 
-  const columns = [
+  const initialColumns = [
     { header: "Bill ID", accessorKey: "bill_number" as keyof Bill },
     { header: "Vendor", accessorKey: "vendor" as keyof Bill },
     { header: "Category", accessorKey: "category" as keyof Bill, 
@@ -189,7 +189,7 @@ export default function Bills() {
           <DocumentsTable
             documents={filteredBills}
             isLoading={isLoading}
-            columns={columns}
+            columns={initialColumns}
             onRowClick={handleViewBill}
             statusKey="status"
             getStatusVariant={getStatusVariant}

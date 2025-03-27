@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -127,7 +126,7 @@ export default function Invoices() {
     }
   };
 
-  const columns = [
+  const initialColumns = [
     { header: "Customer", accessorKey: "client_name" as keyof Invoice },
     { header: "Amount", accessorKey: "amount" as keyof Invoice,
       cell: (item: Invoice) => `$${item.amount.toFixed(2)}` },
@@ -168,7 +167,7 @@ export default function Invoices() {
           <DocumentsTable
             documents={filteredInvoices}
             isLoading={isLoading}
-            columns={columns}
+            columns={initialColumns}
             onRowClick={handleViewInvoice}
             statusKey="status"
             getStatusVariant={getStatusVariant}
@@ -199,4 +198,3 @@ export default function Invoices() {
     </DashboardLayout>
   );
 }
-

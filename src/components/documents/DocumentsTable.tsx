@@ -1,4 +1,5 @@
-import React from "react";
+
+import React, { useState, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -8,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Plus } from "lucide-react";
+import { AlertCircle, Plus, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { isStandardizedFormat } from "@/lib/documentUtils";
 
@@ -35,13 +36,17 @@ interface DocumentsTableProps<T> {
 export function DocumentsTable<T>({
   documents,
   isLoading,
-  columns,
+  columns: initialColumns,
   emptyState,
   onRowClick,
   statusKey,
   getStatusVariant,
   renderRowActions
 }: DocumentsTableProps<T>) {
+  const [columns, setColumns] = useState(initialColumns);
+  const [draggedColumnIndex, setDraggedColumnIndex] = useState<number | null>(null);
+  const dragOverColumnIndex = useRef<number | null>(null);
+
   if (isLoading) {
     return (
       <div className="p-8 text-center">
@@ -75,12 +80,57 @@ export function DocumentsTable<T>({
     return isStandardizedFormat(docNumber);
   };
 
+  // Handle start of drag
+  const handleDragStart = (index: number) => {
+    setDraggedColumnIndex(index);
+  };
+
+  // Handle drag over event
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    dragOverColumnIndex.current = index;
+  };
+
+  // Handle drop event to reorder columns
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    
+    if (draggedColumnIndex === null || dragOverColumnIndex.current === null) {
+      return;
+    }
+    
+    const newColumns = [...columns];
+    const draggedColumn = newColumns[draggedColumnIndex];
+    
+    // Remove dragged column
+    newColumns.splice(draggedColumnIndex, 1);
+    
+    // Insert at new position
+    newColumns.splice(dragOverColumnIndex.current, 0, draggedColumn);
+    
+    setColumns(newColumns);
+    setDraggedColumnIndex(null);
+    dragOverColumnIndex.current = null;
+  };
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          {columns.map((column) => (
-            <TableHead key={String(column.accessorKey)}>{column.header}</TableHead>
+          {columns.map((column, index) => (
+            <TableHead 
+              key={String(column.accessorKey)}
+              draggable
+              onDragStart={() => handleDragStart(index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDrop={handleDrop}
+              className="relative cursor-move group"
+            >
+              <div className="flex items-center">
+                <GripVertical className="h-4 w-4 mr-1 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                {column.header}
+              </div>
+            </TableHead>
           ))}
           {renderRowActions && <TableHead className="w-[100px]">Actions</TableHead>}
         </TableRow>
