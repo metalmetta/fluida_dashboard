@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
@@ -56,6 +57,18 @@ const Index = () => {
     
     const IconComponent = iconName && iconMap[iconName] ? iconMap[iconName] : ArrowUpRight;
     return IconComponent;
+  };
+
+  // Helper function for transaction icons
+  const getTransactionIcon = (type: string) => {
+    switch (type) {
+      case 'Deposit':
+        return <ArrowDown className="w-4 h-4 text-green-600" />;
+      case 'Withdraw':
+        return <ArrowUp className="w-4 h-4 text-red-600" />;
+      default:
+        return <ArrowUpRight className="w-4 h-4" />;
+    }
   };
 
   const balanceData = useMemo(() => {

@@ -28,7 +28,7 @@ export const useUserActions = () => {
       if (!user) return [];
       
       const { data, error } = await supabase
-        .from("user_actions" as any)
+        .from("user_actions")
         .select("*")
         .order("created_at", { ascending: false });
       
@@ -42,7 +42,8 @@ export const useUserActions = () => {
         return [];
       }
       
-      return data as UserAction[];
+      // Cast data to UserAction[] to ensure it matches our type
+      return (data || []) as UserAction[];
     },
     enabled: !!user,
   });
@@ -52,7 +53,7 @@ export const useUserActions = () => {
       if (!user) throw new Error("User not authenticated");
       
       const { data, error } = await supabase
-        .from("user_actions" as any)
+        .from("user_actions")
         .insert([{ ...newAction, user_id: user.id }])
         .select()
         .single();
@@ -85,7 +86,7 @@ export const useUserActions = () => {
       if (!user) throw new Error("User not authenticated");
       
       const { data, error } = await supabase
-        .from("user_actions" as any)
+        .from("user_actions")
         .update(updates)
         .eq("id", id)
         .select()
@@ -119,7 +120,7 @@ export const useUserActions = () => {
       if (!user) throw new Error("User not authenticated");
       
       const { error } = await supabase
-        .from("user_actions" as any)
+        .from("user_actions")
         .delete()
         .eq("id", id);
       
