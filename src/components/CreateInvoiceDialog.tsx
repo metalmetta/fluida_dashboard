@@ -9,6 +9,10 @@ import { useContacts } from "@/hooks/useContacts";
 import { Contact } from "@/types/contact";
 import { AddContactDialog } from "@/components/AddContactDialog";
 import { generateInvoiceId } from "@/lib/billUtils";
+import { CustomerDetailsStep } from "@/components/invoice/CustomerDetailsStep";
+import { LineItemsStep } from "@/components/invoice/LineItemsStep";
+import { PaymentDetailsStep } from "@/components/invoice/PaymentDetailsStep";
+import { InvoicePreview } from "@/components/invoice/InvoicePreview";
 
 interface CreateInvoiceDialogProps {
   open: boolean;
