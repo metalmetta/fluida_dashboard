@@ -1,9 +1,10 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Bill } from "@/types/bill";
+import { Bill, BillNumberParams } from "@/types/bill";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { generateBillNumber, isStandardizedFormat, getNextSequence } from "@/lib/documentUtils";
 
 export function useBills() {
   const [bills, setBills] = useState<Bill[]>([]);
@@ -45,6 +46,30 @@ export function useBills() {
     }
   };
 
+  const generateStandardBillNumber = async (supplierName: string, issueDate: Date): Promise<string> => {
+    // Get all bills for this supplier in this month/year
+    const yearMonth = `${issueDate.getFullYear()}${String(issueDate.getMonth() + 1).padStart(2, '0')}`;
+    const supplierCode = supplierName
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toUpperCase()
+      .substring(0, Math.min(4, supplierName.length));
+    
+    // Find the highest sequence number used for this supplier in this month
+    const sequence = getNextSequence(
+      bills, 
+      'BL', 
+      yearMonth, 
+      supplierCode
+    );
+    
+    // Generate the bill number
+    return generateBillNumber({
+      issueDate,
+      supplierName,
+      sequence
+    });
+  };
+
   const addBill = async (billData: Omit<Bill, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     if (!user) {
       toast({
@@ -56,8 +81,17 @@ export function useBills() {
     }
 
     try {
+      // Check if the bill_number follows the standardized format
+      // If not, generate a standardized bill number
+      let billNumber = billData.bill_number;
+      if (!isStandardizedFormat(billNumber)) {
+        const issueDate = new Date(billData.issue_date);
+        billNumber = await generateStandardBillNumber(billData.vendor, issueDate);
+      }
+
       const newBill = {
         ...billData,
+        bill_number: billNumber,
         user_id: user.id
       };
 
@@ -207,6 +241,7 @@ export function useBills() {
     fetchBills, 
     addBill,
     addSampleBills,
-    updateBillStatus
+    updateBillStatus,
+    generateStandardBillNumber
   };
 }

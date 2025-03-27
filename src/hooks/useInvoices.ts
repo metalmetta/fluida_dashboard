@@ -1,13 +1,15 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Invoice } from "@/types/invoice";
 import { useToast } from "@/hooks/use-toast";
+import { generateInvoiceNumber, isStandardizedFormat, getNextSequence } from "@/lib/documentUtils";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function useInvoices() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchInvoices = async () => {
     setIsLoading(true);
@@ -36,6 +38,78 @@ export function useInvoices() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const generateStandardInvoiceNumber = async (customerName: string, issueDate: Date): Promise<string> => {
+    const yearMonth = `${issueDate.getFullYear()}${String(issueDate.getMonth() + 1).padStart(2, '0')}`;
+    const customerCode = customerName
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toUpperCase()
+      .substring(0, Math.min(4, customerName.length));
+    
+    const sequence = getNextSequence(
+      invoices, 
+      'FL', 
+      yearMonth, 
+      customerCode
+    );
+    
+    return generateInvoiceNumber({
+      issueDate,
+      customerName,
+      sequence
+    });
+  };
+
+  const addInvoice = async (invoiceData: any) => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to add an invoice",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      let invoiceNumber = invoiceData.invoice_number;
+      if (!isStandardizedFormat(invoiceNumber)) {
+        const issueDate = new Date(invoiceData.issue_date);
+        invoiceNumber = await generateStandardInvoiceNumber(invoiceData.client_name, issueDate);
+      }
+
+      const newInvoice = {
+        ...invoiceData,
+        invoice_number: invoiceNumber,
+        user_id: user.id
+      };
+
+      const { data, error } = await supabase
+        .from("invoices")
+        .insert([newInvoice])
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: "Invoice added successfully"
+      });
+
+      fetchInvoices();
+      
+      return data?.[0];
+    } catch (error) {
+      console.error("Error adding invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add invoice",
+        variant: "destructive"
+      });
+      return null;
     }
   };
 
@@ -131,36 +205,34 @@ export function useInvoices() {
     }
   };
 
-  useEffect(() => {
-    fetchInvoices();
-  }, []);
-
-  // Improved helper function to format payment method for display
   const formatPaymentMethod = (paymentMethod: string | undefined): string => {
     if (!paymentMethod) return "—";
     
-    // Handle the standard payment methods
     if (paymentMethod === "bank_transfer") return "Bank Transfer";
     if (paymentMethod === "blockchain_transfer") return "Blockchain Transfer";
     if (paymentMethod === "credit_card") return "Credit Card";
     
-    // For payment methods already in readable format (e.g. "Bank Transfer" from sample data)
     if (paymentMethod === "Bank Transfer") return "Bank Transfer";
     if (paymentMethod === "Credit Card") return "Credit Card";
     if (paymentMethod === "PayPal") return "PayPal";
     
-    // For any other values, make them title case for better display
     return paymentMethod
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   };
 
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
+
   return { 
     invoices, 
     isLoading, 
     fetchInvoices, 
     addSampleInvoices,
-    formatPaymentMethod 
+    formatPaymentMethod,
+    addInvoice,
+    generateStandardInvoiceNumber
   };
 }

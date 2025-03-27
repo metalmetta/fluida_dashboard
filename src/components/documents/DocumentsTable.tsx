@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Table,
@@ -11,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { isStandardizedFormat } from "@/lib/documentUtils";
 
 interface DocumentsTableProps<T> {
   documents: T[];
@@ -67,6 +67,14 @@ export function DocumentsTable<T>({
     );
   }
 
+  // Helper function to check if a document has a standardized ID format
+  const hasStandardizedFormat = (document: T) => {
+    const docNumber = 
+      (document as any).invoice_number || 
+      (document as any).bill_number || '';
+    return isStandardizedFormat(docNumber);
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -96,6 +104,13 @@ export function DocumentsTable<T>({
                   >
                     {String(document[statusKey])}
                   </Badge>
+                ) : ['invoice_number', 'bill_number'].includes(String(column.accessorKey)) ? (
+                  <div className="flex items-center">
+                    <span>{String(document[column.accessorKey] || "")}</span>
+                    {!hasStandardizedFormat(document) && (
+                      <Badge className="ml-2 text-xs" variant="outline">Legacy</Badge>
+                    )}
+                  </div>
                 ) : (
                   String(document[column.accessorKey] || "")
                 )}
