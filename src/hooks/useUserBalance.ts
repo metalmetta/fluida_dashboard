@@ -64,6 +64,8 @@ export function useUserBalance() {
       try {
         if (data) {
           const today = new Date().toISOString().split('T')[0];
+          
+          // Check if we already have a snapshot for today
           const { error: snapshotCheckError, count } = await supabase
             .from('balance_snapshots')
             .select('id', { count: 'exact', head: true })
