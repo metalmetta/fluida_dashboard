@@ -55,24 +55,38 @@ export function LineItemsStep({
     }
   };
 
+  // Extract the invoice number from the formatted ID
+  const extractInvoiceNumber = () => {
+    const parts = form.invoice_number.split('-');
+    return parts.length > 0 ? parts[parts.length - 1] : '';
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="invoice_number">Invoice ID</Label>
+          <Label htmlFor="invoice_number">Invoice #</Label>
           <Input
             id="invoice_number"
-            value={form.invoice_number}
+            value={extractInvoiceNumber()}
             onChange={(e) => {
-              setForm({ ...form, invoice_number: e.target.value });
-              // Don't auto-update during direct edit
+              const newNumber = e.target.value;
+              // Generate a new invoice ID with the updated number
+              if (form.client_name && form.issue_date) {
+                const formattedId = generateInvoiceId(
+                  new Date(form.issue_date),
+                  form.client_name,
+                  newNumber
+                );
+                setForm({ ...form, invoice_number: formattedId });
+              }
             }}
-            readOnly // Make it read-only as it's auto-generated
-            className="bg-gray-50"
+            className="mb-1"
           />
-          <p className="text-xs text-muted-foreground">
-            Auto-generated based on customer and date
-          </p>
+          <div className="bg-blue-50 p-3 rounded-md">
+            <p className="text-xs font-medium text-blue-900">Generated Invoice ID:</p>
+            <p className="font-mono text-sm">{form.invoice_number}</p>
+          </div>
         </div>
         
         <div className="space-y-2">
