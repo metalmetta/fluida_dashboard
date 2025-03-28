@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -110,39 +109,50 @@ export function ProfileSection({ profileData, setProfileData, userId }: ProfileS
   };
 
   const handleSaveProfile = async () => {
-    if (!userId) return;
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "User ID not found. Please log in again.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     try {
       setSaving(true);
       console.log("Saving profile data:", profileData);
       
       // Update data in both the legacy profiles table and the new profile_data table
-      const [profilesResult, profileDataResult] = await Promise.all([
-        // Update profiles table (legacy)
-        supabase
-          .from('profiles')
-          .update({
-            full_name: profileData.fullName,
-            company_name: profileData.companyName
-          })
-          .eq('id', userId),
-          
-        // Update or insert into profile_data table
-        supabase
-          .from('profile_data')
-          .upsert({
-            user_id: userId,
-            full_name: profileData.fullName,
-            email: profileData.email,
-            phone: profileData.phone,
-            avatar_url: profileData.avatarUrl
-          }, { onConflict: 'user_id' })
-      ]);
+      const profilesResult = await supabase
+        .from('profiles')
+        .update({
+          full_name: profileData.fullName,
+          company_name: profileData.companyName
+        })
+        .eq('id', userId);
+        
+      if (profilesResult.error) {
+        console.error('Error updating profiles table:', profilesResult.error);
+        throw profilesResult.error;
+      }
+        
+      // Update or insert into profile_data table
+      const profileDataResult = await supabase
+        .from('profile_data')
+        .upsert({
+          user_id: userId,
+          full_name: profileData.fullName,
+          email: profileData.email,
+          phone: profileData.phone,
+          avatar_url: profileData.avatarUrl
+        }, { onConflict: 'user_id' });
+
+      if (profileDataResult.error) {
+        console.error('Error updating profile_data table:', profileDataResult.error);
+        throw profileDataResult.error;
+      }
 
       console.log("Profile update results:", { profilesResult, profileDataResult });
-
-      if (profilesResult.error) throw profilesResult.error;
-      if (profileDataResult.error) throw profileDataResult.error;
 
       toast({
         title: "Profile Updated",
