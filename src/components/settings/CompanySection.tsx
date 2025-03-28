@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -23,17 +23,37 @@ interface CompanySectionProps {
 
 export function CompanySection({ profileData, setProfileData, userId }: CompanySectionProps) {
   const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
 
   const handleSaveCompany = async () => {
+    if (!userId) return;
+    
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          company_name: profileData.companyName
-        })
-        .eq('id', userId);
-
-      if (error) throw error;
+      setSaving(true);
+      
+      // Update both the legacy and new tables
+      await Promise.all([
+        // Update the legacy profiles table with just the company name
+        supabase
+          .from('profiles')
+          .update({
+            company_name: profileData.companyName
+          })
+          .eq('id', userId),
+          
+        // Update or insert into the new company_data table
+        supabase
+          .from('company_data')
+          .upsert({
+            user_id: userId,
+            company_name: profileData.companyName,
+            tax_id: profileData.taxId,
+            address: profileData.address,
+            city: profileData.city,
+            state: profileData.state,
+            zip: profileData.zip
+          }, { onConflict: 'user_id' })
+      ]);
 
       toast({
         title: "Company Details Updated",
@@ -46,6 +66,8 @@ export function CompanySection({ profileData, setProfileData, userId }: CompanyS
         description: "Failed to update company details",
         variant: "destructive"
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -111,7 +133,9 @@ export function CompanySection({ profileData, setProfileData, userId }: CompanyS
           </div>
         </div>
       </div>
-      <Button onClick={handleSaveCompany}>Save Company Details</Button>
+      <Button onClick={handleSaveCompany} disabled={saving}>
+        {saving ? "Saving..." : "Save Company Details"}
+      </Button>
     </div>
   );
 }

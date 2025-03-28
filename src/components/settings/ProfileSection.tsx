@@ -26,6 +26,7 @@ export function ProfileSection({ profileData, setProfileData, userId }: ProfileS
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -51,18 +52,28 @@ export function ProfileSection({ profileData, setProfileData, userId }: ProfileS
         .from('avatars')
         .getPublicUrl(filePath);
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: data.publicUrl })
-        .eq('id', userId);
+      const avatarUrl = data.publicUrl;
 
-      if (updateError) {
-        throw updateError;
-      }
+      // Update both profile tables
+      await Promise.all([
+        // Update profiles table (legacy)
+        supabase
+          .from('profiles')
+          .update({ avatar_url: avatarUrl })
+          .eq('id', userId),
+          
+        // Update new profile_data table
+        supabase
+          .from('profile_data')
+          .upsert({ 
+            user_id: userId,
+            avatar_url: avatarUrl,
+          }, { onConflict: 'user_id' })
+      ]);
 
       setProfileData({
         ...profileData,
-        avatarUrl: data.publicUrl
+        avatarUrl
       });
 
       toast({
@@ -99,16 +110,33 @@ export function ProfileSection({ profileData, setProfileData, userId }: ProfileS
   };
 
   const handleSaveProfile = async () => {
+    if (!userId) return;
+    
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: profileData.fullName,
-          company_name: profileData.companyName
-        })
-        .eq('id', userId);
-
-      if (error) throw error;
+      setSaving(true);
+      
+      // Update data in both the legacy profiles table and the new profile_data table
+      await Promise.all([
+        // Update profiles table (legacy)
+        supabase
+          .from('profiles')
+          .update({
+            full_name: profileData.fullName,
+            company_name: profileData.companyName
+          })
+          .eq('id', userId),
+          
+        // Update or insert into profile_data table
+        supabase
+          .from('profile_data')
+          .upsert({
+            user_id: userId,
+            full_name: profileData.fullName,
+            email: profileData.email,
+            phone: profileData.phone,
+            avatar_url: profileData.avatarUrl
+          }, { onConflict: 'user_id' })
+      ]);
 
       toast({
         title: "Profile Updated",
@@ -121,6 +149,8 @@ export function ProfileSection({ profileData, setProfileData, userId }: ProfileS
         description: "Failed to update profile",
         variant: "destructive"
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -191,7 +221,9 @@ export function ProfileSection({ profileData, setProfileData, userId }: ProfileS
         </div>
       </div>
 
-      <Button onClick={handleSaveProfile}>Save Changes</Button>
+      <Button onClick={handleSaveProfile} disabled={saving}>
+        {saving ? "Saving..." : "Save Changes"}
+      </Button>
     </div>
   );
 }

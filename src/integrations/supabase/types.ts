@@ -84,6 +84,45 @@ export type Database = {
         }
         Relationships: []
       }
+      company_data: {
+        Row: {
+          address: string | null
+          city: string | null
+          company_name: string | null
+          created_at: string
+          id: string
+          state: string | null
+          tax_id: string | null
+          updated_at: string
+          user_id: string
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          state?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          user_id: string
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          state?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          user_id?: string
+          zip?: string | null
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           address: string | null
@@ -328,6 +367,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profile_data: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

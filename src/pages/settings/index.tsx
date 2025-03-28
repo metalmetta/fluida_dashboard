@@ -40,30 +40,68 @@ export default function Settings() {
       try {
         setLoading(true);
         if (user) {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
+          // Fetch data from all relevant tables
+          const [profilesResult, profileDataResult, companyDataResult] = await Promise.all([
+            // Legacy profiles table
+            supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', user.id)
+              .single(),
+              
+            // New profile_data table
+            supabase
+              .from('profile_data')
+              .select('*')
+              .eq('user_id', user.id)
+              .maybeSingle(),
+              
+            // New company_data table  
+            supabase
+              .from('company_data')
+              .select('*')
+              .eq('user_id', user.id)
+              .maybeSingle()
+          ]);
           
-          if (error) {
-            throw error;
+          const baseData = {
+            fullName: "",
+            email: user.email || "",
+            phone: "",
+            companyName: "",
+            taxId: "",
+            address: "",
+            city: "",
+            state: "",
+            zip: "",
+            avatarUrl: ""
+          };
+          
+          // First take data from legacy profiles table
+          if (profilesResult.data) {
+            baseData.fullName = profilesResult.data.full_name || '';
+            baseData.companyName = profilesResult.data.company_name || '';
+            baseData.avatarUrl = profilesResult.data.avatar_url || '';
           }
-
-          if (data) {
-            setProfileData({
-              fullName: data.full_name || '',
-              email: user.email || '',
-              phone: '',
-              companyName: data.company_name || '',
-              taxId: '',
-              address: '',
-              city: '',
-              state: '',
-              zip: '',
-              avatarUrl: data.avatar_url || ''
-            });
+          
+          // Then override with data from new profile_data table if available
+          if (profileDataResult.data) {
+            baseData.fullName = profileDataResult.data.full_name || baseData.fullName;
+            baseData.phone = profileDataResult.data.phone || '';
+            baseData.avatarUrl = profileDataResult.data.avatar_url || baseData.avatarUrl;
           }
+          
+          // Then add company data if available
+          if (companyDataResult.data) {
+            baseData.companyName = companyDataResult.data.company_name || baseData.companyName;
+            baseData.taxId = companyDataResult.data.tax_id || '';
+            baseData.address = companyDataResult.data.address || '';
+            baseData.city = companyDataResult.data.city || '';
+            baseData.state = companyDataResult.data.state || '';
+            baseData.zip = companyDataResult.data.zip || '';
+          }
+          
+          setProfileData(baseData);
         }
       } catch (error) {
         console.error('Error loading profile data:', error);
@@ -141,21 +179,33 @@ export default function Settings() {
 
           <TabsContent value="profile">
             <Card className="p-6">
-              <ProfileSection 
-                profileData={profileData} 
-                setProfileData={setProfileData} 
-                userId={user?.id} 
-              />
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <p>Loading profile data...</p>
+                </div>
+              ) : (
+                <ProfileSection 
+                  profileData={profileData} 
+                  setProfileData={setProfileData} 
+                  userId={user?.id} 
+                />
+              )}
             </Card>
           </TabsContent>
 
           <TabsContent value="company">
             <Card className="p-6">
-              <CompanySection 
-                profileData={profileData} 
-                setProfileData={setProfileData} 
-                userId={user?.id} 
-              />
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <p>Loading company data...</p>
+                </div>
+              ) : (
+                <CompanySection 
+                  profileData={profileData} 
+                  setProfileData={setProfileData} 
+                  userId={user?.id} 
+                />
+              )}
             </Card>
           </TabsContent>
 
