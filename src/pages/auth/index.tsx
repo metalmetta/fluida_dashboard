@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -48,6 +48,7 @@ export default function Auth() {
     signIn,
     signUp
   } = useAuth();
+  const navigate = useNavigate();
   
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -79,7 +80,8 @@ export default function Auth() {
   const onSignupSubmit = async (data: SignupFormValues) => {
     try {
       await signUp(data.email, data.password, data.fullName, data.companyName);
-      setActiveTab("login");
+      // After successful signup, navigate to the settings page with a flag to prompt profile completion
+      navigate("/settings", { state: { promptProfileCompletion: true } });
     } catch (error) {
       console.error("Signup error:", error);
     }

@@ -13,9 +13,10 @@ import { CompanySection } from "@/components/settings/CompanySection";
 import { ApprovalSettings } from "@/components/settings/ApprovalSettings";
 import { TeamSection } from "@/components/settings/TeamSection";
 import { BillingSection } from "@/components/settings/BillingSection";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, isNewUser, setIsNewUser } = useAuth();
   const { toast } = useToast();
   const [profileData, setProfileData] = useState({
     fullName: "",
@@ -30,6 +31,9 @@ export default function Settings() {
     avatarUrl: ""
   });
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<string>("profile");
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function loadProfileData() {
@@ -74,7 +78,30 @@ export default function Settings() {
     }
 
     loadProfileData();
-  }, [user, toast]);
+
+    // Check if we need to prompt for profile completion
+    if (isNewUser || location.state?.promptProfileCompletion) {
+      setActiveTab("profile");
+      toast({
+        title: "Complete your profile",
+        description: "Please complete your profile information to get started",
+      });
+      setIsNewUser(false); // Reset the flag after showing the prompt
+    }
+  }, [user, toast, isNewUser, setIsNewUser, location.state]);
+
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    
+    // If this is a new user being guided through setup, show company prompt after profile
+    if (isNewUser && value === "company") {
+      toast({
+        title: "Company Information",
+        description: "Now, let's add your company details",
+      });
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -84,7 +111,7 @@ export default function Settings() {
           <p className="text-muted-foreground">Manage your account settings</p>
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList>
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />

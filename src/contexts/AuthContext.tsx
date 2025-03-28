@@ -4,6 +4,7 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ReactConfetti from "react-confetti";
+import { useNavigate } from "react-router-dom";
 
 type AuthContextType = {
   user: User | null;
@@ -12,6 +13,8 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, fullName: string, companyName?: string) => Promise<void>;
   signOut: () => Promise<void>;
+  isNewUser: boolean;
+  setIsNewUser: (isNew: boolean) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -126,10 +130,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Show confetti animation
       setShowConfetti(true);
       
-      // Removed the email verification toast message
+      // Mark as new user to prompt for profile completion
+      setIsNewUser(true);
+      
       toast({
         title: "Account created",
-        description: "You have been signed up successfully.",
+        description: "You have been signed up successfully. Let's complete your profile.",
       });
     } catch (error: any) {
       toast({
@@ -163,7 +169,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      isLoading, 
+      signIn, 
+      signUp, 
+      signOut, 
+      isNewUser, 
+      setIsNewUser 
+    }}>
       {showConfetti && (
         <ReactConfetti
           width={window.innerWidth}
