@@ -58,10 +58,8 @@ export default function Settings() {
               .maybeSingle()
           ]);
           
-          console.log("Fetched data:", {
-            profilesResult,
-            companyDataResult
-          });
+          console.log("Fetched profile data:", profilesResult);
+          console.log("Fetched company data:", companyDataResult);
           
           const baseData = {
             fullName: "",

@@ -55,10 +55,15 @@ export function ProfileSection({ profileData, setProfileData, userId }: ProfileS
       const avatarUrl = data.publicUrl;
 
       // Update profiles table with new avatar URL
-      await supabase
+      const { error } = await supabase
         .from('profiles')
         .update({ avatar_url: avatarUrl })
         .eq('id', userId);
+      
+      if (error) {
+        console.error('Error updating profile with avatar:', error);
+        throw error;
+      }
 
       setProfileData({
         ...profileData,
@@ -112,8 +117,8 @@ export function ProfileSection({ profileData, setProfileData, userId }: ProfileS
       setSaving(true);
       console.log("Saving profile data:", profileData);
       
-      // Update data in the profiles table only
-      const profilesResult = await supabase
+      // Update the correct columns in the profiles table
+      const { error } = await supabase
         .from('profiles')
         .update({
           full_name: profileData.fullName,
@@ -123,12 +128,10 @@ export function ProfileSection({ profileData, setProfileData, userId }: ProfileS
         })
         .eq('id', userId);
         
-      if (profilesResult.error) {
-        console.error('Error updating profiles table:', profilesResult.error);
-        throw profilesResult.error;
+      if (error) {
+        console.error('Error updating profiles table:', error);
+        throw error;
       }
-
-      console.log("Profile update results:", profilesResult);
 
       toast({
         title: "Profile Updated",
@@ -207,7 +210,7 @@ export function ProfileSection({ profileData, setProfileData, userId }: ProfileS
           <Input 
             id="phone" 
             placeholder="Your phone number" 
-            value={profileData.phone}
+            value={profileData.phone || ''}
             onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
           />
         </div>
