@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,23 +41,16 @@ export default function Settings() {
         if (user) {
           console.log("Loading profile data for user:", user.id);
           
-          // Fetch data from all relevant tables
-          const [profilesResult, profileDataResult, companyDataResult] = await Promise.all([
-            // Legacy profiles table
+          // Fetch data from both profiles and company_data tables
+          const [profilesResult, companyDataResult] = await Promise.all([
+            // Profiles table
             supabase
               .from('profiles')
               .select('*')
               .eq('id', user.id)
               .single(),
               
-            // New profile_data table
-            supabase
-              .from('profile_data')
-              .select('*')
-              .eq('user_id', user.id)
-              .maybeSingle(),
-              
-            // New company_data table  
+            // Company data table  
             supabase
               .from('company_data')
               .select('*')
@@ -68,7 +60,6 @@ export default function Settings() {
           
           console.log("Fetched data:", {
             profilesResult,
-            profileDataResult,
             companyDataResult
           });
           
@@ -85,18 +76,12 @@ export default function Settings() {
             avatarUrl: ""
           };
           
-          // First take data from legacy profiles table
+          // Take data from profiles table
           if (profilesResult.data) {
             baseData.fullName = profilesResult.data.full_name || '';
             baseData.companyName = profilesResult.data.company_name || '';
             baseData.avatarUrl = profilesResult.data.avatar_url || '';
-          }
-          
-          // Then override with data from new profile_data table if available
-          if (profileDataResult.data) {
-            baseData.fullName = profileDataResult.data.full_name || baseData.fullName;
-            baseData.phone = profileDataResult.data.phone || '';
-            baseData.avatarUrl = profileDataResult.data.avatar_url || baseData.avatarUrl;
+            baseData.phone = profilesResult.data.phone || '';
           }
           
           // Then add company data if available
