@@ -26,40 +26,51 @@ export function CompanySection({ profileData, setProfileData, userId }: CompanyS
   const [saving, setSaving] = useState(false);
 
   const handleSaveCompany = async () => {
-    if (!userId) return;
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "User ID not found. Please log in again.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     try {
       setSaving(true);
       console.log("Saving company data:", profileData);
       
-      // Update both the legacy and new tables
-      const [profilesResult, companyDataResult] = await Promise.all([
-        // Update the legacy profiles table with just the company name
-        supabase
-          .from('profiles')
-          .update({
-            company_name: profileData.companyName
-          })
-          .eq('id', userId),
-          
-        // Update or insert into the new company_data table
-        supabase
-          .from('company_data')
-          .upsert({
-            user_id: userId,
-            company_name: profileData.companyName,
-            tax_id: profileData.taxId,
-            address: profileData.address,
-            city: profileData.city,
-            state: profileData.state,
-            zip: profileData.zip
-          }, { onConflict: 'user_id' })
-      ]);
+      // Update the legacy profiles table with just the company name
+      const profilesResult = await supabase
+        .from('profiles')
+        .update({
+          company_name: profileData.companyName
+        })
+        .eq('id', userId);
+        
+      if (profilesResult.error) {
+        console.error('Error updating profiles table:', profilesResult.error);
+        throw profilesResult.error;
+      }
+      
+      // Update or insert into the company_data table
+      const companyDataResult = await supabase
+        .from('company_data')
+        .upsert({
+          user_id: userId,
+          company_name: profileData.companyName,
+          tax_id: profileData.taxId,
+          address: profileData.address,
+          city: profileData.city,
+          state: profileData.state,
+          zip: profileData.zip
+        }, { onConflict: 'user_id' });
+      
+      if (companyDataResult.error) {
+        console.error('Error updating company_data table:', companyDataResult.error);
+        throw companyDataResult.error;
+      }
 
       console.log("Company update results:", { profilesResult, companyDataResult });
-
-      if (profilesResult.error) throw profilesResult.error;
-      if (companyDataResult.error) throw companyDataResult.error;
 
       toast({
         title: "Company Details Updated",
