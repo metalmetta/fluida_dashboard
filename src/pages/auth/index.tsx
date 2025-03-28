@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { z } from "zod";
@@ -10,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useAuth } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
+import { LockIcon, MailIcon, UserIcon, BuildingIcon } from "lucide-react";
+
 const loginSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address."
@@ -18,6 +21,7 @@ const loginSchema = z.object({
     message: "Password must be at least 6 characters."
   })
 });
+
 const signupSchema = loginSchema.extend({
   fullName: z.string().min(2, {
     message: "Full name must be at least 2 characters."
@@ -32,8 +36,10 @@ const signupSchema = loginSchema.extend({
   message: "Passwords do not match.",
   path: ["confirmPassword"]
 });
+
 type LoginFormValues = z.infer<typeof loginSchema>;
 type SignupFormValues = z.infer<typeof signupSchema>;
+
 export default function Auth() {
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const {
@@ -42,6 +48,7 @@ export default function Auth() {
     signIn,
     signUp
   } = useAuth();
+  
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -49,6 +56,7 @@ export default function Auth() {
       password: ""
     }
   });
+  
   const signupForm = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -59,6 +67,7 @@ export default function Auth() {
       confirmPassword: ""
     }
   });
+  
   const onLoginSubmit = async (data: LoginFormValues) => {
     try {
       await signIn(data.email, data.password);
@@ -66,6 +75,7 @@ export default function Auth() {
       console.error("Login error:", error);
     }
   };
+  
   const onSignupSubmit = async (data: SignupFormValues) => {
     try {
       await signUp(data.email, data.password, data.fullName, data.companyName);
@@ -79,101 +89,138 @@ export default function Auth() {
   if (user && !isLoading) {
     return <Navigate to="/" replace />;
   }
-  return <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-      <Card className="max-w-md w-full">
-        <CardHeader className="space-y-1">
+  
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-secondary/50 via-background to-secondary/50 p-4">
+      <Card className="max-w-md w-full shadow-lg border-primary/10">
+        <CardHeader className="space-y-4">
           <div className="flex justify-center mb-6">
             <img src="/logo.png" alt="Logo" className="h-20" />
           </div>
-          <CardTitle className="text-2xl text-center">Welcome to Fluida</CardTitle>
-          <CardDescription className="text-center">
+          <CardTitle className="text-2xl text-center font-bold">Welcome to Fluida</CardTitle>
+          <CardDescription className="text-center text-muted-foreground">
             Sign in to your account or create a new one
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeTab} onValueChange={value => setActiveTab(value as "login" | "signup")}>
-            <TabsList className="grid w-full grid-cols-2 mb-6">
+          <Tabs value={activeTab} onValueChange={value => setActiveTab(value as "login" | "signup")} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="login">
+            <TabsContent value="login" className="space-y-4">
               <Form {...loginForm}>
                 <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
-                  <FormField control={loginForm.control} name="email" render={({
-                  field
-                }) => <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="your@email.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>} />
-                  <FormField control={loginForm.control} name="password" render={({
-                  field
-                }) => <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>} />
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <FormField control={loginForm.control} name="email" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                            <MailIcon className="h-4 w-4" />
+                          </span>
+                          <Input placeholder="your@email.com" className="pl-10" {...field} />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={loginForm.control} name="password" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                            <LockIcon className="h-4 w-4" />
+                          </span>
+                          <Input type="password" placeholder="••••••••" className="pl-10" {...field} />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <Button type="submit" className="w-full mt-4" disabled={isLoading}>
                     {isLoading ? "Signing in..." : "Sign in"}
                   </Button>
                 </form>
               </Form>
             </TabsContent>
             
-            <TabsContent value="signup">
+            <TabsContent value="signup" className="space-y-4">
               <Form {...signupForm}>
                 <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="space-y-4">
-                  <FormField control={signupForm.control} name="fullName" render={({
-                  field
-                }) => <FormItem>
-                        <FormLabel>Full Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="John Doe" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>} />
-                  <FormField control={signupForm.control} name="companyName" render={({
-                  field
-                }) => <FormItem>
-                        <FormLabel>Company Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Acme Inc." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>} />
-                  <FormField control={signupForm.control} name="email" render={({
-                  field
-                }) => <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="your@email.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>} />
-                  <FormField control={signupForm.control} name="password" render={({
-                  field
-                }) => <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>} />
-                  <FormField control={signupForm.control} name="confirmPassword" render={({
-                  field
-                }) => <FormItem>
-                        <FormLabel>Confirm Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>} />
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <FormField control={signupForm.control} name="fullName" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                            <UserIcon className="h-4 w-4" />
+                          </span>
+                          <Input placeholder="John Doe" className="pl-10" {...field} />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={signupForm.control} name="companyName" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company Name</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                            <BuildingIcon className="h-4 w-4" />
+                          </span>
+                          <Input placeholder="Acme Inc." className="pl-10" {...field} />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={signupForm.control} name="email" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                            <MailIcon className="h-4 w-4" />
+                          </span>
+                          <Input placeholder="your@email.com" className="pl-10" {...field} />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={signupForm.control} name="password" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                            <LockIcon className="h-4 w-4" />
+                          </span>
+                          <Input type="password" placeholder="••••••••" className="pl-10" {...field} />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={signupForm.control} name="confirmPassword" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm Password</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                            <LockIcon className="h-4 w-4" />
+                          </span>
+                          <Input type="password" placeholder="••••••••" className="pl-10" {...field} />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <Button type="submit" className="w-full mt-4" disabled={isLoading}>
                     {isLoading ? "Creating account..." : "Create account"}
                   </Button>
                 </form>
@@ -191,5 +238,6 @@ export default function Auth() {
         </CardFooter>
       </Card>
       <Toaster />
-    </div>;
+    </div>
+  );
 }
