@@ -114,32 +114,32 @@ export function WithdrawDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] w-full">
-        <DialogHeader>
-          <DialogTitle>Withdraw Funds</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="sm:max-w-[480px] w-full p-6">
+        <DialogHeader className="space-y-2">
+          <DialogTitle className="text-2xl font-bold">Withdraw Funds</DialogTitle>
+          <DialogDescription className="text-base text-muted-foreground">
             Transfer funds from your account to your bank account.
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <div className="flex justify-between">
-                <Label htmlFor="amount">Amount</Label>
+        <form onSubmit={handleSubmit} className="mt-4">
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="amount" className="text-sm font-medium">Amount</Label>
                 <span className="text-sm text-muted-foreground">
                   Available: {formatCurrency(currentBalance, currentCurrency)}
                 </span>
               </div>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary">
                   {currentCurrency === 'EUR' ? '€' : 
                    currentCurrency === 'GBP' ? '£' : '$'}
                 </span>
                 <Input
                   id="amount"
                   type="text"
-                  className="pl-8"
+                  className="pl-8 h-12 text-lg"
                   value={amount}
                   onChange={handleAmountChange}
                   placeholder="0.00"
@@ -148,12 +148,12 @@ export function WithdrawDialog({
               </div>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="withdrawal-destination">Destination</Label>
-              <div className="border rounded-md p-3 bg-gray-50">
+            <div className="space-y-2">
+              <Label htmlFor="withdrawal-destination" className="text-sm font-medium">Destination</Label>
+              <div className="border rounded-md p-4 bg-secondary/30">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium">Bank Account</span>
-                  <span className="text-xs text-muted-foreground">Default</span>
+                  <span className="text-base font-medium">Bank Account</span>
+                  <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">Default</span>
                 </div>
                 <div className="text-sm text-muted-foreground">
                   Chase • ••••4321
@@ -161,16 +161,16 @@ export function WithdrawDialog({
               </div>
             </div>
 
-            <div className="bg-amber-50 p-3 rounded-md border border-amber-200 text-amber-800 flex gap-2 text-sm">
-              <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+            <div className="bg-amber-50 p-4 rounded-md border border-amber-200 text-amber-800 flex gap-3 text-sm">
+              <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5 text-amber-500" />
               <div>
                 Withdrawals typically take 1-3 business days to process.
               </div>
             </div>
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <DialogFooter className="flex-col sm:flex-row gap-3 mt-8 pt-4 border-t">
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto order-2 sm:order-1">
               <Button 
                 type="button" 
                 variant="outline" 
@@ -193,7 +193,7 @@ export function WithdrawDialog({
             <Button 
               type="submit" 
               disabled={isSubmitting}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto order-1 sm:order-2"
             >
               {isSubmitting ? (
                 <>
