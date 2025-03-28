@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertTriangle, DollarSign, X } from "lucide-react";
+import { AlertTriangle, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 
@@ -114,32 +114,32 @@ export function WithdrawDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] w-full p-0 overflow-hidden">
-        <DialogHeader className="px-6 pt-6 pb-2">
-          <DialogTitle className="text-2xl font-bold">Withdraw Funds</DialogTitle>
-          <DialogDescription className="text-blue-600 mt-1 text-base">
+      <DialogContent className="sm:max-w-[425px] w-full">
+        <DialogHeader>
+          <DialogTitle>Withdraw Funds</DialogTitle>
+          <DialogDescription>
             Transfer funds from your account to your bank account.
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="px-6">
-          <div className="space-y-5 pt-2 pb-4">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="amount" className="text-lg font-medium">Amount</Label>
-                <span className="text-blue-600 font-medium">
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <div className="flex justify-between">
+                <Label htmlFor="amount">Amount</Label>
+                <span className="text-sm text-muted-foreground">
                   Available: {formatCurrency(currentBalance, currentCurrency)}
                 </span>
               </div>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xl">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
                   {currentCurrency === 'EUR' ? '€' : 
                    currentCurrency === 'GBP' ? '£' : '$'}
                 </span>
                 <Input
                   id="amount"
                   type="text"
-                  className="pl-8 h-12 text-lg"
+                  className="pl-8"
                   value={amount}
                   onChange={handleAmountChange}
                   placeholder="0.00"
@@ -148,35 +148,35 @@ export function WithdrawDialog({
               </div>
             </div>
 
-            <div className="space-y-3">
-              <Label htmlFor="withdrawal-destination" className="text-lg font-medium">Destination</Label>
-              <div className="border rounded-md p-4 bg-white">
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-medium">Bank Account</span>
-                  <span className="text-blue-600 font-medium">Default</span>
+            <div className="grid gap-2">
+              <Label htmlFor="withdrawal-destination">Destination</Label>
+              <div className="border rounded-md p-3 bg-gray-50">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium">Bank Account</span>
+                  <span className="text-xs text-muted-foreground">Default</span>
                 </div>
-                <div className="text-blue-600 font-medium mt-1">
+                <div className="text-sm text-muted-foreground">
                   Chase • ••••4321
                 </div>
               </div>
             </div>
 
-            <div className="bg-amber-50 p-4 rounded-md border border-amber-200 text-amber-800 flex gap-3 text-base">
-              <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+            <div className="bg-amber-50 p-3 rounded-md border border-amber-200 text-amber-800 flex gap-2 text-sm">
+              <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
               <div>
                 Withdrawals typically take 1-3 business days to process.
               </div>
             </div>
           </div>
 
-          <DialogFooter className="flex pb-6 pt-2 px-0 gap-3">
-            <div className="grid grid-cols-2 gap-3 w-full">
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
-                className="text-base h-12"
+                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>
@@ -185,7 +185,7 @@ export function WithdrawDialog({
                 variant="outline" 
                 onClick={handleSimulateWithdrawal}
                 disabled={isSubmitting}
-                className="text-base h-12"
+                className="w-full sm:w-auto"
               >
                 Simulate Withdrawal
               </Button>
@@ -193,7 +193,7 @@ export function WithdrawDialog({
             <Button 
               type="submit" 
               disabled={isSubmitting}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-base h-12"
+              className="w-full sm:w-auto"
             >
               {isSubmitting ? (
                 <>
@@ -202,22 +202,13 @@ export function WithdrawDialog({
                 </>
               ) : (
                 <>
-                  <DollarSign className="h-5 w-5 mr-2" />
+                  <DollarSign className="h-4 w-4 mr-2" />
                   Withdraw Funds
                 </>
               )}
             </Button>
           </DialogFooter>
         </form>
-
-        {/* Custom close button position to match the design */}
-        <button 
-          onClick={() => onOpenChange(false)}
-          className="absolute right-5 top-5 rounded-full p-1 hover:bg-gray-100 transition-colors"
-          aria-label="Close"
-        >
-          <X className="h-5 w-5" />
-        </button>
       </DialogContent>
     </Dialog>
   );
