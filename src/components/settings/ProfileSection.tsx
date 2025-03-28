@@ -114,9 +114,10 @@ export function ProfileSection({ profileData, setProfileData, userId }: ProfileS
     
     try {
       setSaving(true);
+      console.log("Saving profile data:", profileData);
       
       // Update data in both the legacy profiles table and the new profile_data table
-      await Promise.all([
+      const [profilesResult, profileDataResult] = await Promise.all([
         // Update profiles table (legacy)
         supabase
           .from('profiles')
@@ -137,6 +138,11 @@ export function ProfileSection({ profileData, setProfileData, userId }: ProfileS
             avatar_url: profileData.avatarUrl
           }, { onConflict: 'user_id' })
       ]);
+
+      console.log("Profile update results:", { profilesResult, profileDataResult });
+
+      if (profilesResult.error) throw profilesResult.error;
+      if (profileDataResult.error) throw profileDataResult.error;
 
       toast({
         title: "Profile Updated",

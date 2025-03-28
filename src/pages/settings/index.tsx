@@ -40,6 +40,8 @@ export default function Settings() {
       try {
         setLoading(true);
         if (user) {
+          console.log("Loading profile data for user:", user.id);
+          
           // Fetch data from all relevant tables
           const [profilesResult, profileDataResult, companyDataResult] = await Promise.all([
             // Legacy profiles table
@@ -63,6 +65,12 @@ export default function Settings() {
               .eq('user_id', user.id)
               .maybeSingle()
           ]);
+          
+          console.log("Fetched data:", {
+            profilesResult,
+            profileDataResult,
+            companyDataResult
+          });
           
           const baseData = {
             fullName: "",
@@ -101,6 +109,7 @@ export default function Settings() {
             baseData.zip = companyDataResult.data.zip || '';
           }
           
+          console.log("Setting profile data:", baseData);
           setProfileData(baseData);
         }
       } catch (error) {

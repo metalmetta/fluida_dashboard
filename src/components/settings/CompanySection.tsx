@@ -30,9 +30,10 @@ export function CompanySection({ profileData, setProfileData, userId }: CompanyS
     
     try {
       setSaving(true);
+      console.log("Saving company data:", profileData);
       
       // Update both the legacy and new tables
-      await Promise.all([
+      const [profilesResult, companyDataResult] = await Promise.all([
         // Update the legacy profiles table with just the company name
         supabase
           .from('profiles')
@@ -54,6 +55,11 @@ export function CompanySection({ profileData, setProfileData, userId }: CompanyS
             zip: profileData.zip
           }, { onConflict: 'user_id' })
       ]);
+
+      console.log("Company update results:", { profilesResult, companyDataResult });
+
+      if (profilesResult.error) throw profilesResult.error;
+      if (companyDataResult.error) throw companyDataResult.error;
 
       toast({
         title: "Company Details Updated",
