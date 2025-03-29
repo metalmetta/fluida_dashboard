@@ -117,13 +117,19 @@ export function ProfileSection({ profileData, setProfileData, userId }: ProfileS
       setSaving(true);
       console.log("Saving profile data:", profileData);
       
+      // Convert phone to numeric if it's not empty, or null if it is
+      const phoneValue = profileData.phone ? 
+        // Make sure we're sending a valid numeric value by removing non-digits
+        profileData.phone.replace(/\D/g, '') || null 
+        : null;
+      
       // Update the correct columns in the profiles table
       const { error } = await supabase
         .from('profiles')
         .update({
           full_name: profileData.fullName,
           company_name: profileData.companyName,
-          phone: profileData.phone,
+          phone: phoneValue,
           avatar_url: profileData.avatarUrl
         })
         .eq('id', userId);

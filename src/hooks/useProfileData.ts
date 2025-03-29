@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 export interface ProfileData {
   fullName: string;
   email: string;
-  phone: string;
+  phone: string; // Ensuring this is a string type
   companyName: string;
   taxId: string;
   address: string;
@@ -79,7 +79,8 @@ export function useProfileData(promptProfileCompletion?: boolean) {
             baseData.fullName = profilesResult.data.full_name || '';
             baseData.companyName = profilesResult.data.company_name || '';
             baseData.avatarUrl = profilesResult.data.avatar_url || '';
-            baseData.phone = profilesResult.data.phone || '';
+            // Convert phone to string if it exists
+            baseData.phone = profilesResult.data.phone ? String(profilesResult.data.phone) : '';
           }
           
           // Then add company data if available
