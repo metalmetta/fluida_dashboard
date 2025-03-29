@@ -1,8 +1,9 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowUp, Loader2 } from "lucide-react";
+import { ArrowDown, ArrowUp, HelpCircle, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface BalanceCardProps {
   isLoading: boolean;
@@ -58,6 +59,18 @@ export function BalanceCard({
                 : "$0.00"
               }
             </p>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" className="p-0 h-auto mb-1" aria-label="Balance information">
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>Fluida uses digital currency. When you add money to Fluida, it's automatically converted to a stablecoin called USDC.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <p className="text-sm text-muted-foreground mb-1">Available balance</p>
           </div>
         )}
