@@ -1,7 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowUp, HelpCircle, Loader2 } from "lucide-react";
+import { ArrowDown, ArrowUp, AlertCircle, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -63,7 +63,7 @@ export function BalanceCard({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" className="p-0 h-auto mb-1" aria-label="Balance information">
-                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    <AlertCircle className="h-4 w-4 text-muted-foreground" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">

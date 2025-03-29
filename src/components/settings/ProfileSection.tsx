@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -120,7 +119,7 @@ export function ProfileSection({ profileData, setProfileData, userId }: ProfileS
       // Convert phone to numeric if it's not empty, or null if it is
       const phoneValue = profileData.phone ? 
         // Make sure we're sending a valid numeric value by removing non-digits
-        profileData.phone.replace(/\D/g, '') || null 
+        parseInt(profileData.phone.replace(/\D/g, '')) || null 
         : null;
       
       // Update the correct columns in the profiles table
