@@ -19,6 +19,7 @@ import { TopUpBalanceDialog } from "@/components/TopUpBalanceDialog";
 import { BalanceCard } from "@/components/dashboard/BalanceCard";
 import { PendingActionsCard } from "@/components/dashboard/PendingActionsCard";
 import { TransactionsCard } from "@/components/dashboard/TransactionsCard";
+import { useProfileData } from "@/hooks/useProfileData";
 
 const Index = () => {
   const { user } = useAuth();
@@ -28,8 +29,10 @@ const Index = () => {
   const [depositDialogOpen, setDepositDialogOpen] = useState(false);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
   const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
+  const { profileData, loading: profileLoading } = useProfileData();
   
   const userName = user?.user_metadata?.full_name || "there";
+  const companyName = profileData?.companyName || "";
   
   const getActionIcon = (iconName: string | null) => {
     const iconMap: Record<string, React.ElementType> = {
@@ -53,6 +56,12 @@ const Index = () => {
             <h1 className="text-3xl font-semibold">Welcome back, {userName}</h1>
             <p className="text-muted-foreground">Here's your financial overview</p>
           </div>
+          {companyName && !profileLoading && (
+            <div className="text-right">
+              <p className="text-lg font-medium">{companyName}</p>
+              <p className="text-sm text-muted-foreground">Company Account</p>
+            </div>
+          )}
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
