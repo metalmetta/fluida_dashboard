@@ -20,6 +20,7 @@ import { BalanceCard } from "@/components/dashboard/BalanceCard";
 import { PendingActionsCard } from "@/components/dashboard/PendingActionsCard";
 import { TransactionsCard } from "@/components/dashboard/TransactionsCard";
 import { useProfileData } from "@/hooks/useProfileData";
+import { Badge } from "@/components/ui/badge";
 
 const Index = () => {
   const { user } = useAuth();
@@ -58,8 +59,9 @@ const Index = () => {
           </div>
           {companyName && !profileLoading && (
             <div className="text-right">
-              <p className="text-lg font-medium">{companyName}</p>
-              <p className="text-sm text-muted-foreground">Company Account</p>
+              <p className="text-lg font-medium">
+                <Badge className="bg-blue-500 hover:bg-blue-600">{companyName}</Badge>
+              </p>
             </div>
           )}
         </div>
@@ -109,3 +111,4 @@ const Index = () => {
 };
 
 export default Index;
+
