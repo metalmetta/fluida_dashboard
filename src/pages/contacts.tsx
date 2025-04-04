@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -20,12 +19,12 @@ export default function Contacts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
 
-  // Filter contacts based on search query and type filter
   const filteredContacts = contacts.filter(contact => {
     const matchesSearch = contact.name.toLowerCase().includes(searchQuery.toLowerCase()) || contact.company && contact.company.toLowerCase().includes(searchQuery.toLowerCase()) || contact.email && contact.email.toLowerCase().includes(searchQuery.toLowerCase()) || contact.phone && contact.phone.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = typeFilter === "all" || contact.type.toLowerCase() === typeFilter.toLowerCase();
     return matchesSearch && matchesType;
   });
+
   return <DashboardLayout>
       <div className="space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
