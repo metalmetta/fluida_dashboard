@@ -1,3 +1,4 @@
+
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Mail, MessageCircle, Phone, HelpCircle } from "lucide-react";
-import { SubtitleCard } from "@/components/ui/subtitle-card";
 
 const faqs = [
   {
@@ -44,11 +44,6 @@ export default function Support() {
           <h1 className="text-3xl font-semibold">Support</h1>
           <p className="text-muted-foreground">Get help and support</p>
         </div>
-
-        <SubtitleCard 
-          text="Choose your preferred way to contact our support team."
-          tooltip="Our support team is available Monday to Friday, 9am-5pm EST."
-        />
 
         <div className="grid gap-6 md:grid-cols-3">
           <Card className="p-6">
@@ -98,6 +93,8 @@ export default function Support() {
         </div>
 
         <Card className="p-6">
+          <p className="text-sm text-muted-foreground mb-6">Choose your preferred way to contact our support team.</p>
+          
           <div className="flex items-center gap-2 mb-6">
             <HelpCircle className="h-5 w-5 text-primary" />
             <h2 className="text-lg font-medium">Frequently Asked Questions</h2>
