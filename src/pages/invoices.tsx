@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import { Invoice } from "@/types/invoice";
 import { useToast } from "@/hooks/use-toast";
 import { DocumentsHeader } from "@/components/documents/DocumentsHeader";
 import { DocumentsTable } from "@/components/documents/DocumentsTable";
+import { SubtitleCard } from "@/components/ui/subtitle-card";
 
 type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
 
@@ -155,6 +157,11 @@ export default function Invoices() {
               onClick: () => setCreateDialogOpen(true)
             }
           ]}
+        />
+
+        <SubtitleCard 
+          text="Create, send, and track invoices all in one place."
+          tooltip="Generate professional invoices and monitor their payment status easily."
         />
 
         <Card>

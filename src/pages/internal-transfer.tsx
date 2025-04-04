@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -18,6 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Wallet, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import NewTransferDialog from "@/components/NewTransferDialog";
+import { SubtitleCard } from "@/components/ui/subtitle-card";
 
 interface InternalTransfer {
   id: string;
@@ -90,6 +92,11 @@ export default function InternalTransfer() {
             New Transfer
           </Button>
         </div>
+
+        <SubtitleCard 
+          text="Transfer funds between your accounts with ease."
+          tooltip="Internal transfers allow you to move money between your Fluida balance and connected bank accounts."
+        />
 
         {balance && (
           <div className="grid gap-6 md:grid-cols-2">

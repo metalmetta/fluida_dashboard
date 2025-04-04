@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PayBillDialog } from "@/components/PayBillDialog";
 import { TopUpBalanceDialog } from "@/components/TopUpBalanceDialog";
 import { useUserBalance } from "@/hooks/useUserBalance";
+import { SubtitleCard } from "@/components/ui/subtitle-card";
 
 export default function Bills() {
   const { bills, isLoading, addBill, updateBillStatus } = useBills();
@@ -155,6 +157,11 @@ export default function Bills() {
               onClick: () => setAddBillDialogOpen(true)
             }
           ]}
+        />
+
+        <SubtitleCard 
+          text="Manage and pay your bills from one central location."
+          tooltip="Forward invoices to bills@getfluida.com to automatically add them to your account."
         />
 
         <div className="flex items-center justify-between">
