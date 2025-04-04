@@ -1,15 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useUserBalance } from "@/hooks/useUserBalance";
 import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +12,6 @@ import { Wallet, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import NewTransferDialog from "@/components/NewTransferDialog";
 import { SubtitleCard } from "@/components/ui/subtitle-card";
-
 interface InternalTransfer {
   id: string;
   amount: number;
@@ -34,58 +25,58 @@ interface InternalTransfer {
   created_at: string;
   updated_at: string;
 }
-
 export default function InternalTransfer() {
   const [transfers, setTransfers] = useState<InternalTransfer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
-  const { balance, fetchBalance } = useUserBalance();
-  const { toast } = useToast();
-  const { user } = useAuth();
-
+  const {
+    balance,
+    fetchBalance
+  } = useUserBalance();
+  const {
+    toast
+  } = useToast();
+  const {
+    user
+  } = useAuth();
   const fetchTransfers = async () => {
     if (!user) return;
-    
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("internal_transfers")
-        .select("*")
-        .order("transfer_date", { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from("internal_transfers").select("*").order("transfer_date", {
+        ascending: false
+      });
       if (error) throw error;
-      
       setTransfers(data || []);
     } catch (error) {
       console.error("Error fetching internal transfers:", error);
       toast({
         title: "Error",
         description: "Failed to load internal transfers",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
   };
-
   const handleTransferComplete = () => {
     fetchTransfers();
     fetchBalance();
   };
-
   useEffect(() => {
     if (user) {
       fetchTransfers();
     }
   }, [user]);
-
-  return (
-    <DashboardLayout>
+  return <DashboardLayout>
       <div className="space-y-8">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-semibold">Internal Transfer</h1>
-            <p className="text-muted-foreground">Send funds from your Fluida balance to your bank accounts</p>
+            <p className="text-muted-foreground"></p>
           </div>
           <Button variant="default" onClick={() => setTransferDialogOpen(true)}>
             <ArrowRightLeft className="h-4 w-4 mr-2" />
@@ -93,13 +84,9 @@ export default function InternalTransfer() {
           </Button>
         </div>
 
-        <SubtitleCard 
-          text="Transfer funds between your accounts with ease."
-          tooltip="Internal transfers allow you to move money between your Fluida balance and connected bank accounts."
-        />
+        <SubtitleCard text="Transfer funds between your accounts with ease." tooltip="Internal transfers allow you to move money between your Fluida balance and connected bank accounts." />
 
-        {balance && (
-          <div className="grid gap-6 md:grid-cols-2">
+        {balance && <div className="grid gap-6 md:grid-cols-2">
             <Card className="p-6">
               <div className="flex items-center gap-3 mb-2">
                 <Wallet className="h-5 w-5 text-muted-foreground" />
@@ -112,22 +99,16 @@ export default function InternalTransfer() {
                 Current available balance to transfer
               </p>
             </Card>
-          </div>
-        )}
+          </div>}
 
         <Card className="p-6">
           <h3 className="text-lg font-medium mb-6">Transfer History</h3>
           
-          {isLoading ? (
-            <div className="flex justify-center py-8">
+          {isLoading ? <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : transfers.length === 0 ? (
-            <div className="text-center py-8 border rounded-lg bg-muted/30">
+            </div> : transfers.length === 0 ? <div className="text-center py-8 border rounded-lg bg-muted/30">
               <p className="text-muted-foreground">No internal transfers found</p>
-            </div>
-          ) : (
-            <div className="rounded-md border">
+            </div> : <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -140,8 +121,7 @@ export default function InternalTransfer() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {transfers.map((transfer) => (
-                    <TableRow key={transfer.id} className="hover:bg-muted/50">
+                  {transfers.map(transfer => <TableRow key={transfer.id} className="hover:bg-muted/50">
                       <TableCell>
                         {new Date(transfer.transfer_date).toLocaleDateString()}
                       </TableCell>
@@ -151,15 +131,7 @@ export default function InternalTransfer() {
                         {formatCurrency(transfer.amount, transfer.currency)}
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant={
-                            transfer.status === "Completed"
-                              ? "success"
-                              : transfer.status === "Processing"
-                              ? "outline"
-                              : "destructive"
-                          }
-                        >
+                        <Badge variant={transfer.status === "Completed" ? "success" : transfer.status === "Processing" ? "outline" : "destructive"}>
                           {transfer.status}
                         </Badge>
                       </TableCell>
@@ -168,20 +140,13 @@ export default function InternalTransfer() {
                           {transfer.reference || "-"}
                         </span>
                       </TableCell>
-                    </TableRow>
-                  ))}
+                    </TableRow>)}
                 </TableBody>
               </Table>
-            </div>
-          )}
+            </div>}
         </Card>
       </div>
 
-      <NewTransferDialog 
-        open={transferDialogOpen} 
-        onOpenChange={setTransferDialogOpen} 
-        onTransferComplete={handleTransferComplete}
-      />
-    </DashboardLayout>
-  );
+      <NewTransferDialog open={transferDialogOpen} onOpenChange={setTransferDialogOpen} onTransferComplete={handleTransferComplete} />
+    </DashboardLayout>;
 }
