@@ -87,8 +87,6 @@ export default function Payments() {
         </div>
 
         <Card className="p-6">
-          <p className="text-sm text-muted-foreground mb-6">Track and manage all your outgoing payments in one place.</p>
-          
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
             <h3 className="text-lg font-medium">Payment History</h3>
             <div className="flex flex-col md:flex-row items-start md:items-center gap-3 w-full md:w-auto">

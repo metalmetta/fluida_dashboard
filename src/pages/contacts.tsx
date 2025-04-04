@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useContacts } from "@/hooks/useContacts";
 import { AddContactDialog } from "@/components/AddContactDialog";
+import { SubtitleCard } from "@/components/ui/subtitle-card";
 
 export default function Contacts() {
   const {
@@ -35,9 +36,9 @@ export default function Contacts() {
           </div>
         </div>
 
+        <SubtitleCard text="To avoid delays when creating transfers for vendors, add their details now. Verification takes up to one day, so starting early keeps you ready to transact." tooltip="Adding contact details in advance helps streamline payment processes and ensures timely transfers." />
+
         <Card className="p-4 sm:p-6">
-          <p className="text-sm text-muted-foreground mb-6">To avoid delays when creating transfers for vendors, add their details now. Verification takes up to one day, so starting early keeps you ready to transact.</p>
-          
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1">
               <div className="relative">

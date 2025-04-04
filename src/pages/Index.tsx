@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { 
@@ -21,7 +20,7 @@ import { PendingActionsCard } from "@/components/dashboard/PendingActionsCard";
 import { TransactionsCard } from "@/components/dashboard/TransactionsCard";
 import { useProfileData } from "@/hooks/useProfileData";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { SubtitleCard } from "@/components/ui/subtitle-card";
 
 const Index = () => {
   const { user } = useAuth();
@@ -67,9 +66,10 @@ const Index = () => {
           )}
         </div>
 
-        <Card className="p-6 mb-6">
-          <p className="text-sm text-muted-foreground">Track your account balance, pending actions, and recent transactions.</p>
-        </Card>
+        <SubtitleCard 
+          text="Track your account balance, pending actions, and recent transactions."
+          tooltip="This dashboard gives you a quick overview of your financial status and activities."
+        />
 
         <div className="grid gap-6 md:grid-cols-2">
           <BalanceCard 
