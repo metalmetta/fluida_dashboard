@@ -12,6 +12,7 @@ import { Wallet, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import NewTransferDialog from "@/components/NewTransferDialog";
 import { SubtitleCard } from "@/components/ui/subtitle-card";
+
 interface InternalTransfer {
   id: string;
   amount: number;
@@ -25,6 +26,7 @@ interface InternalTransfer {
   created_at: string;
   updated_at: string;
 }
+
 export default function InternalTransfer() {
   const [transfers, setTransfers] = useState<InternalTransfer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,6 +41,7 @@ export default function InternalTransfer() {
   const {
     user
   } = useAuth();
+
   const fetchTransfers = async () => {
     if (!user) return;
     setIsLoading(true);
@@ -62,15 +65,18 @@ export default function InternalTransfer() {
       setIsLoading(false);
     }
   };
+
   const handleTransferComplete = () => {
     fetchTransfers();
     fetchBalance();
   };
+
   useEffect(() => {
     if (user) {
       fetchTransfers();
     }
   }, [user]);
+
   return <DashboardLayout>
       <div className="space-y-8">
         <div className="flex items-center justify-between">
@@ -84,7 +90,7 @@ export default function InternalTransfer() {
           </Button>
         </div>
 
-        <SubtitleCard text="Transfer funds between your accounts with ease." tooltip="Internal transfers allow you to move money between your Fluida balance and connected bank accounts." />
+        <SubtitleCard text="Transfer funds between your Treasury accounts with ease." tooltip="Internal transfers allow you to move money between your Fluida balance and connected bank accounts." />
 
         {balance && <div className="grid gap-6 md:grid-cols-2">
             <Card className="p-6">
