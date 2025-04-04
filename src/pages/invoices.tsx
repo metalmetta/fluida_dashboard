@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -145,7 +144,6 @@ export default function Invoices() {
       <div className="space-y-8">
         <DocumentsHeader
           title="Invoices"
-          description="Manage your invoices"
           statusFilters={statusFilters}
           selectedStatus={selectedStatus}
           onStatusChange={handleStatusChange}
