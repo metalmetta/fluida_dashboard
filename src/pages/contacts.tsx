@@ -28,7 +28,8 @@ export default function Contacts() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold">Contacts</h1>
-            <p className="text-muted-foreground">To avoid delays when creating transfers for vendors, add their details now. Verification takes up to one day, so starting early keeps you ready to transact.</p>
+            <p className="text-muted-foreground">To avoid delays when creating transfers for vendors, add their details now. 
+Verification takes up to one day, so starting early keeps you ready to transact.</p>
           </div>
           <div className="flex gap-2">
             <AddContactDialog />
