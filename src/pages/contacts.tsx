@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useContacts } from "@/hooks/useContacts";
 import { AddContactDialog } from "@/components/AddContactDialog";
 import { SubtitleCard } from "@/components/ui/subtitle-card";
-
 export default function Contacts() {
   const {
     contacts,
@@ -18,29 +17,24 @@ export default function Contacts() {
   } = useContacts();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
-
   const filteredContacts = contacts.filter(contact => {
     const matchesSearch = contact.name.toLowerCase().includes(searchQuery.toLowerCase()) || contact.company && contact.company.toLowerCase().includes(searchQuery.toLowerCase()) || contact.email && contact.email.toLowerCase().includes(searchQuery.toLowerCase()) || contact.phone && contact.phone.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = typeFilter === "all" || contact.type.toLowerCase() === typeFilter.toLowerCase();
     return matchesSearch && matchesType;
   });
-
   return <DashboardLayout>
       <div className="space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold">Contacts</h1>
-            <p className="text-muted-foreground">To avoid delays when creating transfers for vendors, add their details now.</p>
+            <p className="text-muted-foreground"></p>
           </div>
           <div className="flex gap-2">
             <AddContactDialog />
           </div>
         </div>
 
-        <SubtitleCard 
-          text="Verification takes up to one day, so starting early keeps you ready to transact."
-          tooltip="Adding contact details in advance helps streamline payment processes and ensures timely transfers."
-        />
+        <SubtitleCard text="Verification takes up to one day, so starting early keeps you ready to transact." tooltip="Adding contact details in advance helps streamline payment processes and ensures timely transfers." />
 
         <Card className="p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
