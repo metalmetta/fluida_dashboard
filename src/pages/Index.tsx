@@ -61,7 +61,7 @@ const Index = () => {
           </div>
           {companyName && !profileLoading && <div className="text-right">
               <p className="text-lg font-medium">
-                <Badge className="bg-blue-500 hover:bg-blue-600">{companyName}</Badge>
+                <Badge className="">{companyName}</Badge>
               </p>
             </div>}
         </div>
