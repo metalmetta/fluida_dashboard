@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useContacts } from "@/hooks/useContacts";
 import { AddContactDialog } from "@/components/AddContactDialog";
 import { SubtitleCard } from "@/components/ui/subtitle-card";
+
 export default function Contacts() {
   const {
     contacts,
@@ -34,7 +36,7 @@ export default function Contacts() {
           </div>
         </div>
 
-        <SubtitleCard text="Verification takes up to one day, so starting early keeps you ready to transact." tooltip="Adding contact details in advance helps streamline payment processes and ensures timely transfers." />
+        <SubtitleCard text="To avoid delays when creating transfers for vendors, add their details now. Verification takes up to one day, so starting early keeps you ready to transact." tooltip="Adding contact details in advance helps streamline payment processes and ensures timely transfers." />
 
         <Card className="p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
