@@ -243,7 +243,7 @@ export function WithdrawDialog({
             </div>
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-3 mt-8 pt-4 border-t mb-6">
+          <DialogFooter className="flex-col sm:flex-row gap-3 mt-8 pt-4 border-t pb-6">
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto order-2 sm:order-1">
               <Button 
                 type="button" 
