@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -67,12 +66,10 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
     },
   });
 
-  // Watch for changes to generate bill number
   const vendor = form.watch("vendor");
   const issueDate = form.watch("issue_date");
   const invoiceNumber = form.watch("invoice_number");
 
-  // Generate bill number when relevant fields change
   useEffect(() => {
     if (vendor && issueDate && invoiceNumber) {
       const generatedBillNumber = generateBillId(issueDate, vendor, invoiceNumber);
@@ -118,7 +115,6 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
     setAddContactDialogOpen(false);
   }, []);
 
-  // Get the currency symbol based on the selected currency
   const getCurrencySymbol = (currency: string) => {
     switch (currency) {
       case "EUR": return <Euro className="h-4 w-4" />;
@@ -140,7 +136,6 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
           <Form {...form}>
             <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
               <div className="flex flex-col md:flex-row">
-                {/* Left Column - Drag and Drop */}
                 <div className="md:w-1/3 px-6">
                   <div className="bg-gray-50 h-full py-16 px-6 rounded-lg flex flex-col items-center justify-center">
                     <div className="flex flex-col items-center gap-2 text-center">
@@ -152,7 +147,6 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                   </div>
                 </div>
                 
-                {/* Right Column - Form Fields */}
                 <div className="md:w-2/3 px-6 space-y-5 overflow-y-auto max-h-[70vh]">
                   <h2 className="text-lg font-medium">Summary</h2>
                   
@@ -220,7 +214,6 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                     </div>
                   </div>
 
-                  {/* Generated Bill ID Display */}
                   {billNumber && (
                     <div className="bg-muted p-3 rounded-md">
                       <p className="text-sm font-medium">Generated Bill ID:</p>
@@ -411,9 +404,7 @@ export function AddBillDialog({ open, onOpenChange, onSubmit }: AddBillDialogPro
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Checking">Checking Account</SelectItem>
-                              <SelectItem value="Savings">Savings Account</SelectItem>
-                              <SelectItem value="CreditCard">Credit Card</SelectItem>
+                              <SelectItem value="FluidaBalance">Fluida Balance</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
