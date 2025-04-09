@@ -94,7 +94,7 @@ export function DocumentsTable<T>({
                   <Badge
                     variant={getStatusVariant(String(document[statusKey]))}
                   >
-                    {String(document[statusKey])}
+                    {String(document[statusKey]) === "Ready for payment" ? "Ready" : String(document[statusKey])}
                   </Badge>
                 ) : (
                   String(document[column.accessorKey] || "")

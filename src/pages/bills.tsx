@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -40,7 +39,7 @@ export default function Bills() {
 
   const statusFilters = [
     { value: "Draft", label: "Draft", count: statusCounts.Draft },
-    { value: "Ready for payment", label: "Ready for payment", count: statusCounts["Ready for payment"] },
+    { value: "Ready for payment", label: "Ready", count: statusCounts["Ready for payment"] },
     { value: "Paid", label: "Paid", count: statusCounts.Paid },
   ];
 
