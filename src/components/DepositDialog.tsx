@@ -9,11 +9,11 @@ import {
   DialogDescription
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Copy, CreditCard, Building, Euro } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUserBalance } from "@/hooks/useUserBalance";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { USDDepositDetails } from "./deposit/USDDepositDetails";
+import { EURDepositDetails } from "./deposit/EURDepositDetails";
 
 interface DepositDialogProps {
   open: boolean;
@@ -92,242 +92,18 @@ export function DepositDialog({ open, onOpenChange }: DepositDialogProps) {
             <TabsTrigger value="eur">EUR</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="usd" className="space-y-4">
-            <div className="bg-muted p-4 rounded-lg space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Building className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">ACH Instructions</span>
-                </div>
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Account Name</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{usdBankDetails.accountName}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6"
-                      onClick={() => handleCopy(usdBankDetails.accountName, "Account name")}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Routing Number</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{usdBankDetails.routingNumber}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6"
-                      onClick={() => handleCopy(usdBankDetails.routingNumber, "Routing number")}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Account Number</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{usdBankDetails.accountNumber}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6"
-                      onClick={() => handleCopy(usdBankDetails.accountNumber, "Account number")}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Bank Name</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{usdBankDetails.bankName}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6"
-                      onClick={() => handleCopy(usdBankDetails.bankName, "Bank name")}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-muted p-4 rounded-lg space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">WIRE Instructions</span>
-                </div>
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">SWIFT Code</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{usdBankDetails.swiftCode}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6"
-                      onClick={() => handleCopy(usdBankDetails.swiftCode, "SWIFT code")}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Bank Address</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{usdBankDetails.address}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6"
-                      onClick={() => handleCopy(usdBankDetails.address, "Bank address")}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Account Number</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{usdBankDetails.accountNumber}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6"
-                      onClick={() => handleCopy(usdBankDetails.accountNumber, "Account number")}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <TabsContent value="usd">
+            <USDDepositDetails 
+              bankDetails={usdBankDetails} 
+              onCopy={handleCopy} 
+            />
           </TabsContent>
           
-          <TabsContent value="eur" className="space-y-4">
-            <div className="bg-muted p-4 rounded-lg space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Euro className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">SEPA Instructions</span>
-                </div>
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Account Name</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{euroBankDetails.accountName}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6"
-                      onClick={() => handleCopy(euroBankDetails.accountName, "Account name")}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">IBAN</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{euroBankDetails.iban}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6"
-                      onClick={() => handleCopy(euroBankDetails.iban, "IBAN")}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">BIC/SWIFT</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{euroBankDetails.bic}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6"
-                      onClick={() => handleCopy(euroBankDetails.bic, "BIC/SWIFT")}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Bank Name</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{euroBankDetails.bankName}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6"
-                      onClick={() => handleCopy(euroBankDetails.bankName, "Bank name")}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Bank Address</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{euroBankDetails.address}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6"
-                      onClick={() => handleCopy(euroBankDetails.address, "Bank address")}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Reference</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{euroBankDetails.reference}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6"
-                      onClick={() => handleCopy(euroBankDetails.reference, "Reference")}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <TabsContent value="eur">
+            <EURDepositDetails 
+              bankDetails={euroBankDetails} 
+              onCopy={handleCopy} 
+            />
           </TabsContent>
         </Tabs>
         
