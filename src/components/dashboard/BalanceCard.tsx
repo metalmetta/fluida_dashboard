@@ -1,7 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowUp, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowDown, ArrowUp, AlertCircle, Loader2, Wallet } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -52,27 +52,41 @@ export function BalanceCard({
             <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
           </div>
         ) : (
-          <div className="flex items-end gap-2 mb-6">
-            <p className="text-3xl font-semibold">
-              {balance 
-                ? formatCurrency(balance.available_amount, balance.currency)
-                : "$0.00"
-              }
-            </p>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" className="p-0 h-auto mb-1" aria-label="Balance information">
-                    <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p>Fluida uses digital currency. When you add money to Fluida, it's automatically converted to a stablecoin called USDC.</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <p className="text-sm text-muted-foreground mb-1">Available balance</p>
-          </div>
+          <>
+            <div className="flex items-end gap-2 mb-6">
+              <p className="text-3xl font-semibold">
+                {balance 
+                  ? formatCurrency(balance.available_amount, balance.currency)
+                  : "$0.00"
+                }
+              </p>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" className="p-0 h-auto mb-1" aria-label="Balance information">
+                      <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p>Fluida uses digital currency. When you add money to Fluida, it's automatically converted to a stablecoin called USDC.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <p className="text-sm text-muted-foreground mb-1">Available balance</p>
+            </div>
+            
+            <Button
+              variant="outline"
+              className="w-full mt-4"
+              onClick={() => {
+                console.log("Create wallet clicked - Implement Solana wallet integration");
+                // When integrated: createWallet() would be called here
+              }}
+            >
+              <Wallet className="mr-2 h-4 w-4" />
+              Create Wallet
+            </Button>
+          </>
         )}
       </div>
     </Card>
