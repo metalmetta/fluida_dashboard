@@ -1,9 +1,12 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowUp, AlertCircle, Loader2, Wallet } from "lucide-react";
+import { ArrowDown, ArrowUp, AlertCircle, Loader2, Wallet, Check, Copy } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useWallet } from "@/hooks/useWallet";
+import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
 
 interface BalanceCardProps {
   isLoading: boolean;
@@ -21,6 +24,23 @@ export function BalanceCard({
   onDepositClick,
   onWithdrawClick
 }: BalanceCardProps) {
+  const { wallet, isCreating, createWallet } = useWallet();
+  const [copied, setCopied] = useState(false);
+
+  const handleCreateWallet = async () => {
+    await createWallet();
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    toast({
+      title: "Address Copied",
+      description: "Wallet address copied to clipboard",
+    });
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <Card>
       <div className="p-6">
@@ -75,17 +95,43 @@ export function BalanceCard({
               <p className="text-sm text-muted-foreground mb-1">Available balance</p>
             </div>
             
-            <Button
-              variant="outline"
-              className="w-full mt-4"
-              onClick={() => {
-                console.log("Create wallet clicked - Implement Solana wallet integration");
-                // When integrated: createWallet() would be called here
-              }}
-            >
-              <Wallet className="mr-2 h-4 w-4" />
-              Create Wallet
-            </Button>
+            {wallet ? (
+              <div className="mt-4 border rounded-md p-3 bg-muted/20">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="text-sm font-medium">Solana Wallet</h4>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 w-6 p-0" 
+                    onClick={() => copyToClipboard(wallet.address)}
+                  >
+                    {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground font-mono truncate">
+                  {wallet.address}
+                </p>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full mt-4"
+                onClick={handleCreateWallet}
+                disabled={isCreating}
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Wallet...
+                  </>
+                ) : (
+                  <>
+                    <Wallet className="mr-2 h-4 w-4" />
+                    Create Wallet
+                  </>
+                )}
+              </Button>
+            )}
           </>
         )}
       </div>
