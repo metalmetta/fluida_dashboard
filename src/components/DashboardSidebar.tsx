@@ -10,14 +10,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { FileText, CreditCard, Receipt, Users, Settings, HelpCircle, LogOut, ChevronDown, ArrowRightLeft } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { FileText, CreditCard, Receipt, Users, Settings, HelpCircle, LogOut, ArrowRightLeft } from "lucide-react";
+import { UserCard } from "@/components/ui/user-card";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -101,16 +95,11 @@ export function DashboardSidebar() {
   const userEmail = user?.email || "user@example.com";
   const userName = user?.user_metadata?.full_name || userEmail.split("@")[0];
 
-  // Get initials for avatar fallback
-  const getInitials = (name: string) => {
-    if (!name) return "U";
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  // Map the user menu items with active state
+  const mappedUserMenuItems = userMenuItems.map(item => ({
+    ...item,
+    isActive: item.href ? location.pathname === item.href : false
+  }));
 
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-white">
@@ -158,39 +147,13 @@ export function DashboardSidebar() {
         </SidebarContent>
 
         <div className="mt-auto border-t">
-          <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-3 w-full p-4 hover:bg-secondary/50 transition-colors">
-              <Avatar>
-                {avatarUrl ? (
-                  <AvatarImage src={avatarUrl} alt={userName} />
-                ) : (
-                  <AvatarFallback>{getInitials(userName)}</AvatarFallback>
-                )}
-              </Avatar>
-              <div className="text-left flex-1">
-                <p className="font-medium">{userName}</p>
-                <p className="text-sm text-muted-foreground">{userEmail}</p>
-              </div>
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" side="right" className="w-56">
-              {userMenuItems.map((item) => {
-                const isActive = location.pathname === item.href;
-                return (
-                  <DropdownMenuItem 
-                    key={item.label} 
-                    onClick={() => handleUserAction(item.action, item.href)}
-                    className={`flex items-center gap-2 cursor-pointer ${
-                      isActive ? 'text-[#2606EB] bg-[#2606EB]/5' : ''
-                    }`}
-                  >
-                    <item.icon className={`h-4 w-4 ${isActive ? 'text-[#2606EB]' : ''}`} />
-                    <span>{item.label}</span>
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <UserCard
+            userName={userName}
+            userEmail={userEmail}
+            avatarUrl={avatarUrl}
+            menuItems={mappedUserMenuItems}
+            onMenuItemClick={handleUserAction}
+          />
         </div>
       </Sidebar>
     </div>
