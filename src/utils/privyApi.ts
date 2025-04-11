@@ -1,6 +1,4 @@
 
-import { toast } from "@/hooks/use-toast";
-
 // Types for wallet responses
 export interface WalletResponse {
   id: string;
@@ -12,16 +10,19 @@ export interface WalletResponse {
   created_at: number;
 }
 
+const PRIVY_APP_ID = 'cm7ae13h401kawj3tomldpsrf';
+const PRIVY_AUTH_KEY = '4oYQp4VhuFGi3poTWYeVvvavZhR1PvapZvE6VEUCbnXNHX98eidKM2Ge9TfihaW39bMtSZHm8iGx58UuS8jVMJWa';
+
 export const createSolanaWallet = async (): Promise<WalletResponse | null> => {
   try {
     const response = await fetch('https://api.privy.io/v1/wallets', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'privy-app-id': 'cm7ae13h401kawj3tomldpsrf',
+        'privy-app-id': PRIVY_APP_ID,
         // Note: In a production app, this should be handled server-side
         // The authorization would be managed through a secure backend
-        'Authorization': 'Basic ' + btoa('cm7ae13h401kawj3tomldpsrf:4oYQp4VhuFGi3poTWYeVvvavZhR1PvapZvE6VEUCbnXNHX98eidKM2Ge9TfihaW39bMtSZHm8iGx58UuS8jVMJWa')
+        'Authorization': 'Basic ' + btoa(`${PRIVY_APP_ID}:${PRIVY_AUTH_KEY}`)
       },
       body: JSON.stringify({
         chain_type: "solana"
@@ -37,11 +38,6 @@ export const createSolanaWallet = async (): Promise<WalletResponse | null> => {
     return data as WalletResponse;
   } catch (error) {
     console.error('Error creating wallet:', error);
-    toast({
-      title: "Wallet Creation Failed",
-      description: error instanceof Error ? error.message : "An unexpected error occurred",
-      variant: "destructive"
-    });
-    return null;
+    throw error;
   }
 };

@@ -21,6 +21,11 @@ export const useWallet = () => {
       }
     } catch (error) {
       console.error("Error in useWallet hook:", error);
+      toast({
+        title: "Wallet Creation Failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive"
+      });
     } finally {
       setIsCreating(false);
     }
