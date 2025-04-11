@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowDown, ArrowUp, AlertCircle, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useWallet } from "@/hooks/useWallet";
-import { WalletDisplay } from "@/components/wallet/WalletDisplay";
-import { CreateWalletButton } from "@/components/wallet/CreateWalletButton";
+import { WalletSection } from "@/components/wallet/WalletSection";
 
 interface BalanceCardProps {
   isLoading: boolean;
@@ -24,12 +22,6 @@ export function BalanceCard({
   onDepositClick,
   onWithdrawClick
 }: BalanceCardProps) {
-  const { wallet, isCreating, createWallet } = useWallet();
-
-  const handleCreateWallet = async () => {
-    await createWallet();
-  };
-
   return (
     <Card>
       <div className="p-6">
@@ -84,14 +76,7 @@ export function BalanceCard({
               <p className="text-sm text-muted-foreground mb-1">Available balance</p>
             </div>
             
-            {wallet ? (
-              <WalletDisplay wallet={wallet} />
-            ) : (
-              <CreateWalletButton 
-                isCreating={isCreating} 
-                onClick={handleCreateWallet} 
-              />
-            )}
+            <WalletSection />
           </>
         )}
       </div>
