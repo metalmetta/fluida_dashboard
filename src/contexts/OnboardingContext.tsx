@@ -373,7 +373,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       };
 
       try {
-        // Updated to handle CORS issue
+        // Updated to fix the 415 Unsupported Media Type error
         const response = await fetch("https://sandbox.infinite.dev/customers", {
           method: "POST",
           headers: {
@@ -381,12 +381,26 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
             "x-organization-id": "b89dfab6-8ebd-41cf-87e0-10db9f2826f1",
             "Content-Type": "application/json"
           },
-          mode: "no-cors", // Add no-cors mode to bypass CORS restrictions
           body: JSON.stringify(formattedData)
         });
         
-        // Since we're using no-cors, we can't read the response
-        // So we'll just assume success if no error is thrown
+        // Process response
+        if (!response.ok) {
+          // If we can read the error response, get more details
+          if (response.status !== 415) {
+            try {
+              const errorData = await response.json();
+              throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+            } catch (jsonError) {
+              // If can't parse JSON, use generic error
+              throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+          } else {
+            // 415 specific error
+            throw new Error("415 Unsupported Media Type: The server doesn't support the format sent");
+          }
+        }
+        
         console.log("Onboarding data submitted successfully");
         toast({
           title: "Onboarding Complete",
@@ -398,7 +412,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         setIsSubmitting(false);
       } catch (fetchError) {
         console.error("Error submitting onboarding data:", fetchError);
-        setError("Network error when submitting data. Please try again.");
+        setError(fetchError instanceof Error ? fetchError.message : "Network error when submitting data. Please try again.");
         setIsSubmitting(false);
         throw fetchError;
       }
