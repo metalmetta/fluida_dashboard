@@ -1,10 +1,10 @@
-
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Check, Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function ReviewStep() {
   const { 
@@ -14,14 +14,14 @@ export function ReviewStep() {
     isSubmitting,
     error,
   } = useOnboarding();
+  const { setIsNewUser } = useAuth();
   const navigate = useNavigate();
   
   const handleSubmit = async () => {
     try {
       await submitOnboardingData();
-      navigate("/"); // Redirect to dashboard on success
+      navigate("/");
     } catch (error) {
-      // Error is handled in the context
       console.error("Failed to submit onboarding data:", error);
     }
   };
@@ -30,7 +30,6 @@ export function ReviewStep() {
     <div className="space-y-6">
       <h3 className="text-lg font-medium">Review Your Information</h3>
       
-      {/* Error alert */}
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
