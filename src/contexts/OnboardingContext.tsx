@@ -1,6 +1,5 @@
+
 import { createContext, useContext, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "@/components/ui/use-toast";
 
 // Define types for the onboarding data
 export type CompanyInformation = {
@@ -49,6 +48,7 @@ export type UltimateBeneficialOwner = {
   issuingCountry: string;
   pepStatus: boolean;
   sanctionScreeningPassed: boolean;
+  // We won't collect file uploads in this implementation
 };
 
 export type ContactInformation = {
@@ -154,7 +154,6 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const [onboardingData, setOnboardingData] = useState<OnboardingData>(defaultOnboardingData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { setIsNewUser } = useAuth();
   
   const totalSteps = 5; // Company, Registered Address, UBO, Contact, Review
 
@@ -372,50 +371,24 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         }
       };
 
-      try {
-        // Updated to fix the 415 Unsupported Media Type error
-        const response = await fetch("https://sandbox.infinite.dev/customers", {
-          method: "POST",
-          headers: {
-            "x-api-key": "ia_UZPCx-629EOUM4cv-6o7XQ",
-            "x-organization-id": "b89dfab6-8ebd-41cf-87e0-10db9f2826f1",
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(formattedData)
-        });
-        
-        // Process response
-        if (!response.ok) {
-          // If we can read the error response, get more details
-          if (response.status !== 415) {
-            try {
-              const errorData = await response.json();
-              throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
-            } catch (jsonError) {
-              // If can't parse JSON, use generic error
-              throw new Error(`Error ${response.status}: ${response.statusText}`);
-            }
-          } else {
-            // 415 specific error
-            throw new Error("415 Unsupported Media Type: The server doesn't support the format sent");
-          }
-        }
-        
-        console.log("Onboarding data submitted successfully");
-        toast({
-          title: "Onboarding Complete",
-          description: "Your information has been successfully submitted.",
-        });
-        
-        // Mark user as no longer new after successful onboarding
-        setIsNewUser(false);
-        setIsSubmitting(false);
-      } catch (fetchError) {
-        console.error("Error submitting onboarding data:", fetchError);
-        setError(fetchError instanceof Error ? fetchError.message : "Network error when submitting data. Please try again.");
-        setIsSubmitting(false);
-        throw fetchError;
+      // Make API call
+      const response = await fetch("https://sandbox.infinite.dev/customers", {
+        method: "POST",
+        headers: {
+          "x-api-key": "ia_UZPCx-629EOUM4cv-6o7XQ",
+          "x-organization-id": "b89dfab6-8ebd-41cf-87e0-10db9f2826f1",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formattedData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to submit onboarding data");
       }
+
+      // Reset the state
+      setIsSubmitting(false);
     } catch (err) {
       setIsSubmitting(false);
       setError(err instanceof Error ? err.message : "An unknown error occurred");
