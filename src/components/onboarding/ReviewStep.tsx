@@ -6,6 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/components/ui/use-toast";
 
 export function ReviewStep() {
   const { 
@@ -25,6 +26,16 @@ export function ReviewStep() {
     } catch (error) {
       console.error("Failed to submit onboarding data:", error);
     }
+  };
+
+  // Function to skip onboarding for testing purposes
+  const skipOnboarding = () => {
+    toast({
+      title: "Onboarding Skipped",
+      description: "Onboarding has been skipped for testing purposes.",
+    });
+    setIsNewUser(false);
+    navigate("/");
   };
 
   return (
@@ -129,23 +140,32 @@ export function ReviewStep() {
         <Button type="button" variant="outline" onClick={() => setCurrentStep(4)} disabled={isSubmitting}>
           Back
         </Button>
-        <Button 
-          onClick={handleSubmit} 
-          disabled={isSubmitting}
-          className="gap-2"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Submitting...
-            </>
-          ) : (
-            <>
-              <Check className="h-4 w-4" />
-              Complete Onboarding
-            </>
-          )}
-        </Button>
+        <div className="space-x-2">
+          <Button 
+            onClick={skipOnboarding} 
+            variant="outline"
+            className="gap-2"
+          >
+            Skip (Testing)
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={isSubmitting}
+            className="gap-2"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              <>
+                <Check className="h-4 w-4" />
+                Complete Onboarding
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );
