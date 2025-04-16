@@ -24,7 +24,7 @@ export function ViewBillDialog({
 }: ViewBillDialogProps) {
   const billStatuses = [
     { value: "Draft", label: "Draft" },
-    { value: "Ready for payment", label: "Ready for payment" },
+    { value: "Ready for payment", label: "Ready" },
     { value: "Paid", label: "Paid" }
   ];
 

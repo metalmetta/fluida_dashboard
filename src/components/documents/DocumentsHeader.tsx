@@ -11,7 +11,6 @@ interface StatusFilter {
 
 interface DocumentsHeaderProps {
   title: string;
-  description?: string;
   statusFilters: StatusFilter[];
   selectedStatus: string | null;
   onStatusChange: (status: string | null) => void;
@@ -25,7 +24,6 @@ interface DocumentsHeaderProps {
 
 export function DocumentsHeader({
   title,
-  description,
   statusFilters,
   selectedStatus,
   onStatusChange,
@@ -36,7 +34,6 @@ export function DocumentsHeader({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold">{title}</h1>
-          {description && <p className="text-muted-foreground">{description}</p>}
         </div>
         <div className="flex gap-3">
           {actionButtons.map((button, index) => (

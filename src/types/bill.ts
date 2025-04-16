@@ -5,7 +5,7 @@ export interface Bill {
   vendor: string;
   amount: number;
   due_date: string;
-  status: 'Draft' | 'Ready for payment' | 'Paid';
+  status: 'Draft' | 'Ready for payment' | 'Paid' | 'Approve';
   category?: string;
   description?: string;
   bill_number: string;
@@ -16,3 +16,10 @@ export interface Bill {
 }
 
 export type BillFormData = Omit<Bill, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
+
+// Add a type for bill number generation
+export interface BillNumberParams {
+  issueDate: Date;
+  vendor: string;
+  invoiceNumber: string;
+}

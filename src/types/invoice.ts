@@ -57,3 +57,10 @@ export interface PaymentMethod {
   };
   isDefault: boolean;
 }
+
+// Add a type for invoice number generation
+export interface InvoiceNumberParams {
+  issueDate: Date;
+  customerName: string;
+  invoiceNumber: string;
+}

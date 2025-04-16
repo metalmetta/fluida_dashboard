@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
-import { Plus, ArrowRightLeft, DollarSign } from "lucide-react";
+import { Plus, DollarSign } from "lucide-react";
 import { useBills } from "@/hooks/useBills";
 import { formatCurrency } from "@/lib/utils";
 import { AddBillDialog } from "@/components/AddBillDialog";
@@ -15,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PayBillDialog } from "@/components/PayBillDialog";
 import { TopUpBalanceDialog } from "@/components/TopUpBalanceDialog";
 import { useUserBalance } from "@/hooks/useUserBalance";
+import { SubtitleCard } from "@/components/ui/subtitle-card";
 
 export default function Bills() {
   const { bills, isLoading, addBill, updateBillStatus } = useBills();
@@ -31,7 +31,6 @@ export default function Bills() {
     ? bills.filter(bill => bill.status === selectedStatus)
     : bills;
 
-  // Count bills by status
   const statusCounts = {
     Draft: bills.filter(bill => bill.status === "Draft").length,
     "Ready for payment": bills.filter(bill => bill.status === "Ready for payment").length,
@@ -40,7 +39,7 @@ export default function Bills() {
 
   const statusFilters = [
     { value: "Draft", label: "Draft", count: statusCounts.Draft },
-    { value: "Ready for payment", label: "Ready for payment", count: statusCounts["Ready for payment"] },
+    { value: "Ready for payment", label: "Ready", count: statusCounts["Ready for payment"] },
     { value: "Paid", label: "Paid", count: statusCounts.Paid },
   ];
 
@@ -63,13 +62,11 @@ export default function Bills() {
         throw new Error("Balance information not available");
       }
 
-      // Deduct bill amount from balance
       const success = await updateBalance(-bill.amount);
       if (!success) {
         throw new Error("Failed to update balance");
       }
 
-      // Mark bill as paid
       await updateBillStatus(bill.id, "Paid");
 
       toast({
@@ -77,9 +74,7 @@ export default function Bills() {
         description: `Bill ${bill.bill_number} has been paid.`
       });
 
-      // Close the payment dialog
       setPayBillDialogOpen(false);
-
     } catch (error) {
       console.error("Error paying bill:", error);
       toast({
@@ -156,17 +151,16 @@ export default function Bills() {
           onStatusChange={setSelectedStatus}
           actionButtons={[
             {
-              icon: ArrowRightLeft,
-              label: "Transfer funds",
-              variant: "outline",
-              onClick: openTopUpDialog
-            },
-            {
               icon: Plus,
               label: "Add bill",
               onClick: () => setAddBillDialogOpen(true)
             }
           ]}
+        />
+
+        <SubtitleCard 
+          text="Manage and pay your bills from one central location."
+          tooltip="Forward invoices to bills@getfluida.com to automatically add them to your account."
         />
 
         <div className="flex items-center justify-between">
@@ -179,14 +173,6 @@ export default function Bills() {
               <div className="font-medium">
                 {formatCurrency(balance.available_amount, balance.currency)}
               </div>
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={openTopUpDialog}
-              >
-                <Plus className="h-3 w-3 mr-1" />
-                Top Up
-              </Button>
             </div>
           )}
         </div>

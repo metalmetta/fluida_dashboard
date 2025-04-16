@@ -24,6 +24,7 @@ import { UserBalance } from "@/hooks/useUserBalance";
 import { formatCurrency } from "@/lib/utils";
 import { ArrowRight, BellRing, Check, CreditCard, DollarSign, Info, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { usePayments } from "@/hooks/usePayments";
 
 interface PayBillDialogProps {
   open: boolean;
@@ -44,6 +45,7 @@ export function PayBillDialog({
 }: PayBillDialogProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showInsufficientFundsAlert, setShowInsufficientFundsAlert] = useState(false);
+  const { createPaymentFromBill } = usePayments();
   
   if (!bill || !balance) return null;
 
@@ -58,6 +60,9 @@ export function PayBillDialog({
 
     setIsProcessing(true);
     try {
+      // First create the payment record
+      await createPaymentFromBill(bill);
+      // Then update the bill status
       await onPayBill(bill);
       // The dialog will be closed by the parent component after successful payment
     } catch (error) {

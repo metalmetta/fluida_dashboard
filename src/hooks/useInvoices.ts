@@ -3,11 +3,14 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Invoice } from "@/types/invoice";
 import { useToast } from "@/hooks/use-toast";
+import { generateInvoiceId } from "@/lib/billUtils";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function useInvoices() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchInvoices = async () => {
     setIsLoading(true);
@@ -41,9 +44,7 @@ export function useInvoices() {
 
   const addSampleInvoices = async () => {
     try {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !userData.user) {
+      if (!user) {
         toast({
           title: "Error",
           description: "You must be logged in to add sample invoices",
@@ -52,10 +53,12 @@ export function useInvoices() {
         return;
       }
 
+      const currentDate = new Date();
+      
       const sampleInvoices = [
         {
-          user_id: userData.user.id,
-          invoice_number: "INV-2024-001",
+          user_id: user.id,
+          invoice_number: generateInvoiceId(currentDate, "Acme Corporation", "001"),
           client_name: "Acme Corporation",
           amount: 2500.00,
           status: "paid" as Invoice['status'],
@@ -65,8 +68,8 @@ export function useInvoices() {
           description: "Website development services"
         },
         {
-          user_id: userData.user.id,
-          invoice_number: "INV-2024-002",
+          user_id: user.id,
+          invoice_number: generateInvoiceId(currentDate, "TechStart Inc.", "002"),
           client_name: "TechStart Inc.",
           amount: 1800.50,
           status: "sent" as Invoice['status'],
@@ -76,8 +79,8 @@ export function useInvoices() {
           description: "Monthly consulting retainer"
         },
         {
-          user_id: userData.user.id,
-          invoice_number: "INV-2024-003",
+          user_id: user.id,
+          invoice_number: generateInvoiceId(currentDate, "Global Solutions", "003"),
           client_name: "Global Solutions",
           amount: 3450.00,
           status: "draft" as Invoice['status'],
@@ -86,8 +89,8 @@ export function useInvoices() {
           description: "Software implementation phase 1"
         },
         {
-          user_id: userData.user.id,
-          invoice_number: "INV-2024-004",
+          user_id: user.id,
+          invoice_number: generateInvoiceId(currentDate, "Innovate Partners", "004"),
           client_name: "Innovate Partners",
           amount: 950.75,
           status: "overdue" as Invoice['status'],
@@ -97,8 +100,8 @@ export function useInvoices() {
           description: "Marketing services"
         },
         {
-          user_id: userData.user.id,
-          invoice_number: "INV-2024-005",
+          user_id: user.id,
+          invoice_number: generateInvoiceId(currentDate, "First National Bank", "005"),
           client_name: "First National Bank",
           amount: 5000.00,
           status: "paid" as Invoice['status'],
@@ -135,25 +138,28 @@ export function useInvoices() {
     fetchInvoices();
   }, []);
 
-  // Improved helper function to format payment method for display
+  // Updated formatPaymentMethod to only allow the three specified payment methods
   const formatPaymentMethod = (paymentMethod: string | undefined): string => {
     if (!paymentMethod) return "—";
     
-    // Handle the standard payment methods
-    if (paymentMethod === "bank_transfer") return "Bank Transfer";
-    if (paymentMethod === "blockchain_transfer") return "Blockchain Transfer";
-    if (paymentMethod === "credit_card") return "Credit Card";
+    // Standardize the input by removing spaces and making it lowercase
+    const normalizedMethod = paymentMethod.toLowerCase().replace(/\s+/g, '_');
     
-    // For payment methods already in readable format (e.g. "Bank Transfer" from sample data)
-    if (paymentMethod === "Bank Transfer") return "Bank Transfer";
-    if (paymentMethod === "Credit Card") return "Credit Card";
-    if (paymentMethod === "PayPal") return "PayPal";
+    // Map to one of the three allowed payment methods
+    if (normalizedMethod.includes('bank') || normalizedMethod === 'bank_transfer') {
+      return "Bank Transfer";
+    }
     
-    // For any other values, make them title case for better display
-    return paymentMethod
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+    if (normalizedMethod.includes('blockchain') || normalizedMethod === 'blockchain_transfer') {
+      return "Blockchain Transfer";
+    }
+    
+    if (normalizedMethod.includes('credit') || normalizedMethod === 'credit_card') {
+      return "Credit Card";
+    }
+    
+    // Default fallback for any other values
+    return "Bank Transfer";
   };
 
   return { 

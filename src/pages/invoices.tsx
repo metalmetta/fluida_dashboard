@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -12,12 +11,13 @@ import { Invoice } from "@/types/invoice";
 import { useToast } from "@/hooks/use-toast";
 import { DocumentsHeader } from "@/components/documents/DocumentsHeader";
 import { DocumentsTable } from "@/components/documents/DocumentsTable";
+import { SubtitleCard } from "@/components/ui/subtitle-card";
 
 type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
 
 export default function Invoices() {
   const [selectedStatus, setSelectedStatus] = useState<InvoiceStatus | null>(null);
-  const { invoices, isLoading, addSampleInvoices, fetchInvoices, formatPaymentMethod } = useInvoices();
+  const { invoices, isLoading, fetchInvoices, formatPaymentMethod } = useInvoices();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
@@ -135,7 +135,7 @@ export default function Invoices() {
       cell: (item: Invoice) => formatPaymentMethod(item.payment_method) },
     { header: "Due date", accessorKey: "due_date" as keyof Invoice,
       cell: (item: Invoice) => formatDate(item.due_date) },
-    { header: "Invoice #", accessorKey: "invoice_number" as keyof Invoice },
+    { header: "Invoice ID", accessorKey: "invoice_number" as keyof Invoice },
     { header: "Status", accessorKey: "status" as keyof Invoice },
   ];
 
@@ -144,17 +144,10 @@ export default function Invoices() {
       <div className="space-y-8">
         <DocumentsHeader
           title="Invoices"
-          description="Manage your invoices"
           statusFilters={statusFilters}
           selectedStatus={selectedStatus}
           onStatusChange={handleStatusChange}
           actionButtons={[
-            ...(invoices.length === 0 ? [{
-              icon: FileText,
-              label: "Add Sample Data",
-              variant: "outline" as const,
-              onClick: addSampleInvoices
-            }] : []),
             {
               icon: Plus,
               label: "Create invoice",
@@ -162,6 +155,11 @@ export default function Invoices() {
               onClick: () => setCreateDialogOpen(true)
             }
           ]}
+        />
+
+        <SubtitleCard 
+          text="Create, send, and track invoices all in one place."
+          tooltip="Generate professional invoices and monitor their payment status easily."
         />
 
         <Card>
@@ -174,9 +172,9 @@ export default function Invoices() {
             getStatusVariant={getStatusVariant}
             emptyState={{
               title: "No invoices found",
-              description: "You don't have any invoices yet. Add sample data or create a new invoice.",
-              buttonText: "Add Sample Invoices",
-              onButtonClick: addSampleInvoices
+              description: "You don't have any invoices yet.",
+              buttonText: "Create invoice",
+              onButtonClick: () => setCreateDialogOpen(true)
             }}
           />
         </Card>

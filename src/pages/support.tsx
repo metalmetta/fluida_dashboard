@@ -11,6 +11,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Mail, MessageCircle, Phone, HelpCircle } from "lucide-react";
+import { SubtitleCard } from "@/components/ui/subtitle-card";
 
 const faqs = [
   {
@@ -43,6 +44,11 @@ export default function Support() {
           <h1 className="text-3xl font-semibold">Support</h1>
           <p className="text-muted-foreground">Get help and support</p>
         </div>
+
+        <SubtitleCard 
+          text="Choose your preferred way to contact our support team."
+          tooltip="Our support team is available Monday to Friday, 9am-5pm EST."
+        />
 
         <div className="grid gap-6 md:grid-cols-3">
           <Card className="p-6">
@@ -145,4 +151,4 @@ export default function Support() {
       </div>
     </DashboardLayout>
   );
-} 
+}

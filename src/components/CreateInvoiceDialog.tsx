@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { format, addDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
@@ -9,8 +8,7 @@ import { InvoiceFormData, InvoiceFormStep } from "@/types/invoice";
 import { useContacts } from "@/hooks/useContacts";
 import { Contact } from "@/types/contact";
 import { AddContactDialog } from "@/components/AddContactDialog";
-
-// Import step components
+import { generateInvoiceId } from "@/lib/billUtils";
 import { CustomerDetailsStep } from "@/components/invoice/CustomerDetailsStep";
 import { LineItemsStep } from "@/components/invoice/LineItemsStep";
 import { PaymentDetailsStep } from "@/components/invoice/PaymentDetailsStep";
@@ -41,9 +39,8 @@ export function CreateInvoiceDialog({
 
   const getNextInvoiceNumber = () => {
     const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    return `INV-${year}${month}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+    const defaultInvoiceNumber = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return generateInvoiceId(date, "Customer", defaultInvoiceNumber);
   };
 
   const initialFormState: InvoiceFormData = {
@@ -91,6 +88,21 @@ export function CreateInvoiceDialog({
       setCustomerContacts(filtered);
     }
   }, [contacts]);
+
+  useEffect(() => {
+    if (form.client_name && form.client_name !== "Customer") {
+      const currentNumber = form.invoice_number.split('-').pop() || '001';
+      const updatedInvoiceId = generateInvoiceId(
+        new Date(form.issue_date),
+        form.client_name,
+        currentNumber
+      );
+      setForm(prev => ({
+        ...prev,
+        invoice_number: updatedInvoiceId
+      }));
+    }
+  }, [form.client_name, form.issue_date]);
 
   const updateItem = useCallback((index: number, field: string, value: any) => {
     setForm(prevForm => {
@@ -246,7 +258,6 @@ export function CreateInvoiceDialog({
     }
   };
 
-  // Render the appropriate step component based on the current step
   const renderStepContent = () => {
     switch (currentStep) {
       case "customer":
@@ -291,7 +302,6 @@ export function CreateInvoiceDialog({
     }
   };
 
-  // Progress indicator for the multi-step form
   const renderStepIndicator = () => {
     const steps = [
       { key: "customer", label: "Customer" },
