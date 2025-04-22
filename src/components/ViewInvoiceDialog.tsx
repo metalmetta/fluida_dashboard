@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Dialog,
@@ -5,7 +6,7 @@ import {
 } from "@/components/ui/dialog";
 import { Invoice } from "@/types/invoice";
 import { DocumentSidebar } from "./document-viewer/DocumentSidebar";
-import { DocumentPreview } from "./document-viewer/DocumentPreview";
+import { InvoicePreview } from "./invoice/InvoicePreview";
 import { useDocumentStatus } from "@/hooks/useDocumentStatus";
 
 interface ViewInvoiceDialogProps {
@@ -43,6 +44,24 @@ export function ViewInvoiceDialog({
 
   if (!invoice) return null;
 
+  // Convert invoice data to form data format
+  const invoiceFormData = {
+    client_name: invoice.client_name,
+    client_email: "",
+    invoice_number: invoice.invoice_number,
+    issue_date: invoice.issue_date,
+    due_date: invoice.due_date,
+    items: [{
+      description: invoice.description || "Services",
+      quantity: 1,
+      price: invoice.amount,
+      amount: invoice.amount
+    }],
+    notes: invoice.description,
+    payment_method: invoice.payment_method,
+    payment_method_details: invoice.payment_method_details
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl flex flex-col md:flex-row gap-4 p-0">
@@ -57,20 +76,11 @@ export function ViewInvoiceDialog({
         />
         
         <div className="md:w-2/3 bg-gray-50 flex items-center justify-center p-4">
-          <DocumentPreview
-            documentType="invoice"
-            documentData={{
-              id: invoice.id,
-              number: invoice.invoice_number,
-              vendor_or_client: invoice.client_name,
-              issue_date: invoice.issue_date,
-              due_date: invoice.due_date,
-              amount: invoice.amount,
-              currency: invoice.currency,
-              description: invoice.description,
-              payment_method: invoice.payment_method,
-              payment_method_details: invoice.payment_method_details
-            }}
+          <InvoicePreview
+            form={invoiceFormData}
+            companyName="Your Company"
+            companyEmail="company@example.com"
+            calculateTotal={() => invoice.amount}
           />
         </div>
       </DialogContent>

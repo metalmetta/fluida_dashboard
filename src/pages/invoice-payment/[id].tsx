@@ -1,9 +1,8 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { DocumentPreview } from "@/components/document-viewer/DocumentPreview";
+import { InvoicePreview } from "@/components/invoice/InvoicePreview";
 import { Separator } from "@/components/ui/separator";
 import { BankDetailsSection } from "@/components/deposit/BankDetailsSection";
 import { useToast } from "@/hooks/use-toast";
@@ -95,7 +94,23 @@ export default function InvoicePayment() {
 
   const showBlockchainDetails = invoice.payment_method === "blockchain_transfer";
   const showBankDetails = invoice.payment_method === "bank_transfer";
-  const currencyDisplay = invoice.currency || "USD";
+
+  const invoiceFormData = {
+    client_name: invoice.client_name,
+    client_email: "",
+    invoice_number: invoice.invoice_number,
+    issue_date: invoice.issue_date,
+    due_date: invoice.due_date,
+    items: [{
+      description: invoice.description || "Services",
+      quantity: 1,
+      price: invoice.amount,
+      amount: invoice.amount
+    }],
+    notes: invoice.description,
+    payment_method: invoice.payment_method,
+    payment_method_details: invoice.payment_method_details
+  };
 
   const getPaymentMethodDetails = () => {
     if (!invoice.payment_method_details) return [];
@@ -150,7 +165,7 @@ export default function InvoicePayment() {
             </div>
             <div>
               <p className="text-gray-500">Amount Due</p>
-              <p className="font-medium">{currencyDisplay} {invoice.amount.toLocaleString()}</p>
+              <p className="font-medium">{invoice.currency || 'USD'} {invoice.amount.toLocaleString()}</p>
             </div>
             <div>
               <p className="text-gray-500">Due Date</p>
@@ -160,19 +175,11 @@ export default function InvoicePayment() {
           
           <Separator className="my-6" />
           
-          <DocumentPreview
-            documentType="invoice"
-            documentData={{
-              id: invoice.id,
-              number: invoice.invoice_number,
-              vendor_or_client: invoice.client_name,
-              issue_date: new Date(invoice.issue_date).toLocaleDateString(),
-              due_date: new Date(invoice.due_date).toLocaleDateString(),
-              amount: invoice.amount,
-              currency: currencyDisplay,
-              description: invoice.description || "",
-              payment_method: invoice.payment_method
-            }}
+          <InvoicePreview
+            form={invoiceFormData}
+            companyName="Your Company"
+            companyEmail="company@example.com"
+            calculateTotal={() => invoice.amount}
           />
         </Card>
 
