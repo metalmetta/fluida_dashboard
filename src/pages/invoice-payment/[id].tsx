@@ -59,6 +59,10 @@ export default function InvoicePayment() {
             
           if (!paymentMethodError && paymentMethodData) {
             console.log("Payment method data:", paymentMethodData);
+            
+            // Safely access the details properties by treating details as a record/object
+            const details = paymentMethodData.details as Record<string, any>;
+            
             // Merge payment method details into invoice
             setInvoice({
               ...data as Invoice,
@@ -66,10 +70,10 @@ export default function InvoicePayment() {
               payment_method_details: {
                 label: paymentMethodData.label,
                 type: paymentMethodData.type,
-                iban: paymentMethodData.details?.iban,
-                accountNumber: paymentMethodData.details?.accountNumber,
-                bank_name: paymentMethodData.details?.bank_name,
-                solanaAddress: paymentMethodData.details?.solanaAddress,
+                iban: details?.iban,
+                accountNumber: details?.accountNumber,
+                bank_name: details?.bank_name,
+                solanaAddress: details?.solanaAddress,
               }
             });
           } else {
