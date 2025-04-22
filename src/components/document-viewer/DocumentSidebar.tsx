@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -45,6 +46,15 @@ export function DocumentSidebar({
   };
 
   const handleCopyPaymentLink = () => {
+    if (!documentId) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No document ID provided"
+      });
+      return;
+    }
+    
     const paymentLink = `${window.location.origin}/invoice-payment/${documentId}`;
     navigator.clipboard.writeText(paymentLink);
     
