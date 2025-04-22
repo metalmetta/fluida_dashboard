@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,42 +29,59 @@ export default function InvoicePayment() {
       try {
         console.log("Fetching invoice with ID:", id);
         
-        const { data, error } = await supabase
+        // First, get the invoice
+        const { data: invoiceData, error: invoiceError } = await supabase
           .from("invoices")
-          .select("*, payment_methods(*)")
+          .select("*")
           .eq("id", id)
           .maybeSingle();
 
-        if (error) {
-          console.error("Supabase error:", error);
-          throw error;
+        if (invoiceError) {
+          console.error("Supabase error fetching invoice:", invoiceError);
+          throw invoiceError;
         }
         
-        if (!data) {
+        if (!invoiceData) {
           setError("Invoice not found");
           setLoading(false);
           return;
         }
         
-        console.log("Invoice data retrieved:", data);
-        
-        if (data.payment_methods) {
-          const details = data.payment_methods.details as Record<string, any>;
-          setInvoice({
-            ...data,
-            payment_method: data.payment_methods.type,
-            payment_method_details: {
-              label: data.payment_methods.label,
-              type: data.payment_methods.type,
+        // If the invoice has a payment_method, fetch its details separately
+        let paymentMethodDetails = null;
+        if (invoiceData.payment_method) {
+          const { data: paymentMethod, error: paymentMethodError } = await supabase
+            .from("payment_methods")
+            .select("*")
+            .eq("id", invoiceData.payment_method)
+            .maybeSingle();
+            
+          if (paymentMethodError) {
+            console.error("Error fetching payment method:", paymentMethodError);
+            // Continue with the invoice even if payment method has an error
+          }
+          
+          if (paymentMethod) {
+            // Convert details from Json to a proper object
+            const details = paymentMethod.details as Record<string, any>;
+            paymentMethodDetails = {
+              label: paymentMethod.label,
+              type: paymentMethod.type,
               iban: details?.iban,
               accountNumber: details?.accountNumber,
               bank_name: details?.bank_name,
               solanaAddress: details?.solanaAddress,
-            }
-          } as Invoice);
-        } else {
-          setInvoice(data as Invoice);
+            };
+          }
         }
+        
+        console.log("Invoice data retrieved:", invoiceData);
+        
+        // Set the invoice with payment details
+        setInvoice({
+          ...invoiceData,
+          payment_method_details: paymentMethodDetails
+        } as Invoice);
       } catch (error: any) {
         console.error("Error fetching invoice:", error);
         setError("Could not load invoice details");
@@ -117,7 +135,9 @@ export default function InvoicePayment() {
             </div>
             <div>
               <p className="text-gray-500">Payment Method</p>
-              <p className="font-medium capitalize">{invoice.payment_method?.replace(/_/g, ' ') || 'Not specified'}</p>
+              <p className="font-medium capitalize">
+                {invoice.payment_method_details?.label || 'Not specified'}
+              </p>
             </div>
             <div>
               <p className="text-gray-500">Amount Due</p>
