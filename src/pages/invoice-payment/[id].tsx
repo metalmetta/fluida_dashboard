@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,10 +28,9 @@ export default function InvoicePayment() {
       try {
         console.log("Fetching invoice with ID:", id);
         
-        // Modified this query to use a simpler approach without JOIN
         const { data, error } = await supabase
           .from("invoices")
-          .select("*")
+          .select("*, payment_methods(*)")
           .eq("id", id)
           .maybeSingle();
 
@@ -49,37 +47,20 @@ export default function InvoicePayment() {
         
         console.log("Invoice data retrieved:", data);
         
-        // Fetch payment method details if needed
-        if (data.payment_method) {
-          const { data: paymentMethodData, error: paymentMethodError } = await supabase
-            .from("payment_methods")
-            .select("*")
-            .eq("id", data.payment_method)
-            .maybeSingle();
-            
-          if (!paymentMethodError && paymentMethodData) {
-            console.log("Payment method data:", paymentMethodData);
-            
-            // Safely access the details properties by treating details as a record/object
-            const details = paymentMethodData.details as Record<string, any>;
-            
-            // Merge payment method details into invoice
-            setInvoice({
-              ...data as Invoice,
-              payment_method: paymentMethodData.type,
-              payment_method_details: {
-                label: paymentMethodData.label,
-                type: paymentMethodData.type,
-                iban: details?.iban,
-                accountNumber: details?.accountNumber,
-                bank_name: details?.bank_name,
-                solanaAddress: details?.solanaAddress,
-              }
-            });
-          } else {
-            // Still set the invoice even if payment method fetch fails
-            setInvoice(data as Invoice);
-          }
+        if (data.payment_methods) {
+          const details = data.payment_methods.details as Record<string, any>;
+          setInvoice({
+            ...data,
+            payment_method: data.payment_methods.type,
+            payment_method_details: {
+              label: data.payment_methods.label,
+              type: data.payment_methods.type,
+              iban: details?.iban,
+              accountNumber: details?.accountNumber,
+              bank_name: details?.bank_name,
+              solanaAddress: details?.solanaAddress,
+            }
+          } as Invoice);
         } else {
           setInvoice(data as Invoice);
         }

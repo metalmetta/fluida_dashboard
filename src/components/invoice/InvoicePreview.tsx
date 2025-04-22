@@ -1,4 +1,3 @@
-
 import { InvoiceFormData } from "@/types/invoice";
 
 interface InvoicePreviewProps {
@@ -14,46 +13,32 @@ export function InvoicePreview({
   companyEmail,
   calculateTotal
 }: InvoicePreviewProps) {
-  // Helper to format payment method details
+  // Update the helper to format payment method details more clearly
   const formatPaymentMethodDetails = () => {
-    if (!form.payment_method) return "";
+    if (!form.payment_method_details) return "";
     
-    if (form.payment_method_details) {
-      const { label, type, iban, accountNumber, bank_name, solanaAddress } = form.payment_method_details;
-      
-      let details = label || "";
-      
-      if (type) {
-        details += ` (${type.toUpperCase()})`;
-      }
-      
-      if (bank_name) {
-        details += `\nBank: ${bank_name}`;
-      }
-      
-      if (iban) {
-        details += `\nIBAN: ${iban}`;  // Display full IBAN
-      } else if (accountNumber) {
-        details += `\nAccount Number: ${accountNumber}`;
-      }
-      
-      if (solanaAddress) {
-        details += `\nWallet Address: ${solanaAddress}`;
-      }
-      
-      return details;
+    const { label, type, iban, accountNumber, bank_name, solanaAddress } = form.payment_method_details;
+    let details = `${label || ""}`;
+    
+    if (type) {
+      details += ` (${type.toUpperCase()})`;
     }
     
-    // Fallback for payment methods without details
-    if (form.payment_method === "credit_card") {
-      return "Credit Card";
-    } else if (form.payment_method === "bank_transfer") {
-      return "Bank Transfer";
-    } else if (form.payment_method === "blockchain_transfer") {
-      return "Blockchain Transfer";
+    if (bank_name) {
+      details += `\nBank: ${bank_name}`;
     }
     
-    return form.payment_method;
+    if (iban) {
+      details += `\nIBAN: ${iban}`;
+    } else if (accountNumber) {
+      details += `\nAccount Number: ${accountNumber}`;
+    }
+    
+    if (solanaAddress) {
+      details += `\nWallet Address: ${solanaAddress}`;
+    }
+    
+    return details;
   };
 
   return (

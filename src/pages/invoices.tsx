@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
-import { Plus, FileText } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useInvoices } from "@/hooks/useInvoices";
 import { format } from "date-fns";
 import { CreateInvoiceDialog } from "@/components/CreateInvoiceDialog";
@@ -131,8 +132,8 @@ export default function Invoices() {
     { header: "Customer", accessorKey: "client_name" as keyof Invoice },
     { header: "Amount", accessorKey: "amount" as keyof Invoice,
       cell: (item: Invoice) => `$${item.amount.toFixed(2)}` },
-    { header: "Method", accessorKey: "payment_method" as keyof Invoice,
-      cell: (item: Invoice) => formatPaymentMethod(item.payment_method) },
+    { header: "Method", accessorKey: "payment_method_details" as keyof Invoice,
+      cell: (item: Invoice) => item.payment_method_details?.label || "Not specified" },
     { header: "Due date", accessorKey: "due_date" as keyof Invoice,
       cell: (item: Invoice) => formatDate(item.due_date) },
     { header: "Invoice ID", accessorKey: "invoice_number" as keyof Invoice },
