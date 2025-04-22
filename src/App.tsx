@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
@@ -14,7 +15,7 @@ import Support from "@/pages/support";
 import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import InternalTransfer from "@/pages/internal-transfer";
-import InvoicePayment from "@/pages/invoice-payment";
+import InvoicePayment from "@/pages/invoice-payment/[id]";
 
 export default function App() {
   return (
