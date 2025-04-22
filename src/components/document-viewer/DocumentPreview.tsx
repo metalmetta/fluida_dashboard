@@ -32,14 +32,19 @@ export function DocumentPreview({ documentType, documentData }: DocumentPreviewP
   const documentLabel = isInvoice ? "INVOICE" : "BILL";
   
   const formatPaymentMethodDetails = () => {
-    if (!documentData.payment_method_details) return "";
+    if (!documentData.payment_method || !documentData.payment_method_details) return "";
+    
+    const details = [];
+    
+    if (documentData.payment_method_details.label) {
+      details.push(`${documentData.payment_method_details.label}`);
+    }
     
     if (documentData.payment_method === "blockchain_transfer" && documentData.payment_method_details.solanaAddress) {
-      return `Solana Wallet: ${documentData.payment_method_details.solanaAddress}`;
+      details.push(`Solana Wallet: ${documentData.payment_method_details.solanaAddress}`);
     }
     
     if (documentData.payment_method === "bank_transfer") {
-      const details = [];
       if (documentData.payment_method_details.bank_name) {
         details.push(`Bank: ${documentData.payment_method_details.bank_name}`);
       }
@@ -48,13 +53,11 @@ export function DocumentPreview({ documentType, documentData }: DocumentPreviewP
       } else if (documentData.payment_method_details.accountNumber) {
         details.push(`Account: ${documentData.payment_method_details.accountNumber}`);
       }
-      return details.join("\n");
     }
     
-    return "";
+    return details.join("\n");
   };
   
-  // Use the currency from the document data or default to USD
   const currency = documentData.currency || "USD";
   
   return (
@@ -92,7 +95,7 @@ export function DocumentPreview({ documentType, documentData }: DocumentPreviewP
         {documentData.payment_method && (
           <div className="mb-6">
             <h4 className="text-sm uppercase text-gray-500 mb-2">Payment Method</h4>
-            <p className="whitespace-pre-line">{formatPaymentMethodDetails()}</p>
+            <p className="whitespace-pre-line font-medium">{formatPaymentMethodDetails()}</p>
           </div>
         )}
         
