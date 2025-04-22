@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -8,7 +7,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Mail, Copy, Download } from "lucide-react";
+import { Mail, Copy, Download, ExternalLink } from "lucide-react";
 import { 
   DialogHeader, 
   DialogTitle, 
@@ -86,6 +85,7 @@ export function DocumentSidebar({
         <Button variant="outline" onClick={handleCopyPaymentLink} className="justify-start">
           <Copy className="mr-2 h-4 w-4" />
           Copy payment link
+          <ExternalLink className="ml-2 h-3 w-3 text-gray-500" />
         </Button>
         
         <Button variant="outline" onClick={handleDownloadPDF} className="justify-start">
