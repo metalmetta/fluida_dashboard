@@ -63,6 +63,20 @@ export function DocumentSidebar({
     });
   };
 
+  const handleOpenPaymentLink = () => {
+    if (!documentId) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No document ID provided"
+      });
+      return;
+    }
+    
+    const paymentLink = `${window.location.origin}/invoice-payment/${documentId}`;
+    window.open(paymentLink, '_blank', 'noopener,noreferrer');
+  };
+
   const handleDownloadPDF = () => {
     toast({
       title: "Downloading PDF",
@@ -82,11 +96,23 @@ export function DocumentSidebar({
           Send email
         </Button>
         
-        <Button variant="outline" onClick={handleCopyPaymentLink} className="justify-start">
-          <Copy className="mr-2 h-4 w-4" />
-          Copy payment link
-          <ExternalLink className="ml-2 h-3 w-3 text-gray-500" />
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            onClick={handleCopyPaymentLink} 
+            className="flex-grow justify-start"
+          >
+            <Copy className="mr-2 h-4 w-4" />
+            Copy payment link
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleOpenPaymentLink} 
+            className="w-12 px-2 justify-center"
+          >
+            <ExternalLink className="h-4 w-4" />
+          </Button>
+        </div>
         
         <Button variant="outline" onClick={handleDownloadPDF} className="justify-start">
           <Download className="mr-2 h-4 w-4" />
