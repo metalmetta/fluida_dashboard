@@ -99,18 +99,39 @@ export default function InvoicePayment() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
-        <h1 className="text-2xl font-semibold">Invoice Payment</h1>
-        
         <Card className="p-6">
+          <h1 className="text-2xl font-semibold mb-4">Invoice #{invoice.invoice_number}</h1>
+          <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
+            <div>
+              <p className="text-gray-500">Status</p>
+              <p className="font-medium capitalize">{invoice.status}</p>
+            </div>
+            <div>
+              <p className="text-gray-500">Payment Method</p>
+              <p className="font-medium capitalize">{invoice.payment_method?.replace(/_/g, ' ') || 'Not specified'}</p>
+            </div>
+            <div>
+              <p className="text-gray-500">Amount Due</p>
+              <p className="font-medium">{invoice.currency} {invoice.amount.toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-gray-500">Due Date</p>
+              <p className="font-medium">{new Date(invoice.due_date).toLocaleDateString()}</p>
+            </div>
+          </div>
+          
+          <Separator className="my-6" />
+          
           <DocumentPreview
             documentType="invoice"
             documentData={{
               id: invoice.id,
               number: invoice.invoice_number,
               vendor_or_client: invoice.client_name,
-              issue_date: invoice.issue_date,
-              due_date: invoice.due_date,
+              issue_date: new Date(invoice.issue_date).toLocaleDateString(),
+              due_date: new Date(invoice.due_date).toLocaleDateString(),
               amount: invoice.amount,
+              currency: invoice.currency,
               description: invoice.description || "",
               payment_method: invoice.payment_method
             }}
