@@ -31,7 +31,7 @@ export default function InvoicePayment() {
         
         const { data, error } = await supabase
           .from("invoices")
-          .select("*")
+          .select("*, payment_methods(*)")
           .eq("id", id)
           .single();
 
@@ -95,9 +95,44 @@ export default function InvoicePayment() {
 
   const showBlockchainDetails = invoice.payment_method === "blockchain_transfer";
   const showBankDetails = invoice.payment_method === "bank_transfer";
-
-  // Default to USD if currency is not specified
   const currencyDisplay = invoice.currency || "USD";
+
+  const getPaymentMethodDetails = () => {
+    if (!invoice.payment_method_details) return [];
+
+    if (showBlockchainDetails) {
+      return [
+        { label: "Network", value: "Solana" },
+        { 
+          label: "Wallet Address", 
+          value: invoice.payment_method_details.solanaAddress || "Address not available"
+        }
+      ];
+    }
+
+    if (showBankDetails) {
+      return [
+        { 
+          label: "Bank Name", 
+          value: invoice.payment_method_details.bank_name || "Bank name not available"
+        },
+        { 
+          label: "Account Name", 
+          value: invoice.payment_method_details.label || "Account name not available"
+        },
+        { 
+          label: invoice.payment_method_details.iban ? "IBAN" : "Account Number",
+          value: invoice.payment_method_details.iban || invoice.payment_method_details.accountNumber || "Account details not available"
+        },
+        { 
+          label: "Reference", 
+          value: invoice.invoice_number 
+        }
+      ];
+    }
+
+    return [];
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -143,35 +178,11 @@ export default function InvoicePayment() {
 
         <Separator />
 
-        {showBlockchainDetails && (
+        {(showBlockchainDetails || showBankDetails) && (
           <BankDetailsSection
-            title="Blockchain Payment Details"
-            icon={Wallet}
-            details={[
-              { label: "Network", value: "Solana" },
-              { label: "Wallet Address", value: "84nDYwF73bE73GJCsPqFxQZKBgfJf3nEWGJwJ9BBfbf9" }
-            ]}
-            onCopy={(text, label) => {
-              navigator.clipboard.writeText(text);
-              toast({
-                title: "Copied",
-                description: `${label} copied to clipboard`
-              });
-            }}
-          />
-        )}
-
-        {showBankDetails && (
-          <BankDetailsSection
-            title="Bank Transfer Details"
-            icon={Building}
-            details={[
-              { label: "Bank Name", value: "Example Bank" },
-              { label: "Account Name", value: "Company Ltd" },
-              { label: "Account Number", value: "1234567890" },
-              { label: "Sort Code", value: "12-34-56" },
-              { label: "Reference", value: invoice.invoice_number }
-            ]}
+            title={showBlockchainDetails ? "Blockchain Payment Details" : "Bank Transfer Details"}
+            icon={showBlockchainDetails ? Wallet : Building}
+            details={getPaymentMethodDetails()}
             onCopy={(text, label) => {
               navigator.clipboard.writeText(text);
               toast({
