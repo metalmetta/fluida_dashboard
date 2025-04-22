@@ -29,11 +29,12 @@ export default function InvoicePayment() {
       try {
         console.log("Fetching invoice with ID:", id);
         
+        // Modified this query to use a simpler approach without JOIN
         const { data, error } = await supabase
           .from("invoices")
-          .select("*, payment_methods(*)")
+          .select("*")
           .eq("id", id)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error("Supabase error:", error);
@@ -47,7 +48,37 @@ export default function InvoicePayment() {
         }
         
         console.log("Invoice data retrieved:", data);
-        setInvoice(data as Invoice);
+        
+        // Fetch payment method details if needed
+        if (data.payment_method) {
+          const { data: paymentMethodData, error: paymentMethodError } = await supabase
+            .from("payment_methods")
+            .select("*")
+            .eq("id", data.payment_method)
+            .maybeSingle();
+            
+          if (!paymentMethodError && paymentMethodData) {
+            console.log("Payment method data:", paymentMethodData);
+            // Merge payment method details into invoice
+            setInvoice({
+              ...data as Invoice,
+              payment_method: paymentMethodData.type,
+              payment_method_details: {
+                label: paymentMethodData.label,
+                type: paymentMethodData.type,
+                iban: paymentMethodData.details?.iban,
+                accountNumber: paymentMethodData.details?.accountNumber,
+                bank_name: paymentMethodData.details?.bank_name,
+                solanaAddress: paymentMethodData.details?.solanaAddress,
+              }
+            });
+          } else {
+            // Still set the invoice even if payment method fetch fails
+            setInvoice(data as Invoice);
+          }
+        } else {
+          setInvoice(data as Invoice);
+        }
       } catch (error: any) {
         console.error("Error fetching invoice:", error);
         setError("Could not load invoice details");
