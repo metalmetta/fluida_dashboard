@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
@@ -15,6 +14,7 @@ import Support from "@/pages/support";
 import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import InternalTransfer from "@/pages/internal-transfer";
+import InvoicePayment from "@/pages/invoice-payment";
 
 export default function App() {
   return (
@@ -33,6 +33,7 @@ export default function App() {
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
             <Route path="/logout" element={<Navigate to="/auth" />} />
+            <Route path="/invoice-payment/:id" element={<InvoicePayment />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster />

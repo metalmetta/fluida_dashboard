@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -46,8 +45,7 @@ export function DocumentSidebar({
   };
 
   const handleCopyPaymentLink = () => {
-    // Create a payment link (this would be a real link in production)
-    const paymentLink = `https://pay.example.com/${title.toLowerCase()}/${documentId}`;
+    const paymentLink = `${window.location.origin}/invoice-payment/${documentId}`;
     navigator.clipboard.writeText(paymentLink);
     
     toast({
