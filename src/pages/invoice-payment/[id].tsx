@@ -1,13 +1,15 @@
+
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { InvoicePreview } from "@/components/invoice/InvoicePreview";
 import { Separator } from "@/components/ui/separator";
-import { BankDetailsSection } from "@/components/deposit/BankDetailsSection";
 import { useToast } from "@/hooks/use-toast";
-import { Wallet, Building, AlertCircle } from "lucide-react";
 import { Invoice } from "@/types/invoice";
+import { LoadingState } from "@/components/invoice-payment/LoadingState";
+import { ErrorState } from "@/components/invoice-payment/ErrorState";
+import { PaymentMethodDetails } from "@/components/invoice-payment/PaymentMethodDetails";
 
 export default function InvoicePayment() {
   const { id } = useParams();
@@ -15,7 +17,6 @@ export default function InvoicePayment() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchInvoice = async () => {
@@ -64,36 +65,12 @@ export default function InvoicePayment() {
   }, [id, toast]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading invoice details...</p>
-        </div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   if (error || !invoice) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Card className="p-6 max-w-md text-center">
-          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-          <h1 className="text-xl font-semibold mb-2">Error</h1>
-          <p className="text-gray-600 mb-4">{error || "Invoice not found"}</p>
-          <button
-            onClick={() => navigate("/")}
-            className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors"
-          >
-            Return to Dashboard
-          </button>
-        </Card>
-      </div>
-    );
+    return <ErrorState error={error} />;
   }
-
-  const showBlockchainDetails = invoice.payment_method === "blockchain_transfer";
-  const showBankDetails = invoice.payment_method === "bank_transfer";
 
   const invoiceFormData = {
     client_name: invoice.client_name,
@@ -110,43 +87,6 @@ export default function InvoicePayment() {
     notes: invoice.description,
     payment_method: invoice.payment_method,
     payment_method_details: invoice.payment_method_details
-  };
-
-  const getPaymentMethodDetails = () => {
-    if (!invoice.payment_method_details) return [];
-
-    if (showBlockchainDetails) {
-      return [
-        { label: "Network", value: "Solana" },
-        { 
-          label: "Wallet Address", 
-          value: invoice.payment_method_details.solanaAddress || "Address not available"
-        }
-      ];
-    }
-
-    if (showBankDetails) {
-      return [
-        { 
-          label: "Bank Name", 
-          value: invoice.payment_method_details.bank_name || "Bank name not available"
-        },
-        { 
-          label: "Account Name", 
-          value: invoice.payment_method_details.label || "Account name not available"
-        },
-        { 
-          label: invoice.payment_method_details.iban ? "IBAN" : "Account Number",
-          value: invoice.payment_method_details.iban || invoice.payment_method_details.accountNumber || "Account details not available"
-        },
-        { 
-          label: "Reference", 
-          value: invoice.invoice_number 
-        }
-      ];
-    }
-
-    return [];
   };
 
   return (
@@ -185,29 +125,7 @@ export default function InvoicePayment() {
 
         <Separator />
 
-        {(showBlockchainDetails || showBankDetails) && (
-          <BankDetailsSection
-            title={showBlockchainDetails ? "Blockchain Payment Details" : "Bank Transfer Details"}
-            icon={showBlockchainDetails ? Wallet : Building}
-            details={getPaymentMethodDetails()}
-            onCopy={(text, label) => {
-              navigator.clipboard.writeText(text);
-              toast({
-                title: "Copied",
-                description: `${label} copied to clipboard`
-              });
-            }}
-          />
-        )}
-
-        {!showBlockchainDetails && !showBankDetails && (
-          <Card className="p-6">
-            <p className="text-center text-gray-600">
-              No payment details available for the selected payment method. 
-              Please contact the invoice sender for payment instructions.
-            </p>
-          </Card>
-        )}
+        <PaymentMethodDetails invoice={invoice} />
       </div>
     </div>
   );
