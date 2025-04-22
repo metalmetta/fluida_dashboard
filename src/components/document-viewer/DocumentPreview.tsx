@@ -1,4 +1,3 @@
-
 import React from "react";
 import { formatCurrency } from "@/lib/utils";
 
@@ -16,6 +15,14 @@ interface DocumentPreviewProps {
     description?: string;
     category?: string;
     payment_method?: string;
+    payment_method_details?: {
+      label?: string;
+      type?: string;
+      iban?: string;
+      accountNumber?: string;
+      bank_name?: string;
+      solanaAddress?: string;
+    };
   };
 }
 
@@ -24,15 +31,27 @@ export function DocumentPreview({ documentType, documentData }: DocumentPreviewP
   const entityLabel = isInvoice ? "Client" : "Vendor";
   const documentLabel = isInvoice ? "INVOICE" : "BILL";
   
-  // Format payment method for display
-  const formatPaymentMethod = (method?: string) => {
-    if (!method) return "";
+  const formatPaymentMethodDetails = () => {
+    if (!documentData.payment_method_details) return "";
     
-    if (method === "bank_transfer") return "Bank Transfer";
-    if (method === "blockchain_transfer") return "Blockchain Transfer";
-    if (method === "credit_card") return "Credit Card";
+    if (documentData.payment_method === "blockchain_transfer" && documentData.payment_method_details.solanaAddress) {
+      return `Solana Wallet: ${documentData.payment_method_details.solanaAddress}`;
+    }
     
-    return method; // Return original if it's a custom value
+    if (documentData.payment_method === "bank_transfer") {
+      const details = [];
+      if (documentData.payment_method_details.bank_name) {
+        details.push(`Bank: ${documentData.payment_method_details.bank_name}`);
+      }
+      if (documentData.payment_method_details.iban) {
+        details.push(`IBAN: ${documentData.payment_method_details.iban}`);
+      } else if (documentData.payment_method_details.accountNumber) {
+        details.push(`Account: ${documentData.payment_method_details.accountNumber}`);
+      }
+      return details.join("\n");
+    }
+    
+    return "";
   };
   
   // Use the currency from the document data or default to USD
@@ -73,7 +92,7 @@ export function DocumentPreview({ documentType, documentData }: DocumentPreviewP
         {documentData.payment_method && (
           <div className="mb-6">
             <h4 className="text-sm uppercase text-gray-500 mb-2">Payment Method</h4>
-            <p>{formatPaymentMethod(documentData.payment_method)}</p>
+            <p className="whitespace-pre-line">{formatPaymentMethodDetails()}</p>
           </div>
         )}
         

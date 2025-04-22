@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Dialog,
@@ -67,8 +66,10 @@ export function ViewInvoiceDialog({
               issue_date: invoice.issue_date,
               due_date: invoice.due_date,
               amount: invoice.amount,
+              currency: invoice.currency,
               description: invoice.description,
-              payment_method: invoice.payment_method
+              payment_method: invoice.payment_method,
+              payment_method_details: invoice.payment_method_details
             }}
           />
         </div>
