@@ -1,4 +1,3 @@
-
 export interface Invoice {
   id: string;
   user_id: string;
@@ -12,6 +11,7 @@ export interface Invoice {
   description?: string;
   created_at: string;
   updated_at: string;
+  currency: string;
 }
 
 export interface InvoiceFormData {
@@ -58,7 +58,6 @@ export interface PaymentMethod {
   isDefault: boolean;
 }
 
-// Add a type for invoice number generation
 export interface InvoiceNumberParams {
   issueDate: Date;
   customerName: string;

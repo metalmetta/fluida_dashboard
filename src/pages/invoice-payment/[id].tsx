@@ -96,6 +96,9 @@ export default function InvoicePayment() {
   const showBlockchainDetails = invoice.payment_method === "blockchain_transfer";
   const showBankDetails = invoice.payment_method === "bank_transfer";
 
+  // Default to USD if currency is not specified
+  const currencyDisplay = invoice.currency || "USD";
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -112,7 +115,7 @@ export default function InvoicePayment() {
             </div>
             <div>
               <p className="text-gray-500">Amount Due</p>
-              <p className="font-medium">{invoice.currency} {invoice.amount.toLocaleString()}</p>
+              <p className="font-medium">{currencyDisplay} {invoice.amount.toLocaleString()}</p>
             </div>
             <div>
               <p className="text-gray-500">Due Date</p>
@@ -131,7 +134,7 @@ export default function InvoicePayment() {
               issue_date: new Date(invoice.issue_date).toLocaleDateString(),
               due_date: new Date(invoice.due_date).toLocaleDateString(),
               amount: invoice.amount,
-              currency: invoice.currency,
+              currency: currencyDisplay,
               description: invoice.description || "",
               payment_method: invoice.payment_method
             }}
