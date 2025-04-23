@@ -15,6 +15,7 @@ import { PayBillDialog } from "@/components/PayBillDialog";
 import { TopUpBalanceDialog } from "@/components/TopUpBalanceDialog";
 import { useUserBalance } from "@/hooks/useUserBalance";
 import { SubtitleCard } from "@/components/ui/subtitle-card";
+import { ImportPdfButton } from "@/components/ImportPdfButton";
 
 export default function Bills() {
   const { bills, isLoading, addBill, updateBillStatus } = useBills();
@@ -141,6 +142,24 @@ export default function Bills() {
     return null;
   };
 
+  const handleImportedPdf = async (billData: any) => {
+    const formattedBillData = {
+      vendor: billData.vendor || '',
+      amount: billData.amount || 0,
+      due_date: billData.dueDate || new Date().toISOString().split('T')[0],
+      status: 'Draft' as const,
+      bill_number: billData.billNumber || '',
+      issue_date: new Date().toISOString().split('T')[0],
+      category: billData.category || '',
+      description: billData.description || '',
+      currency: billData.currency || 'USD',
+      document_url: billData.documentUrl || '',
+      ocr_data: billData
+    };
+
+    await addBill(formattedBillData);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -156,6 +175,11 @@ export default function Bills() {
               onClick: () => setAddBillDialogOpen(true)
             }
           ]}
+          additionalActions={(
+            <ImportPdfButton 
+              onImportSuccess={handleImportedPdf} 
+            />
+          )}
         />
 
         <SubtitleCard 

@@ -44,9 +44,11 @@ export type Database = {
           created_at: string
           currency: string
           description: string | null
+          document_url: string | null
           due_date: string
           id: string
           issue_date: string
+          ocr_data: Json | null
           status: string
           updated_at: string
           user_id: string
@@ -59,9 +61,11 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
+          document_url?: string | null
           due_date: string
           id?: string
           issue_date?: string
+          ocr_data?: Json | null
           status: string
           updated_at?: string
           user_id: string
@@ -74,9 +78,11 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
+          document_url?: string | null
           due_date?: string
           id?: string
           issue_date?: string
+          ocr_data?: Json | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -235,10 +241,12 @@ export type Database = {
           created_at: string
           currency: string
           description: string | null
+          document_url: string | null
           due_date: string
           id: string
           invoice_number: string
           issue_date: string
+          ocr_data: Json | null
           payment_method: string | null
           status: string
           updated_at: string
@@ -250,10 +258,12 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
+          document_url?: string | null
           due_date: string
           id?: string
           invoice_number: string
           issue_date?: string
+          ocr_data?: Json | null
           payment_method?: string | null
           status: string
           updated_at?: string
@@ -265,10 +275,12 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
+          document_url?: string | null
           due_date?: string
           id?: string
           invoice_number?: string
           issue_date?: string
+          ocr_data?: Json | null
           payment_method?: string | null
           status?: string
           updated_at?: string
