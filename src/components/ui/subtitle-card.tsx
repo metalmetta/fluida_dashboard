@@ -18,8 +18,8 @@ interface SubtitleCardProps {
 
 export function SubtitleCard({ text, tooltip, className }: SubtitleCardProps) {
   return (
-    <Card className={cn("p-4 mb-6 bg-gray-50", className)}>
-      <div className="flex items-center gap-2">
+    <Card className={cn("p-6 mb-8 bg-gray-50", className)}>
+      <div className="flex items-center gap-3">
         <p className="text-sm text-muted-foreground">{text}</p>
         {tooltip && (
           <TooltipProvider>
