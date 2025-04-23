@@ -9,7 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { FileText, CreditCard, Receipt, Users, Settings, HelpCircle, LogOut, ArrowRightLeft } from "lucide-react";
+import { LayoutDashboard, Receipt, WalletCards, ReceiptPoundSterling, ArrowLeftRight, Users, Settings, HelpCircle, LogOut } from "lucide-react";
 import { UserCard } from "@/components/ui/user-card";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,10 +19,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const menuItems = [
-  { icon: FileText, label: "Invoices", href: "/invoices" },
-  { icon: CreditCard, label: "Payments", href: "/payments" },
-  { icon: Receipt, label: "Bills", href: "/bills" },
-  { icon: ArrowRightLeft, label: "Internal Transfer", href: "/internal-transfer" },
+  { icon: LayoutDashboard, label: "Invoices", href: "/invoices" },
+  { icon: WalletCards, label: "Payments", href: "/payments" },
+  { icon: ReceiptPoundSterling, label: "Bills", href: "/bills" },
+  { icon: ArrowLeftRight, label: "Internal Transfer", href: "/internal-transfer" },
   { icon: Users, label: "Contacts", href: "/contacts" },
 ];
 
