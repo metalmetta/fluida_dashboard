@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -16,11 +17,11 @@ import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import InternalTransfer from "@/pages/internal-transfer";
 import InvoicePayment from "@/pages/invoice-payment/[id]";
-import { Helmet } from 'react-helmet-async';
+import { Helmet, HelmetProvider } from 'react-helmet-async';
 
 export default function App() {
   return (
-    <>
+    <HelmetProvider>
       <Helmet>
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </Helmet>
@@ -48,6 +49,6 @@ export default function App() {
           </OnboardingProvider>
         </AuthProvider>
       </ThemeProvider>
-    </>
+    </HelmetProvider>
   );
 }
