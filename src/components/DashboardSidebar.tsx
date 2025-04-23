@@ -100,9 +100,9 @@ export function DashboardSidebar() {
   }));
 
   return (
-    <div className="flex h-screen w-64 flex-col border-r bg-card">
+    <div className="flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
       <Sidebar className="flex flex-col h-screen">
-        <SidebarHeader className="p-4">
+        <SidebarHeader className="p-8">
           <button 
             onClick={() => handleNavigation("/")}
             className="hover:opacity-80 transition-opacity"
@@ -110,12 +110,12 @@ export function DashboardSidebar() {
             <img 
               src="/logo.png" 
               alt="Logo" 
-              className="h-28 w-auto"
+              className="h-8 w-auto"
             />
           </button>
         </SidebarHeader>
         
-        <SidebarContent className="flex-1">
+        <SidebarContent className="flex-1 px-4">
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -125,15 +125,14 @@ export function DashboardSidebar() {
                     <SidebarMenuItem key={item.label}>
                       <SidebarMenuButton
                         onClick={() => handleNavigation(item.href)}
-                        className={`flex items-center gap-3 w-full relative ${
-                          isActive ? 'text-[#2606EB] bg-[#2606EB]/5 dark:text-primary dark:bg-primary/10' : ''
+                        className={`flex items-center gap-3 w-full py-3 px-4 rounded-lg transition-colors ${
+                          isActive 
+                            ? 'bg-gray-100 text-gray-900' 
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                       >
-                        {isActive && (
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#2606EB] dark:bg-primary rounded-r" />
-                        )}
-                        <item.icon className={`h-4 w-4 ${isActive ? 'text-[#2606EB] dark:text-primary' : ''}`} />
-                        <span>{item.label}</span>
+                        <item.icon className={`h-5 w-5 ${isActive ? 'text-gray-900' : 'text-gray-600'}`} />
+                        <span className="font-medium">{item.label}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
@@ -143,8 +142,8 @@ export function DashboardSidebar() {
           </SidebarGroup>
         </SidebarContent>
 
-        <div className="mt-auto border-t">
-          <div className="p-4 flex justify-between items-center">
+        <div className="mt-auto border-t border-gray-200">
+          <div className="p-4">
             <ThemeToggle />
           </div>
           <UserCard

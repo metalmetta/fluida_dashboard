@@ -23,19 +23,19 @@ export function WalletDisplay({ wallet }: WalletDisplayProps) {
   };
 
   return (
-    <div className="mt-4 border rounded-md p-3 bg-muted/20">
-      <div className="flex justify-between items-center mb-2">
-        <h4 className="text-sm font-medium">Solana Wallet</h4>
+    <div className="mt-6 border border-gray-200 rounded-lg p-4 bg-white">
+      <div className="flex justify-between items-center mb-3">
+        <h4 className="text-sm font-medium text-gray-900">Solana Wallet</h4>
         <Button 
           variant="ghost" 
           size="sm" 
-          className="h-6 w-6 p-0" 
+          className="h-8 w-8 p-0 text-gray-600 hover:text-gray-900" 
           onClick={() => copyToClipboard(wallet.address)}
         >
-          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground font-mono truncate">
+      <p className="text-sm text-gray-600 font-mono truncate">
         {wallet.address}
       </p>
     </div>
