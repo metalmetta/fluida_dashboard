@@ -10,19 +10,19 @@ interface CreateWalletButtonProps {
 export function CreateWalletButton({ isCreating, onClick }: CreateWalletButtonProps) {
   return (
     <Button
-      variant="default"
-      className="w-full mt-6"
+      variant="outline"
+      className="w-full mt-4"
       onClick={onClick}
       disabled={isCreating}
     >
       {isCreating ? (
         <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin text-white" />
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Creating Wallet...
         </>
       ) : (
         <>
-          <Wallet className="mr-2 h-4 w-4 text-white" />
+          <Wallet className="mr-2 h-4 w-4" />
           Create Wallet
         </>
       )}
