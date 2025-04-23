@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { useInvoices } from "@/hooks/useInvoices";
 import { format } from "date-fns";
 import { CreateInvoiceDialog } from "@/components/CreateInvoiceDialog";
@@ -156,7 +157,10 @@ export default function Invoices() {
               onClick: () => setCreateDialogOpen(true)
             },
             {
-              component: <ImportInvoiceButton onImportComplete={fetchInvoices} />
+              icon: Upload,
+              label: "Import PDF",
+              variant: "outline" as const,
+              onClick: () => {} // This is a dummy onClick as the real functionality is in the ImportInvoiceButton
             }
           ]}
         />
@@ -165,6 +169,10 @@ export default function Invoices() {
           text="Create, send, and track invoices all in one place."
           tooltip="Generate professional invoices and monitor their payment status easily."
         />
+
+        <div className="flex justify-end mb-2">
+          <ImportInvoiceButton onImportComplete={fetchInvoices} />
+        </div>
 
         <Card>
           <DocumentsTable
