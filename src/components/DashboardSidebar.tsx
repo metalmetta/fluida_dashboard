@@ -1,4 +1,3 @@
-
 import {
   Sidebar,
   SidebarContent,
@@ -17,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const menuItems = [
   { icon: FileText, label: "Invoices", href: "/invoices" },
@@ -91,18 +91,16 @@ export function DashboardSidebar() {
     }
   };
 
-  // Extract user details
   const userEmail = user?.email || "user@example.com";
   const userName = user?.user_metadata?.full_name || userEmail.split("@")[0];
 
-  // Map the user menu items with active state
   const mappedUserMenuItems = userMenuItems.map(item => ({
     ...item,
     isActive: item.href ? location.pathname === item.href : false
   }));
 
   return (
-    <div className="flex h-screen w-64 flex-col border-r bg-white">
+    <div className="flex h-screen w-64 flex-col border-r bg-card">
       <Sidebar className="flex flex-col h-screen">
         <SidebarHeader className="p-4">
           <button 
@@ -147,6 +145,9 @@ export function DashboardSidebar() {
         </SidebarContent>
 
         <div className="mt-auto border-t">
+          <div className="p-4">
+            <ThemeToggle />
+          </div>
           <UserCard
             userName={userName}
             userEmail={userEmail}
