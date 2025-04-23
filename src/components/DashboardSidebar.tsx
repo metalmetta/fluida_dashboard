@@ -1,3 +1,4 @@
+
 import {
   Sidebar,
   SidebarContent,
@@ -127,13 +128,13 @@ export function DashboardSidebar() {
                       <SidebarMenuButton
                         onClick={() => handleNavigation(item.href)}
                         className={`flex items-center gap-3 w-full relative ${
-                          isActive ? 'text-[#2606EB] bg-[#2606EB]/5' : ''
+                          isActive ? 'text-[#2606EB] bg-[#2606EB]/5 dark:text-primary dark:bg-primary/10' : ''
                         }`}
                       >
                         {isActive && (
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#2606EB] rounded-r" />
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#2606EB] dark:bg-primary rounded-r" />
                         )}
-                        <item.icon className={`h-4 w-4 ${isActive ? 'text-[#2606EB]' : ''}`} />
+                        <item.icon className={`h-4 w-4 ${isActive ? 'text-[#2606EB] dark:text-primary' : ''}`} />
                         <span>{item.label}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -145,7 +146,7 @@ export function DashboardSidebar() {
         </SidebarContent>
 
         <div className="mt-auto border-t">
-          <div className="p-4">
+          <div className="p-4 flex justify-between items-center">
             <ThemeToggle />
           </div>
           <UserCard

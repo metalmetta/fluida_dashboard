@@ -5,7 +5,7 @@ import { DashboardSidebar } from "./DashboardSidebar";
 export const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50">
+      <div className="min-h-screen flex w-full bg-gray-50 dark:bg-background">
         <DashboardSidebar />
         <main className="flex-1 overflow-y-auto">
           <div className="container max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
