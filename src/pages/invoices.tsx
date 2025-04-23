@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -13,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DocumentsHeader } from "@/components/documents/DocumentsHeader";
 import { DocumentsTable } from "@/components/documents/DocumentsTable";
 import { SubtitleCard } from "@/components/ui/subtitle-card";
+import { ImportInvoiceButton } from "@/components/invoice/ImportInvoiceButton";
 
 type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
 
@@ -154,6 +154,9 @@ export default function Invoices() {
               label: "Create invoice",
               variant: "default" as const,
               onClick: () => setCreateDialogOpen(true)
+            },
+            {
+              component: <ImportInvoiceButton onImportComplete={fetchInvoices} />
             }
           ]}
         />
