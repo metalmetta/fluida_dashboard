@@ -1,4 +1,3 @@
-
 import {
   Sidebar,
   SidebarContent,
@@ -118,7 +117,6 @@ export function DashboardSidebar() {
         
         <SidebarContent className="flex-1">
           <SidebarGroup>
-            <SidebarGroupLabel>Menu</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {menuItems.map((item) => {
