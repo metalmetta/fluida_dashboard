@@ -52,7 +52,7 @@ export function DocumentsHeader({
         </div>
       </div>
 
-      <div className="flex gap-8 border-b pb-1">
+      <div className="flex gap-8">
         {statusFilters.map((filter) => (
           <button
             key={filter.value}
