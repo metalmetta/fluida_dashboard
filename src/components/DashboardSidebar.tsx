@@ -1,4 +1,3 @@
-
 import {
   Sidebar,
   SidebarContent,
@@ -17,7 +16,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Invoices", href: "/invoices" },
@@ -103,10 +101,7 @@ export function DashboardSidebar() {
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-card">
       <Sidebar className="flex flex-col h-screen">
-        <SidebarHeader className="p-4 relative">
-          <div className="absolute top-4 right-4">
-            <ThemeToggle />
-          </div>
+        <SidebarHeader className="p-4">
           <button 
             onClick={() => handleNavigation("/")}
             className="hover:opacity-80 transition-opacity"
