@@ -1,10 +1,10 @@
 import {
   Sidebar,
+  SidebarHeader,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -101,7 +101,7 @@ export function DashboardSidebar() {
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-card">
       <Sidebar className="flex flex-col h-screen">
-        <SidebarHeader className="p-4">
+        <SidebarHeader className="p-4 flex items-center justify-between">
           <button 
             onClick={() => handleNavigation("/")}
             className="hover:opacity-80 transition-opacity"
