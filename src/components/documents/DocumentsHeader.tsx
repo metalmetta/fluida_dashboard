@@ -20,6 +20,7 @@ interface DocumentsHeaderProps {
     onClick: () => void;
     variant?: "default" | "outline" | "secondary";
   }[];
+  additionalActions?: React.ReactNode;
 }
 
 export function DocumentsHeader({
@@ -28,6 +29,7 @@ export function DocumentsHeader({
   selectedStatus,
   onStatusChange,
   actionButtons,
+  additionalActions,
 }: DocumentsHeaderProps) {
   return (
     <>
@@ -46,6 +48,7 @@ export function DocumentsHeader({
               {button.label}
             </Button>
           ))}
+          {additionalActions}
         </div>
       </div>
 
