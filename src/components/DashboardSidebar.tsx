@@ -1,3 +1,4 @@
+
 import {
   Sidebar,
   SidebarContent,
@@ -102,7 +103,10 @@ export function DashboardSidebar() {
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-card">
       <Sidebar className="flex flex-col h-screen">
-        <SidebarHeader className="p-4">
+        <SidebarHeader className="p-4 relative">
+          <div className="absolute top-4 right-4">
+            <ThemeToggle />
+          </div>
           <button 
             onClick={() => handleNavigation("/")}
             className="hover:opacity-80 transition-opacity"
@@ -144,9 +148,6 @@ export function DashboardSidebar() {
         </SidebarContent>
 
         <div className="mt-auto border-t">
-          <div className="p-4 flex justify-between items-center">
-            <ThemeToggle />
-          </div>
           <UserCard
             userName={userName}
             userEmail={userEmail}
