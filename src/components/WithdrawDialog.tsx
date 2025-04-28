@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { useWithdrawPaymentMethods } from "@/hooks/useWithdrawPaymentMethods";
 import { PaymentMethod } from "@/types/invoice";
+
 interface WithdrawDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -16,6 +17,7 @@ interface WithdrawDialogProps {
   currentBalance: number;
   currentCurrency: string;
 }
+
 export function WithdrawDialog({
   open,
   onOpenChange,
@@ -34,13 +36,14 @@ export function WithdrawDialog({
     setSelectedPaymentMethod,
     loading: loadingPaymentMethods
   } = useWithdrawPaymentMethods();
+
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Only allow numbers with up to 2 decimal places
     const value = e.target.value;
     if (/^\d*\.?\d{0,2}$/.test(value)) {
       setAmount(value);
     }
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || parseFloat(amount) <= 0) {
@@ -84,11 +87,10 @@ export function WithdrawDialog({
       setIsSubmitting(false);
     }
   };
+
   const handleSimulateWithdrawal = async () => {
-    // Generate random amount between 5000 and 10000
     const randomAmount = Math.floor(Math.random() * 5000) + 5000;
 
-    // Check if there's enough balance
     if (randomAmount > currentBalance) {
       toast({
         title: "Insufficient funds",
@@ -113,6 +115,7 @@ export function WithdrawDialog({
       setIsSubmitting(false);
     }
   };
+
   const formatBankAccountLabel = (method: PaymentMethod) => {
     let bankName = "Bank Account";
     let lastFour = "";
@@ -131,8 +134,9 @@ export function WithdrawDialog({
     }
     return `${bankName} • ••••${lastFour}`;
   };
+
   return <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] w-full p-0">
+      <DialogContent className="sm:max-w-[425px] w-full p-0">
         <DialogHeader className="px-6 pt-6 pb-3">
           <DialogTitle className="text-2xl font-bold">Withdraw Funds</DialogTitle>
           <DialogDescription className="text-base text-muted-foreground">
@@ -141,7 +145,7 @@ export function WithdrawDialog({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="px-0 rounded-none">
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label htmlFor="amount" className="text-sm font-medium">Amount</Label>
