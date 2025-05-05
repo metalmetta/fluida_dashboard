@@ -106,6 +106,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const checkEmailWhitelist = async (email: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('email_whitelist')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+      
+      if (error) {
+        console.error("Error checking email whitelist:", error);
+        return false;
+      }
+      
+      return !!data; // Return true if the email was found, false otherwise
+    } catch (error) {
+      console.error("Exception checking email whitelist:", error);
+      return false;
+    }
+  };
+
   const signUp = async (email: string, password: string, fullName: string, companyName?: string) => {
     try {
       setIsLoading(true);
@@ -130,12 +150,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Show confetti animation
       setShowConfetti(true);
       
-      // Mark as new user to prompt for profile completion
-      setIsNewUser(true);
+      // Check if the email is in the whitelist
+      const isWhitelisted = await checkEmailWhitelist(email);
+      
+      // Set isNewUser flag based on whitelist check
+      setIsNewUser(!isWhitelisted);
       
       toast({
         title: "Account created",
-        description: "You have been signed up successfully. Let's complete your profile.",
+        description: isWhitelisted 
+          ? "You have been signed up successfully. Welcome to the platform!"
+          : "You have been signed up successfully. Let's complete your profile.",
       });
     } catch (error: any) {
       toast({
