@@ -1,4 +1,3 @@
-
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { OnboardingLayout } from "@/components/onboarding/OnboardingLayout";
 import { CompanyInformationStep } from "@/components/onboarding/CompanyInformationStep";
@@ -12,9 +11,9 @@ import { Toaster } from "@/components/ui/toaster";
 
 export default function Onboarding() {
   const { currentStep } = useOnboarding();
-  const { user, isNewUser, setIsNewUser } = useAuth();
+  const { user, isNewUser } = useAuth();
   
-  // Redirect to dashboard if user is not new
+  // Redirect to dashboard if user is not new or not logged in
   if (!user || !isNewUser) {
     return <Navigate to="/" replace />;
   }

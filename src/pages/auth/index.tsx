@@ -80,8 +80,8 @@ export default function Auth() {
   const onSignupSubmit = async (data: SignupFormValues) => {
     try {
       await signUp(data.email, data.password, data.fullName, data.companyName);
-      // After successful signup, navigate to the settings page with a flag to prompt profile completion
-      navigate("/settings", { state: { promptProfileCompletion: true } });
+      // No need to navigate here - the ProtectedRoute component will handle the redirection
+      // based on whether the user is whitelisted or not
     } catch (error) {
       console.error("Signup error:", error);
     }

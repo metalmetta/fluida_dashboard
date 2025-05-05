@@ -20,7 +20,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     return <Navigate to="/auth" replace />;
   }
 
-  // If user is new and not currently on the onboarding page, redirect to onboarding
+  // Only redirect to onboarding if user is new AND not currently on the onboarding page
   if (isNewUser && location.pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;
   }
